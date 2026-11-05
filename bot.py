@@ -30,6 +30,8 @@ CHAT_IDS = [c.strip() for c in CHAT_ID.split(",") if c.strip()]
 MIN_DISCOUNT = 30
 MAX_PER_CYCLE = 20  # أقصى عدد عروض تتبعت لكل متجر في الدورة الواحدة
 HASHTAG = "#عروض_يستاهل"
+# كود أفلييت أمازون مصر الخاص بالقناة (Tracking ID)
+AMAZON_TAG = os.getenv("AMAZON_TAG", "anashesham-21")
 # كود الخصم الخاص بالقناة على نون (يُفعّل بعد تحديد الأقسام المشمولة)
 NOON_COUPON = os.getenv("NOON_COUPON", "")
 HISTORY_DAYS = 90
@@ -88,10 +90,22 @@ def short_link(link):
 
 _branded_cache = {}
 
-def branded_url(url):
-    """يختصر الرابط ويضيف فيه اسم القناة (loqta) مثل https://is.gd/loqta_7f3a9c."""
+def add_affiliate_tag(url):
+    """يضيف كود أفلييت أمازون مصر (Tracking ID) لأي رابط أمازون تلقائياً."""
     if not url or not url.startswith("http"):
         return url
+    if "amazon." in url and AMAZON_TAG:
+        if "tag=" in url:
+            return re.sub(r'tag=[^&#]+', f'tag={AMAZON_TAG}', url)
+        sep = "&" if "?" in url else "?"
+        return f"{url}{sep}tag={AMAZON_TAG}&linkCode=ll1"
+    return url
+
+def branded_url(url):
+    """يضيف كود الأفلييت ثم يختصر الرابط باسم القناة (loqta) مثل https://is.gd/loqta_7f3a9c."""
+    if not url or not url.startswith("http"):
+        return url
+    url = add_affiliate_tag(url)
     if url in _branded_cache:
         return _branded_cache[url]
     slug_hash = hashlib.md5(url.encode("utf-8")).hexdigest()[:6]
