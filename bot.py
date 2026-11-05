@@ -409,7 +409,7 @@ def build_message(store, title, price, list_price, discount, link,
             final_price = round(price * (1 - extra_pct / 100.0), 2)
         elif extra_egp > 0 and price > extra_egp:
             final_price = round(price - extra_egp, 2)
-        elif store.lower() == "noon" and NOON_COUPON:
+        elif store.lower() == "noon" and NOON_COUPON and price >= 100:
             noon_saving = round(min(price * 0.10, 50.0), 2)
             if noon_saving >= 1:
                 final_price = round(price - noon_saving, 2)
