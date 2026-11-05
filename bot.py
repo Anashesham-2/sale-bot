@@ -26,6 +26,8 @@ BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "YOUR_CHAT_ID")
 CHAT_IDS = [c.strip() for c in CHAT_ID.split(",") if c.strip()]
 MIN_DISCOUNT = 30
+MIN_VALID_PRICE = 10       # أقل سعر منطقي (بيستبعد عروض الـ 1 جنيه)
+MAX_VALID_DISCOUNT = 90    # خصم أكبر من كده غالباً غلط في السعر
 MAX_PER_CYCLE = 20  # أقصى عدد عروض تتبعت في الدورة الواحدة (الباقي يتبعت في الدورة اللي بعدها)
 cycle_sent = 0
 HASHTAG = "#عروض_يستاهل"
@@ -122,8 +124,27 @@ def build_message(store, title, price, list_price, discount, link,
             f"📊 أعلى سعر مسجّل: {fmt(max_price)} ج.م | أقل سعر: {fmt(min_price)} ج.م",
         ]
 
-    lines += ["", f"🔗 <a href='{link}'>اشتري من هنا</a>", "", HASHTAG]
+    lines += ["", f"🔗 رابط العرض:\n{link}", "", HASHTAG]
     return "\n".join(lines)
+
+def short_link(link):
+    """رابط قصير وثابت للمنتج (بيفضل شغال لما حد ينسخ الرسالة)."""
+    m = re.search(r'/dp/([A-Z0-9]{10})', link)
+    if m and "amazon" in link:
+        return f"https://www.amazon.eg/dp/{m.group(1)}"
+    m = re.search(r'/([A-Z0-9]{8,})/p/?', link)
+    if m and "noon.com" in link:
+        return f"https://www.noon.com/egypt-ar/{m.group(1)}/p/"
+    return link
+
+# توحيد الروابط القديمة المحفوظة عشان العروض اللي اتبعتت قبل كده ماتتكررش
+sent_deals = {short_link(l) for l in sent_deals}
+price_history = {short_link(k): v for k, v in price_history.items()}
+
+def is_blocked_title(text):
+    t = (text or "").lower()
+    return any(s in t for s in ("access denied", "robot check", "captcha", "verify you are human",
+                                 "sorry", "something went wrong", "حصل خطأ", "page not found"))
 
 def send_telegram_msg(text, image=None):
     """يبعت العرض بصورة المنتج لو متاحة (والكلام تحتها)، وإلا يبعته كرسالة عادية."""
@@ -141,7 +162,7 @@ def send_telegram_msg(text, image=None):
                 resp = requests.post(
                     f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
                     json={"chat_id": chat_id, "text": text, "parse_mode": "HTML",
-                          "disable_web_page_preview": False},
+                          "disable_web_page_preview": True},
                     timeout=10,
                 )
             if resp.ok:
@@ -174,12 +195,16 @@ def parse_amazon_card(text):
     }
 
 async def amazon_product_details(context, link):
-    """يفتح صفحة المنتج لجلب اسم البائع وأهم المميزات."""
+    """يفتح صفحة المنتج لجلب اسم البائع وأهم المميزات. يرجع None لو الصفحة محجوبة."""
     page = await context.new_page()
     seller, features, image = None, [], None
     try:
         await page.goto(link, wait_until="domcontentloaded", timeout=45000)
         await page.wait_for_timeout(2000)
+        title = await page.title()
+        if is_blocked_title(title) or await page.query_selector('form[action*="validateCaptcha"]'):
+            print(f"صفحة منتج أمازون محجوبة ({title[:40]}) - هنكتفي ببيانات الكارت.")
+            return None, None, None
         data = await page.evaluate("""() => {
             const q = s => document.querySelector(s)?.innerText?.trim();
             const seller = q('#sellerProfileTriggerId')
@@ -218,44 +243,55 @@ async def scrape_amazon_eg(page):
     for _ in range(AMAZON_SCROLLS):
         cards = await page.evaluate("""() => [...document.querySelectorAll('div[data-testid="product-card"], div[data-testid="deal-card"]')]
             .map(c => ({href: (c.querySelector('a[data-testid="product-card-link"]') || c.querySelector('a'))?.getAttribute('href'),
-                        text: c.innerText}))""")
+                        text: c.innerText,
+                        img: [...c.querySelectorAll('img')].map(i => i.currentSrc || i.src).find(s => s && s.includes('/images/I/')) || null}))""")
         for c in cards:
             if c["href"]:
                 base = c["href"].split('?')[0]
-                link = f"https://www.amazon.eg{base}" if base.startswith('/') else base
-                products.setdefault(link, c["text"])
+                link = short_link(f"https://www.amazon.eg{base}" if base.startswith('/') else base)
+                products.setdefault(link, c)
         await page.mouse.wheel(0, 1800)
         await page.wait_for_timeout(1200)
 
     print(f"تم العثور على {len(products)} عرض في صفحة أمازون مصر.")
     amazon_sent = 0
+    pdp_blocked = False
 
-    for full_link, text_content in products.items():
+    for full_link, card in products.items():
         try:
+            text_content = card["text"]
             match = re.search(r'(\d+)%', text_content)
             if not match:
                 continue
             info = parse_amazon_card(text_content)
+            # من غير سعر الرسالة ناقصة، فبنسيبها
+            if not info["price"] or is_blocked_title(info["title"]):
+                continue
             discount = int(match.group(1))
-            if info["price"] and info["list_price"]:
+            if info["list_price"]:
                 discount = (1 - info["price"] / info["list_price"]) * 100
 
-            prev_min, max_p, min_p = (None, None, None)
-            if info["price"]:
-                prev_min, max_p, min_p = record_price(full_link, info["price"])
+            prev_min, max_p, min_p = record_price(full_link, info["price"])
 
+            if info["price"] < MIN_VALID_PRICE or discount > MAX_VALID_DISCOUNT:
+                continue
             if discount < MIN_DISCOUNT or full_link in sent_deals or amazon_sent >= MAX_PER_CYCLE:
                 continue
             mark_deal_sent(full_link)
             amazon_sent += 1
 
-            seller, features, image = await amazon_product_details(page.context, full_link)
+            seller, features, image = None, [], None
+            if not pdp_blocked:
+                seller, features, image = await amazon_product_details(page.context, full_link)
+                if features is None:
+                    pdp_blocked = True  # متجربش تاني في نفس الدورة
+                    features = []
             msg = build_message(
                 "Amazon", info["title"], info["price"], info["list_price"], discount, full_link,
                 seller=seller, rating=info["rating"], reviews=info["reviews"], features=features,
                 prev_min=prev_min, max_price=max_p, min_price=min_p,
             )
-            send_telegram_msg(msg, image=image)
+            send_telegram_msg(msg, image=image or card.get("img"))
             await asyncio.sleep(3)  # تجنب حد الإرسال في تليجرام
         except Exception as e:
             print(f"خطأ في كارت أمازون: {e}")
@@ -264,17 +300,31 @@ async def scrape_amazon_eg(page):
 # ---------------------------------------------------------------------------
 # نون مصر (تغطية شاملة للأقسام + تفاصيل المنتج + المميزات + البائع + الصورة)
 # ---------------------------------------------------------------------------
-def parse_noon_card(text):
+def parse_noon_card(text, price_text=None):
     t = clean(text)
     lines = [l.strip() for l in t.split('\n') if l.strip()]
     price = list_price = rating = reviews = None
-    if "جنيه" in lines:
-        i = lines.index("جنيه")
-        nums = [to_float(x) for x in lines[i + 1:i + 3] if re.fullmatch(r'[\d,]+(?:\.\d+)?', x)]
+    # الأدق: بلوك السعر نفسه (أول رقم = السعر الحالي، التاني = السعر قبل الخصم)
+    if price_text:
+        pt = re.sub(r'خصم\s*\d+\s*%|\d+\s*%', ' ', clean(price_text))
+        nums = [to_float(x) for x in re.findall(r'\d[\d,]*(?:\.\d+)?', pt)]
+        nums = [n for n in nums if n and n >= 1]
         if nums:
             price = nums[0]
-        if len(nums) > 1:
+        if len(nums) > 1 and nums[1] > price:
             list_price = nums[1]
+    if price is None:
+        for i, l in enumerate(lines):
+            if "جنيه" in l or "EGP" in l:
+                window = " ".join(lines[i:i + 4])
+                window = re.sub(r'خصم\s*\d+\s*%|\d+\s*%', ' ', window)
+                nums = [to_float(x) for x in re.findall(r'\d[\d,]*(?:\.\d+)?', window)]
+                nums = [n for n in nums if n and n >= 1]
+                if nums:
+                    price = nums[0]
+                if len(nums) > 1 and nums[1] > price:
+                    list_price = nums[1]
+                break
     for j, l in enumerate(lines):
         if re.fullmatch(r'\d\.\d', l):
             rating = l
@@ -323,15 +373,21 @@ def noon_title(text):
     return "منتج على نون"
 
 async def noon_product_details(context, link):
-    """يفتح صفحة المنتج في نون لجلب الاسم الكامل، البائع، المميزات، وصورة المنتج."""
+    """يفتح صفحة المنتج في نون لجلب الاسم الكامل، البائع، المميزات، وصورة المنتج.
+    يرجع None في كل القيم لو الصفحة محجوبة (Access Denied)."""
     page = await context.new_page()
     full_title, seller, features, image = None, None, [], None
     try:
         await page.goto(link, wait_until="domcontentloaded", timeout=40000)
         try:
-            await page.wait_for_selector('h1', timeout=10000)
+            await page.wait_for_selector('[data-qa="pdp-product-name"], h1', timeout=10000)
         except Exception:
             await page.wait_for_timeout(3000)
+        page_title = await page.title()
+        h1 = await page.evaluate("() => document.querySelector('h1')?.innerText || ''")
+        if is_blocked_title(page_title) or is_blocked_title(h1) or not await page.query_selector('[data-qa="pdp-container"]'):
+            print(f"صفحة منتج نون محجوبة ({(h1 or page_title)[:40]}) - هنكتفي ببيانات الكارت.")
+            return None, None, None, None
         data = await page.evaluate("""() => {
             const full_title = (document.querySelector('[data-qa="pdp-product-name"]') || document.querySelector('h1'))?.innerText?.trim();
             const image = document.querySelector('meta[property="og:image"]')?.content;
@@ -353,6 +409,8 @@ async def noon_product_details(context, link):
             return {full_title, seller, feats, image};
         }""")
         full_title = data.get("full_title")
+        if is_blocked_title(full_title):
+            full_title = None
         seller = data.get("seller")
         features = data.get("feats") or []
         image = data.get("image")
@@ -361,6 +419,19 @@ async def noon_product_details(context, link):
     finally:
         await page.close()
     return full_title, seller, features, image
+
+NOON_CARDS_JS = """() => [...document.querySelectorAll('a[href*="/p/"]')].map(a => {
+    const qaImg = a.querySelector('[data-qa^="productImagePLP_"]');
+    return {
+        href: a.getAttribute('href'),
+        text: a.innerText,
+        name: qaImg ? qaImg.getAttribute('data-qa').replace('productImagePLP_', '') : null,
+        price_text: a.querySelector('[data-qa="plp-product-box-price"]')?.innerText || null,
+        express: !!a.querySelector('[data-qa="product-noon-express"]'),
+        img: [...a.querySelectorAll('img')].map(i => i.currentSrc || i.src)
+                .find(s => s && s.includes('nooncdn.com/p/')) || null,
+    };
+})"""
 
 async def scrape_noon_eg(page):
     global _noon_rot_idx
@@ -380,19 +451,15 @@ async def scrape_noon_eg(page):
                 await page.wait_for_selector('a[href*="/p/"]', timeout=15000)
             except Exception:
                 pass
-            # التمرير عدة مرات لتحميل منتجات أكثر
+            # التمرير عدة مرات لتحميل منتجات أكثر (والصور بتتحمل وإحنا نازلين)
             for _ in range(6):
                 await page.mouse.wheel(0, 2500)
                 await page.wait_for_timeout(800)
-            cards = await page.evaluate(
-                "() => [...document.querySelectorAll('a[href*=\"/p/\"]')]"
-                ".map(a => ({href: a.getAttribute('href'), text: a.innerText}))"
-            )
-            for c in cards:
+            for c in await page.evaluate(NOON_CARDS_JS):
                 if c["href"]:
                     base = c["href"].split('?')[0]
-                    link = f"https://www.noon.com{base}" if base.startswith('/') else base
-                    products.setdefault(link, c["text"])
+                    link = short_link(f"https://www.noon.com{base}" if base.startswith('/') else base)
+                    products.setdefault(link, c)
         except Exception as e:
             print(f"تعذر فتح {url}: {e}")
             continue
@@ -401,22 +468,28 @@ async def scrape_noon_eg(page):
 
     # استخراج وترتيب عروض نون من الأعلى خصماً للأقل
     candidates = []
-    for full_link, card_text in products.items():
+    for full_link, card in products.items():
         try:
+            card_text = card["text"]
             match = re.search(r'(?:خصم\s*(\d+)%|(\d+)%\s*(?:خصم|OFF))', card_text, re.IGNORECASE)
             if not match:
                 continue
-            info = parse_noon_card(card_text)
+            info = parse_noon_card(card_text, card.get("price_text"))
+            # من غير سعر الرسالة بتطلع ناقصة، فبنسيبها
+            if not info["price"]:
+                continue
             discount = int(match.group(1) or match.group(2))
-            if info["price"] and info["list_price"]:
+            if info["list_price"]:
                 discount = (1 - info["price"] / info["list_price"]) * 100
 
-            prev_min, max_p, min_p = (None, None, None)
-            if info["price"]:
-                prev_min, max_p, min_p = record_price(full_link, info["price"])
+            prev_min, max_p, min_p = record_price(full_link, info["price"])
+
+            # أسعار زي 1 جنيه غالباً عروض مشروطة/غلط - بنتجاهلها
+            if info["price"] < MIN_VALID_PRICE or discount > MAX_VALID_DISCOUNT:
+                continue
 
             if discount >= MIN_DISCOUNT and full_link not in sent_deals:
-                candidates.append((discount, full_link, card_text, info, prev_min, max_p, min_p))
+                candidates.append((discount, full_link, card, info, prev_min, max_p, min_p))
         except Exception:
             continue
 
@@ -424,24 +497,33 @@ async def scrape_noon_eg(page):
     print(f"تم العثور على {len(candidates)} عرض قوي جديد في نون مصر (خصم >= {MIN_DISCOUNT}%).")
 
     noon_sent = 0
-    for discount, full_link, card_text, info, prev_min, max_p, min_p in candidates:
+    pdp_blocked = False
+    for discount, full_link, card, info, prev_min, max_p, min_p in candidates:
         if noon_sent >= MAX_PER_CYCLE:
             break
         try:
-            mark_deal_sent(full_link)
-            noon_sent += 1
+            card_title = card.get("name") or noon_title(card["text"])
+            full_title, seller, features, image = None, None, [], None
+            if not pdp_blocked:
+                full_title, seller, features, image = await noon_product_details(page.context, full_link)
+                if features is None:
+                    pdp_blocked = True  # متجربش تاني في نفس الدورة
+                    features = []
 
-            full_title, seller, features, image = await noon_product_details(page.context, full_link)
-            title = full_title or noon_title(card_text)
-            if not seller and "express" in card_text.lower():
+            title = full_title or card_title
+            if not title or is_blocked_title(title):
+                continue
+            if not seller and card.get("express"):
                 seller = "نون (Express)"
 
+            mark_deal_sent(full_link)
+            noon_sent += 1
             msg = build_message(
                 "Noon", title, info["price"], info["list_price"], discount, full_link,
                 seller=seller, rating=info["rating"], reviews=info["reviews"], features=features,
                 prev_min=prev_min, max_price=max_p, min_price=min_p,
             )
-            send_telegram_msg(msg, image=image)
+            send_telegram_msg(msg, image=image or card.get("img"))
             await asyncio.sleep(3)  # تجنب حد الإرسال في تليجرام
         except Exception as e:
             print(f"خطأ في منتج نون: {e}")
