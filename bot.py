@@ -37,6 +37,8 @@ NOON_COUPON = os.getenv("NOON_COUPON", "")
 HISTORY_DAYS = 90
 # المدة بين كل فحص والتاني بالثواني (افتراضياً 3 دقايق - فترة العروض)
 CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", "180"))
+# الفاصل الزمني بالثواني بين كل رسالة والتانية (20 ثانية، ما عدا عروض "ببلاش" تتبعت فوراً)
+MESSAGE_DELAY = int(os.getenv("MESSAGE_DELAY", "20"))
 
 SENT_DEALS_FILE = os.path.join(BASE_DIR, "sent_deals.txt")
 HISTORY_FILE = os.path.join(BASE_DIR, "price_history.json")
@@ -128,16 +130,43 @@ def branded_url(url):
         pass
     return url
 
+_COLOR_SIZE_RE = re.compile(
+    r'\b(black|white|red|blue|green|yellow|grey|gray|beige|navy|pink|purple|brown|orange|silver|gold|'
+    r'multicolour|multicolor|xxxl|xxl|xl|xs|small|medium|large|l|m|s|مقاس|'
+    r'أسود|اسود|أبيض|ابيض|أحمر|احمر|أزرق|ازرق|أخضر|اخضر|أصفر|اصفر|رمادي|بيج|كحلي|وردي|بني|بنفسجي|فضي|ذهبي)\b',
+    re.IGNORECASE,
+)
+
+def normalize_title_key(title):
+    """ينظف اسم المنتج (مع تجاهل اللون والمقاس) لمنع تكرار نفس المنتج بألوان مختلفة."""
+    if not title:
+        return ""
+    s = _COLOR_SIZE_RE.sub(" ", str(title).lower())
+    s = re.sub(r'[^\w\u0600-\u06FF]+', ' ', s)
+    s = re.sub(r'\s+', ' ', s).strip()
+    return s[:65] if len(s) >= 12 else ""
+
 sent_deals = set()
 if os.path.exists(SENT_DEALS_FILE):
     with open(SENT_DEALS_FILE, "r", encoding="utf-8") as f:
         sent_deals = {short_link(line.strip()) for line in f if line.strip()}
 
 price_history = {}
+sent_title_prices = {}
 if os.path.exists(HISTORY_FILE):
     try:
         with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-            price_history = {short_link(k): v for k, v in json.load(f).items()}
+            for k, v in json.load(f).items():
+                sk = short_link(k)
+                price_history[sk] = v
+                if sk in sent_deals and v.get("last_sent_price") is None and v.get("prices"):
+                    v["last_sent_price"] = v["prices"][-1][1]
+                    v["last_sent_at"] = v["prices"][-1][0]
+                t_key = v.get("title_key")
+                if t_key and v.get("last_sent_price"):
+                    prev_tp = sent_title_prices.get(t_key)
+                    if prev_tp is None or v["last_sent_price"] < prev_tp:
+                        sent_title_prices[t_key] = v["last_sent_price"]
     except Exception:
         price_history = {}
 
@@ -145,10 +174,64 @@ def save_history():
     with open(HISTORY_FILE, "w", encoding="utf-8") as f:
         json.dump(price_history, f, ensure_ascii=False)
 
-def mark_deal_sent(link):
-    sent_deals.add(link)
-    with open(SENT_DEALS_FILE, "a", encoding="utf-8") as f:
-        f.write(link + "\n")
+def should_send_deal(link, title, current_price, promo_sig=""):
+    """
+    يمنع تكرار إرسال العرض إلا في حالتين فقط:
+    1) لو العرض خلص (سعره رجع ارتفع) وبعدين رجع تاني لعرض خصم.
+    2) لو حصل تعديل حقيقي على العرض من نون أو أمازون (السعر نزل أكتر أو اتضاف كوبون/خصم جديد).
+    وكمان يمنع تكرار نفس المنتج بألوان/بائعين مختلفين بنفس السعر.
+    """
+    if current_price is None:
+        return False, None
+    entry = price_history.get(link, {})
+    last_p = entry.get("last_sent_price")
+    last_at = entry.get("last_sent_at") or 0
+    last_promo = entry.get("last_sent_promo") or ""
+
+    if link in sent_deals:
+        if last_p is None:
+            return False, None
+        # 1) السعر نزل أكتر بشكل ملحوظ (على الأقل 8% وبفرق 15 جنيه أو أكتر)
+        if current_price <= last_p * 0.92 and (last_p - current_price) >= 15:
+            return True, "🔥 تحديث عرض (السعر نزل أكتر!)"
+        # 2) العرض كان خلص (السعر طلع فوق سعر العرض بـ 15%+) وبعدين رجع تاني لعرض خصم
+        prices_after = [p[1] for p in entry.get("prices", []) if p[0] > last_at]
+        if any(p >= last_p * 1.15 for p in prices_after) and current_price <= last_p * 1.02:
+            return True, "🔄 العرض رجع تاني بعد ما خلص!"
+        # 3) اتضاف كود خصم أو خصم Checkout جديد مكنش موجود وقت الإرسال الأول
+        if promo_sig and promo_sig != last_promo:
+            return True, "🔥 تحديث عرض (تم إضافة خصم/كوبون جديد!)"
+        return False, None
+
+    # لو الرابط جديد بس نفس المنتج بالظبط (لون تاني أو بائع تاني) اتبعت قبل كده بنفس السعر
+    t_key = normalize_title_key(title)
+    if t_key and t_key in sent_title_prices:
+        prev_tp = sent_title_prices[t_key]
+        if current_price > prev_tp * 0.90:
+            return False, None
+
+    return True, None
+
+def mark_deal_sent(link, title=None, effective_price=None, promo_sig=""):
+    now = time.time()
+    if link not in sent_deals:
+        sent_deals.add(link)
+        with open(SENT_DEALS_FILE, "a", encoding="utf-8") as f:
+            f.write(link + "\n")
+    entry = price_history.setdefault(link, {"prices": [], "last_sent": None})
+    entry["last_sent"] = now
+    entry["last_sent_at"] = now
+    if effective_price is not None:
+        entry["last_sent_price"] = effective_price
+    entry["last_sent_promo"] = promo_sig or ""
+    t_key = normalize_title_key(title)
+    if t_key:
+        entry["title_key"] = t_key
+        if effective_price is not None:
+            prev_tp = sent_title_prices.get(t_key)
+            if prev_tp is None or effective_price < prev_tp:
+                sent_title_prices[t_key] = effective_price
+    save_history()
 
 def record_price(link, price):
     """يسجّل السعر الحالي ويرجع (أقل سعر سابق، أعلى سعر، أقل سعر) خلال آخر 90 يوم."""
@@ -433,6 +516,8 @@ def build_message(store, title, price, list_price, discount, link,
     freebie = is_almost_free(effective_price, list_price, discount)
     if freebie:
         header = f"🚨🔥 ببلاش حرفياً على {store_ar}! (نزل من {fmt(list_price)} ج.م لـ {fmt(effective_price)} ج.م)"
+    elif section_note:
+        header = f"{icon} على {store_ar} — {section_note}"
     else:
         header = f"{icon} على {store_ar}"
 
@@ -567,6 +652,20 @@ def send_telegram_msg(text, image=None):
                 print(f"Telegram API error ({chat_id}, {resp.status_code}): {resp.text}")
         except Exception as e:
             print(f"Error sending message to {chat_id}: {e}")
+
+_last_send_ts = 0.0
+
+async def pace_and_send(text, image=None, is_freebie=False):
+    """ينتظر 20 ثانية بين كل رسالة والتانية، ما عدا عروض (ببلاش) يبعتها فوراً في نفس اللحظة."""
+    global _last_send_ts
+    if not is_freebie and _last_send_ts > 0:
+        elapsed = time.time() - _last_send_ts
+        if elapsed < MESSAGE_DELAY:
+            wait_s = MESSAGE_DELAY - elapsed
+            print(f"انتظار {wait_s:.0f} ثانية قبل إرسال العرض التالي...")
+            await asyncio.sleep(wait_s)
+    send_telegram_msg(text, image=image)
+    _last_send_ts = time.time()
 
 # ---------------------------------------------------------------------------
 # أمازون مصر (صفحة العروض + فحص البراندات والأقسام + المراجعات ودمج الخصومات)
@@ -747,7 +846,8 @@ async def scrape_amazon_eg(page):
             freebie = is_almost_free(info["price"], info["list_price"], badge_disc)
             has_card_promo = any(w in text_content for w in ("متاح عرض ترويجي", "مع الكوبون", "كوبون خصم", "وفر ", "اشترِ", "اشتري"))
 
-            if (discount >= MIN_DISCOUNT or freebie or (discount >= 22 and has_card_promo)) and full_link not in sent_deals:
+            ok_prelim, _ = should_send_deal(full_link, info["title"], info["price"])
+            if (discount >= MIN_DISCOUNT or freebie or (discount >= 22 and has_card_promo)) and ok_prelim:
                 candidates.append((1 if freebie else 0, discount, full_link, card, info, prev_min, max_p, min_p))
         except Exception as e:
             print(f"خطأ في كارت أمازون: {e}")
@@ -762,9 +862,6 @@ async def scrape_amazon_eg(page):
         if amazon_sent >= MAX_PER_CYCLE:
             break
         try:
-            mark_deal_sent(full_link)
-            amazon_sent += 1
-
             seller, features, image, rev_snippets, page_promos, promo_links = None, [], None, [], [], []
             if not pdp_blocked:
                 seller, features, image, rev_snippets, page_promos, promo_links = await amazon_product_details(page.context, full_link)
@@ -776,16 +873,30 @@ async def scrape_amazon_eg(page):
                 card["text"], page_promos, promo_links
             )
 
+            eff_price = info["price"]
+            if extra_pct > 0:
+                eff_price = round(eff_price * (1 - extra_pct / 100.0), 2)
+            elif extra_egp > 0 and eff_price > extra_egp:
+                eff_price = round(eff_price - extra_egp, 2)
+
+            promo_sig = "|".join(stack_promos)
+            ok_send, update_reason = should_send_deal(full_link, info["title"], eff_price, promo_sig)
+            if not ok_send:
+                continue
+
+            mark_deal_sent(full_link, info["title"], eff_price, promo_sig)
+            amazon_sent += 1
+
             msg = build_message(
                 "Amazon", info["title"], info["price"], info["list_price"], discount, full_link,
                 seller=seller, rating=info["rating"], reviews=info["reviews"], features=features,
                 prev_min=prev_min, max_price=max_p, min_price=min_p,
                 review_snippets=rev_snippets, bought_badge=info.get("bought"),
-                stack_promos=stack_promos, stack_howto=stack_howto,
+                stack_promos=stack_promos, stack_howto=stack_howto, section_note=update_reason,
                 extra_pct=extra_pct, extra_egp=extra_egp, extra_label=extra_label, promo_links=promo_links,
             )
-            send_telegram_msg(msg, image=image or card.get("img"))
-            await asyncio.sleep(3)
+            is_free_now = is_almost_free(eff_price, info["list_price"], discount)
+            await pace_and_send(msg, image=image or card.get("img"), is_freebie=is_free_now)
         except Exception as e:
             print(f"خطأ في إرسال عرض أمازون: {e}")
             continue
@@ -1014,7 +1125,9 @@ async def scrape_noon_eg(page):
             freebie = is_almost_free(info["price"], info["list_price"], badge_disc)
             has_card_promo = any(w in card_text for w in ("مع الكوبون", "كوبون", "كود", "وفر ", "اشترِ", "اشتري"))
 
-            if (discount >= MIN_DISCOUNT or freebie or (discount >= 22 and has_card_promo)) and full_link not in sent_deals:
+            prelim_title = card.get("name") or noon_title(card_text)
+            ok_prelim, _ = should_send_deal(full_link, prelim_title, info["price"])
+            if (discount >= MIN_DISCOUNT or freebie or (discount >= 22 and has_card_promo)) and ok_prelim:
                 candidates.append((1 if freebie else 0, discount, full_link, card, info, prev_min, max_p, min_p))
         except Exception:
             continue
@@ -1047,18 +1160,29 @@ async def scrape_noon_eg(page):
                 card["text"], page_promos
             )
 
-            mark_deal_sent(full_link)
+            eff_price = info["price"]
+            if extra_pct > 0:
+                eff_price = round(eff_price * (1 - extra_pct / 100.0), 2)
+            elif extra_egp > 0 and eff_price > extra_egp:
+                eff_price = round(eff_price - extra_egp, 2)
+
+            promo_sig = "|".join(stack_promos)
+            ok_send, update_reason = should_send_deal(full_link, title, eff_price, promo_sig)
+            if not ok_send:
+                continue
+
+            mark_deal_sent(full_link, title, eff_price, promo_sig)
             noon_sent += 1
             msg = build_message(
                 "Noon", title, info["price"], info["list_price"], discount, full_link,
                 seller=seller, rating=info["rating"], reviews=info["reviews"], features=features,
                 prev_min=prev_min, max_price=max_p, min_price=min_p,
                 review_snippets=rev_snippets, bought_badge=info.get("bought"),
-                stack_promos=stack_promos, stack_howto=stack_howto,
+                stack_promos=stack_promos, stack_howto=stack_howto, section_note=update_reason,
                 extra_pct=extra_pct, extra_egp=extra_egp, extra_label=extra_label, promo_links=promo_links,
             )
-            send_telegram_msg(msg, image=image or card.get("img"))
-            await asyncio.sleep(3)
+            is_free_now = is_almost_free(eff_price, info["list_price"], discount)
+            await pace_and_send(msg, image=image or card.get("img"), is_freebie=is_free_now)
         except Exception as e:
             print(f"خطأ في منتج نون: {e}")
             continue
