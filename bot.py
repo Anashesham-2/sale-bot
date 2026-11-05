@@ -306,6 +306,79 @@ def parse_reviews_count(reviews_str):
         val *= 1000
     return int(val)
 
+_GENERIC_BRAND_NAMES = {
+    "generic", "عام", "أخرى", "اخرى", "other", "others", "no brand", "unbranded",
+    "بدون ماركة", "بدون علامة تجارية", "غير محدد", "n/a", "oem", "none", "unknown",
+}
+
+TRUSTED_BRAND_KEYWORDS = (
+    # تقنية، هاردوير، شواحن، إلكترونيات، موبايلات
+    "ugreen", "يوغرين", "يوجرين", "anker", "أنكر", "انكر", "soundcore", "ساوند كور", "eufy", "يوفي",
+    "redragon", "ريدراجون", "ريد دراجون", "logitech", "لوجيتك", "razer", "ريزر", "hyperx", "هايبر اكس",
+    "fantech", "فانتك", "baseus", "بيسوس", "joyroom", "جوي روم", "oraimo", "أورايمو", "اورايمو",
+    "xiaomi", "شاومي", "redmi", "ريدمي", "poco", "بوكو", "samsung", "سامسونج", "apple", "أبل", "ابل",
+    "huawei", "هواوي", "honor", "هونر", "realme", "ريلمي", "oppo", "أوبو", "اوبو", "vivo", "فيفو",
+    "infinix", "انفينكس", "tecno", "تكنو", "nokia", "نوكيا", "motorola", "موتورولا",
+    "sony", "سوني", "jbl", "جي بي ال", "bose", "بوز", "sennheiser", "سنهايزر", "edifier", "إديفاير",
+    "tp-link", "تي بي لينك", "tapo", "تابو", "d-link", "دي لينك", "ezviz", "hikvision", "هيكفيجن",
+    "sandisk", "سانديسك", "kingston", "كينجستون", "lexar", "ليكسر", "wd", "western digital", "seagate", "crucial",
+    "hp", "اتش بي", "dell", "ديل", "lenovo", "لينوفو", "asus", "أسوس", "اسوس", "acer", "أيسر", "msi", "gigabyte",
+    "hollyland", "fujifilm", "instax", "canon", "كانون", "nikon", "نيكون", "epson", "إبسون", "casio", "كاسيو",
+    "energizer", "انرجايزر", "duracell", "دوراسيل", "hama", "هاما", "belkin", "بيلكن", "promate", "بروميت",
+    # أجهزة منزلية ومطبخ وعدة
+    "tornado", "تورنيدو", "fresh", "فريش", "sharp", "شارب", "panasonic", "باناسونيك", "philips", "فيليبس",
+    "braun", "براون", "kenwood", "كينوود", "moulinex", "مولينكس", "tefal", "تيفال", "delonghi", "ديلونجي",
+    "nespresso", "نسبرسو", "نسبريسو", "black+decker", "black & decker", "بلاك اند ديكر", "bosch", "بوش",
+    "beko", "بيكو", "lg", "ال جي", "إل جي", "toshiba", "توشيبا", "midea", "ميديا", "carrier", "كاريير",
+    "unionaire", "يونيون إير", "ariston", "أريستون", "اريستون", "olympic", "أوليمبيك", "اوليمبيك",
+    "zanussi", "زانوسي", "hoover", "هوفر", "karcher", "كارشر", "vileda", "فيليدا", "tank", "تانك",
+    "total", "توتال", "ingco", "انجكو", "إنجكو", "luminarc", "لومينارك", "pasabahce", "pyrex", "بايركس",
+    "nouval", "نوفال", "zahran", "زهران", "sokany", "سوكاني", "sonai", "سوناي", "raf", "راف",
+    # سوبرماركت وعناية شخصية وملابس
+    "vitrac", "فيتراك", "abu auf", "أبو عوف", "ابو عوف", "nescafe", "نسكافيه", "lipton", "ليبتون",
+    "ahmad tea", "أحمد تي", "rich mix", "ريتش ميكس", "gullon", "جولون", "ariel", "أريال", "اريال", "ايريال",
+    "persil", "برسيل", "downy", "داوني", "tide", "تايد", "pril", "بريل", "finish", "فينيش",
+    "dettol", "ديتول", "clorox", "كلوركس", "harpic", "هاربيك", "vanish", "فانيش", "glade", "جليد",
+    "nivea", "نيفيا", "loreal", "l'oreal", "لوريال", "garnier", "غارنييه", "جارنييه", "dove", "دوف",
+    "axe", "أكس", "rexona", "ريكسونا", "fogg", "فوج", "bioderma", "بيوديرما", "بايوديرما",
+    "la roche", "لاروش", "vichy", "فيتشي", "فيشي", "cerave", "سيرافي", "cetaphil", "سيتافيل",
+    "eva", "إيفا", "ايفا", "beesline", "بيزلين", "bobai", "بوباى", "pantene", "بانتين",
+    "head & shoulders", "هيد اند شولدرز", "tresemme", "تريسمي", "sunsilk", "صانسيلك", "clear", "كلير",
+    "gillette", "جيليت", "oral-b", "أورال بي", "sensodyne", "سنسوداين", "signal", "سيجنال", "listerine", "ليسترين",
+    "johnson", "جونسون", "pampers", "بامبرز", "molfix", "مولفيكس", "babyjoy", "بيبي جوي",
+    "sanosan", "سانوسان", "penduline", "بندولين", "vatika", "فاتيكا", "karseell", "كارسيل", "maybelline", "ميبيلين",
+    "adidas", "أديداس", "اديداس", "nike", "نايكي", "نايك", "puma", "بوما", "reebok", "ريبوك",
+    "skechers", "سكيتشرز", "defacto", "ديفاكتو", "lc waikiki", "ال سي وايكيكي", "cottonil", "قطونيل",
+    "dice", "دايس", "naviforce", "نافي فورس", "lacoste", "لاكوست", "ray-ban", "راي بان",
+)
+
+def is_trusted_product(title, brand=None, rating=None, reviews=None):
+    """
+    يرفض أي منتج غير موثوق:
+    1) لازم يكون عليه تقييم فعلي (>= 3.9) وعدد تقييمات لا يقل عن 3 مشترين.
+    2) لازم تكون الماركة معروفة (أو براند رسمي صريح مش Generic/عام وله تقييمات قوية >= 4.2 من 15+ مشتري).
+    """
+    r_val = to_float(rating) if rating else None
+    r_cnt = parse_reviews_count(reviews)
+    # 1) رفض أي منتج معلهوش تقييمات أو تقييمه ضعيف
+    if r_val is None or r_val < 3.9 or r_cnt < 3:
+        return False
+
+    b_clean = (brand or "").strip().lower()
+    if b_clean in _GENERIC_BRAND_NAMES:
+        return False
+
+    combined = f"{b_clean} {(title or '').lower()}"
+    if any(kw in combined for kw in TRUSTED_BRAND_KEYWORDS):
+        return True
+
+    # لو الماركة مذكورة صراحةً على الموقع (مش عام/Generic) وعليها تقييمات قوية جداً من المشترين
+    if b_clean and len(b_clean) >= 2 and b_clean not in _GENERIC_BRAND_NAMES:
+        if r_val >= 4.2 and r_cnt >= 15:
+            return True
+
+    return False
+
 def clean_image_url(url):
     """ينظف رابط الصورة (خصوصاً نون وأمازون) عشان تليجرام يقبلها كصورة JPG عالية الجودة."""
     if not url or not isinstance(url, str):
@@ -702,16 +775,16 @@ def parse_amazon_card(text):
     }
 
 async def amazon_product_details(context, link):
-    """يفتح صفحة المنتج لجلب البائع، الماركة، المميزات، تعليقات المشترين، الصورة، وعروض دمج الخصومات وروابطها."""
+    """يفتح صفحة المنتج لجلب البائع، الماركة، التقييمات، المميزات، تعليقات المشترين، الصورة، وعروض دمج الخصومات وروابطها."""
     page = await context.new_page()
-    seller, brand, features, image, reviews_list, promos_list, promo_links = None, None, [], None, [], [], []
+    seller, brand, pdp_rating, pdp_reviews, features, image, reviews_list, promos_list, promo_links = None, None, None, None, [], None, [], [], []
     try:
         await page.goto(link, wait_until="domcontentloaded", timeout=45000)
         await page.wait_for_timeout(2000)
         title = await page.title()
         if is_blocked_title(title) or await page.query_selector('form[action*="validateCaptcha"]'):
             print(f"صفحة منتج أمازون محجوبة ({title[:40]}) - هنكتفي ببيانات الكارت.")
-            return None, None, None, None, [], [], []
+            return None, None, None, None, None, None, [], [], []
         await page.evaluate("window.scrollTo(0, document.body.scrollHeight * 0.65)")
         await page.wait_for_timeout(1200)
         data = await page.evaluate("""() => {
@@ -726,6 +799,8 @@ async def amazon_product_details(context, link):
                     .replace(/\\s*Store$/i, '')
                     .trim();
             }
+            const ratingTxt = document.querySelector('#acrPopover')?.getAttribute('title') || q('#acrPopover .a-size-base');
+            const reviewsTxt = q('#acrCustomerReviewText');
             const feats = [...document.querySelectorAll('#feature-bullets li span.a-list-item')]
                 .map(e => e.innerText.trim()).filter(x => x.length > 10);
             const img = document.querySelector('#landingImage, #imgBlkFront, #main-image, #imgTagWrapperId img');
@@ -758,10 +833,16 @@ async def amazon_product_details(context, link):
             )];
             const revs = [...document.querySelectorAll('[data-hook="reviewText"], [data-hook="review-collapsed"], .review-text-content')]
                 .map(e => e.innerText.trim()).filter(x => x.length > 15).slice(0, 3);
-            return {seller, brand, feats, image, promos: promos.slice(0, 10), promo_links: promo_links.slice(0, 2), revs};
+            return {seller, brand, ratingTxt, reviewsTxt, feats, image, promos: promos.slice(0, 10), promo_links: promo_links.slice(0, 2), revs};
         }""")
         seller = data.get("seller")
         brand = data.get("brand")
+        r_m = re.search(r'(\d\.\d)', clean(data.get("ratingTxt") or ""))
+        if r_m:
+            pdp_rating = r_m.group(1)
+        rv_m = re.search(r'([\d,]+)', clean(data.get("reviewsTxt") or ""))
+        if rv_m:
+            pdp_reviews = rv_m.group(1)
         features = data.get("feats") or []
         image = clean_image_url(data.get("image"))
         promos_list = data.get("promos") or []
@@ -771,7 +852,7 @@ async def amazon_product_details(context, link):
         print(f"تعذر جلب تفاصيل المنتج: {e}")
     finally:
         await page.close()
-    return seller, brand, features, image, reviews_list, promos_list, promo_links
+    return seller, brand, pdp_rating, pdp_reviews, features, image, reviews_list, promos_list, promo_links
 
 AMAZON_SCROLLS = int(os.getenv("AMAZON_SCROLLS", "10"))
 
@@ -878,12 +959,17 @@ async def scrape_amazon_eg(page):
         if amazon_sent >= MAX_PER_CYCLE:
             break
         try:
-            seller, brand, features, image, rev_snippets, page_promos, promo_links = None, None, [], None, [], [], []
+            seller, brand, pdp_rating, pdp_reviews, features, image, rev_snippets, page_promos, promo_links = None, None, None, None, [], None, [], [], []
             if not pdp_blocked:
-                seller, brand, features, image, rev_snippets, page_promos, promo_links = await amazon_product_details(page.context, full_link)
+                seller, brand, pdp_rating, pdp_reviews, features, image, rev_snippets, page_promos, promo_links = await amazon_product_details(page.context, full_link)
                 if features is None:
                     pdp_blocked = True
                     features = []
+
+            rating = info["rating"] or pdp_rating
+            reviews = info["reviews"] or pdp_reviews
+            if not is_trusted_product(info["title"], brand=brand, rating=rating, reviews=reviews):
+                continue
 
             stack_promos, stack_howto, extra_pct, extra_egp, extra_label, promo_links = detect_stacking_promos(
                 card["text"], page_promos, promo_links
@@ -905,7 +991,7 @@ async def scrape_amazon_eg(page):
 
             msg = build_message(
                 "Amazon", info["title"], info["price"], info["list_price"], discount, full_link,
-                seller=seller, rating=info["rating"], reviews=info["reviews"], features=features,
+                seller=seller, rating=rating, reviews=reviews, features=features,
                 prev_min=prev_min, max_price=max_p, min_price=min_p,
                 review_snippets=rev_snippets, bought_badge=info.get("bought"),
                 stack_promos=stack_promos, stack_howto=stack_howto, section_note=update_reason,
@@ -1168,6 +1254,9 @@ async def scrape_noon_eg(page):
             info = parse_noon_card(card_text, card.get("price_text"), badge_disc)
             if not info["price"] or info["price"] < 5:
                 continue
+            # تجاهل أي منتج في نون معلهوش تقييمات كافية من المشترين
+            if not info["rating"] or (to_float(info["rating"]) or 0) < 3.9 or parse_reviews_count(info["reviews"]) < 3:
+                continue
             discount = float(badge_disc)
             if info["list_price"] and info["list_price"] > info["price"]:
                 discount = (1 - info["price"] / info["list_price"]) * 100
@@ -1205,6 +1294,8 @@ async def scrape_noon_eg(page):
             if not title or is_blocked_title(title):
                 continue
             brand = pdp_brand or card.get("brand")
+            if not is_trusted_product(title, brand=brand, rating=info["rating"], reviews=info["reviews"]):
+                continue
             if not seller and card.get("express"):
                 seller = "نون (Express)"
 
