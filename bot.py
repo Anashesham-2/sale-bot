@@ -30,8 +30,8 @@ CHAT_IDS = [c.strip() for c in CHAT_ID.split(",") if c.strip()]
 MIN_DISCOUNT = 30
 MAX_PER_CYCLE = 20  # أقصى عدد عروض تتبعت لكل متجر في الدورة الواحدة
 HASHTAG = "#عروض_يستاهل"
-# كود الخصم الخاص بالقناة على نون (10% خصم إضافي)
-NOON_COUPON = os.getenv("NOON_COUPON", "loq1")
+# كود الخصم الخاص بالقناة على نون (يُفعّل بعد تحديد الأقسام المشمولة)
+NOON_COUPON = os.getenv("NOON_COUPON", "")
 HISTORY_DAYS = 90
 # المدة بين كل فحص والتاني بالثواني (افتراضياً 3 دقايق - فترة العروض)
 CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", "180"))
