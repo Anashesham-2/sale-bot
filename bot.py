@@ -496,9 +496,15 @@ def build_message(store, title, price, list_price, discount, link,
                   prev_min=None, max_price=None, min_price=None,
                   review_snippets=None, bought_badge=None,
                   stack_promos=None, stack_howto=None, section_note=None,
-                  extra_pct=0.0, extra_egp=0.0, extra_label=None, promo_links=None):
+                  extra_pct=0.0, extra_egp=0.0, extra_label=None, promo_links=None,
+                  brand=None):
     store_ar = "أمازون" if store.lower() == "amazon" else ("نون" if store.lower() == "noon" else store)
     icon = "🔥" if store.lower() == "amazon" else "🟡"
+
+    brand_clean = (brand or detect_brand(title) or "").strip()
+    display_title = title.strip()
+    if brand_clean and brand_clean.lower() not in display_title.lower():
+        display_title = f"{brand_clean} — {display_title}"
 
     final_price = None
     if price is not None:
@@ -521,7 +527,7 @@ def build_message(store, title, price, list_price, discount, link,
     else:
         header = f"{icon} على {store_ar}"
 
-    lines = [f"<b>{header}</b>", "", f"📦 <b>{html.escape(title[:130])}</b>", ""]
+    lines = [f"<b>{header}</b>", "", f"📦 <b>{html.escape(display_title[:140])}</b>", ""]
 
     if list_price and list_price > (price or 0):
         lines.append(f"❌ السعر القديم: <s>{fmt(list_price)} ج.م</s>")
@@ -539,6 +545,8 @@ def build_message(store, title, price, list_price, discount, link,
     else:
         lines.append(f"📉 الخصم: <b>{discount:.0f}%</b>")
 
+    if brand_clean:
+        lines.append(f"🏷️ الماركة: <b>{html.escape(brand_clean[:40])}</b>")
     if seller:
         lines.append(f"🏪 البائع: {html.escape(seller[:40])}")
     if rating:
@@ -694,16 +702,16 @@ def parse_amazon_card(text):
     }
 
 async def amazon_product_details(context, link):
-    """يفتح صفحة المنتج لجلب البائع، المميزات، تعليقات المشترين، الصورة، وعروض دمج الخصومات وروابطها."""
+    """يفتح صفحة المنتج لجلب البائع، الماركة، المميزات، تعليقات المشترين، الصورة، وعروض دمج الخصومات وروابطها."""
     page = await context.new_page()
-    seller, features, image, reviews_list, promos_list, promo_links = None, [], None, [], [], []
+    seller, brand, features, image, reviews_list, promos_list, promo_links = None, None, [], None, [], [], []
     try:
         await page.goto(link, wait_until="domcontentloaded", timeout=45000)
         await page.wait_for_timeout(2000)
         title = await page.title()
         if is_blocked_title(title) or await page.query_selector('form[action*="validateCaptcha"]'):
             print(f"صفحة منتج أمازون محجوبة ({title[:40]}) - هنكتفي ببيانات الكارت.")
-            return None, None, None, [], [], []
+            return None, None, None, None, [], [], []
         await page.evaluate("window.scrollTo(0, document.body.scrollHeight * 0.65)")
         await page.wait_for_timeout(1200)
         data = await page.evaluate("""() => {
@@ -711,6 +719,13 @@ async def amazon_product_details(context, link):
             const seller = q('#sellerProfileTriggerId')
                 || q('#merchantInfoFeature_feature_div .offer-display-feature-text-message')
                 || q('#merchant-info a') || q('#merchant-info');
+            let brand = q('tr.po-brand td.a-span9') || q('#bylineInfo');
+            if (brand) {
+                brand = brand
+                    .replace(/^(زيارة متجر|العلامة التجارية:|الماركة:|Visit the|Brand:)\\s*/i, '')
+                    .replace(/\\s*Store$/i, '')
+                    .trim();
+            }
             const feats = [...document.querySelectorAll('#feature-bullets li span.a-list-item')]
                 .map(e => e.innerText.trim()).filter(x => x.length > 10);
             const img = document.querySelector('#landingImage, #imgBlkFront, #main-image, #imgTagWrapperId img');
@@ -743,9 +758,10 @@ async def amazon_product_details(context, link):
             )];
             const revs = [...document.querySelectorAll('[data-hook="reviewText"], [data-hook="review-collapsed"], .review-text-content')]
                 .map(e => e.innerText.trim()).filter(x => x.length > 15).slice(0, 3);
-            return {seller, feats, image, promos: promos.slice(0, 10), promo_links: promo_links.slice(0, 2), revs};
+            return {seller, brand, feats, image, promos: promos.slice(0, 10), promo_links: promo_links.slice(0, 2), revs};
         }""")
         seller = data.get("seller")
+        brand = data.get("brand")
         features = data.get("feats") or []
         image = clean_image_url(data.get("image"))
         promos_list = data.get("promos") or []
@@ -755,7 +771,7 @@ async def amazon_product_details(context, link):
         print(f"تعذر جلب تفاصيل المنتج: {e}")
     finally:
         await page.close()
-    return seller, features, image, reviews_list, promos_list, promo_links
+    return seller, brand, features, image, reviews_list, promos_list, promo_links
 
 AMAZON_SCROLLS = int(os.getenv("AMAZON_SCROLLS", "10"))
 
@@ -862,9 +878,9 @@ async def scrape_amazon_eg(page):
         if amazon_sent >= MAX_PER_CYCLE:
             break
         try:
-            seller, features, image, rev_snippets, page_promos, promo_links = None, [], None, [], [], []
+            seller, brand, features, image, rev_snippets, page_promos, promo_links = None, None, [], None, [], [], []
             if not pdp_blocked:
-                seller, features, image, rev_snippets, page_promos, promo_links = await amazon_product_details(page.context, full_link)
+                seller, brand, features, image, rev_snippets, page_promos, promo_links = await amazon_product_details(page.context, full_link)
                 if features is None:
                     pdp_blocked = True
                     features = []
@@ -894,6 +910,7 @@ async def scrape_amazon_eg(page):
                 review_snippets=rev_snippets, bought_badge=info.get("bought"),
                 stack_promos=stack_promos, stack_howto=stack_howto, section_note=update_reason,
                 extra_pct=extra_pct, extra_egp=extra_egp, extra_label=extra_label, promo_links=promo_links,
+                brand=brand,
             )
             is_free_now = is_almost_free(eff_price, info["list_price"], discount)
             await pace_and_send(msg, image=image or card.get("img"), is_freebie=is_free_now)
@@ -987,9 +1004,9 @@ def noon_title(text):
     return "منتج على نون"
 
 async def noon_product_details(context, link):
-    """يفتح صفحة المنتج في نون لجلب الاسم الكامل، البائع، المميزات، التعليقات، العروض الإضافية، والصورة."""
+    """يفتح صفحة المنتج في نون لجلب الاسم الكامل، الماركة، البائع، المميزات، التعليقات، العروض الإضافية، والصورة."""
     page = await context.new_page()
-    full_title, seller, features, image, promos, reviews_list = None, None, [], None, [], []
+    full_title, brand, seller, features, image, promos, reviews_list = None, None, None, [], None, [], []
     try:
         await page.goto(link, wait_until="domcontentloaded", timeout=40000)
         try:
@@ -1000,11 +1017,29 @@ async def noon_product_details(context, link):
         h1 = await page.evaluate("() => document.querySelector('h1')?.innerText || ''")
         if is_blocked_title(page_title) or is_blocked_title(h1) or not await page.query_selector('[data-qa="pdp-container"]'):
             print(f"صفحة منتج نون محجوبة ({(h1 or page_title)[:40]}) - هنكتفي ببيانات الكارت.")
-            return None, None, None, None, [], []
+            return None, None, None, None, None, [], []
         await page.evaluate("window.scrollTo(0, document.body.scrollHeight * 0.5)")
         await page.wait_for_timeout(800)
         data = await page.evaluate("""() => {
-            const full_title = (document.querySelector('[data-qa="pdp-product-name"]') || document.querySelector('h1'))?.innerText?.trim();
+            const h1El = document.querySelector('[data-qa="pdp-product-name"]') || document.querySelector('h1');
+            const full_title = h1El?.innerText?.trim();
+            let brand = document.querySelector('[data-qa*="brand" i], a[class*="brand" i]')?.innerText;
+            if (!brand && h1El?.previousElementSibling) {
+                const prevTxt = (h1El.previousElementSibling.innerText || '').replace(/[>›]/g, '').trim();
+                if (prevTxt.length >= 2 && prevTxt.length <= 35 && !prevTxt.includes('عرض')) {
+                    brand = prevTxt;
+                }
+            }
+            if (!brand) {
+                for (const s of document.querySelectorAll('script[type="application/ld+json"]')) {
+                    try {
+                        const j = JSON.parse(s.textContent);
+                        const b = j?.brand?.name || (typeof j?.brand === 'string' ? j.brand : null);
+                        if (b) { brand = b; break; }
+                    } catch (e) {}
+                }
+            }
+            if (brand) brand = brand.replace(/[>›]/g, '').split('\\n')[0].trim();
             let image = document.querySelector('meta[property="og:image"]')?.content;
             if (!image || !image.startsWith('http')) {
                 image = [...document.querySelectorAll('img')]
@@ -1032,11 +1067,12 @@ async def noon_product_details(context, link):
                 : [];
             const revs = [...document.querySelectorAll('[class*="reviewComment" i], [class*="reviewDesc" i], [data-qa*="review" i] p')]
                 .map(e => e.innerText.trim()).filter(x => x.length > 15 && x.length < 220).slice(0, 2);
-            return {full_title, seller, feats, image, promos: promos.slice(0, 5), revs};
+            return {full_title, brand, seller, feats, image, promos: promos.slice(0, 5), revs};
         }""")
         full_title = data.get("full_title")
         if is_blocked_title(full_title):
             full_title = None
+        brand = data.get("brand")
         seller = data.get("seller")
         features = data.get("feats") or []
         image = clean_image_url(data.get("image"))
@@ -1046,17 +1082,27 @@ async def noon_product_details(context, link):
         print(f"تعذر جلب تفاصيل منتج نون: {e}")
     finally:
         await page.close()
-    return full_title, seller, features, image, promos, reviews_list
+    return full_title, brand, seller, features, image, promos, reviews_list
 
 NOON_CARDS_JS = """() => [...document.querySelectorAll('a[href*="/p/"]')].map(a => {
     const qaImg = a.querySelector('[data-qa^="productImagePLP_"]');
+    const qaName = qaImg ? qaImg.getAttribute('data-qa').replace('productImagePLP_', '').trim() : null;
+    const boxEl = a.querySelector('[data-qa="plp-product-box-name"]');
+    const boxName = boxEl?.innerText?.replace(/\\s+/g, ' ')?.trim() || null;
+    const titleAttr = a.getAttribute('title')?.trim() || null;
+    let brand = a.querySelector('[data-qa*="brand" i]')?.innerText?.trim() || null;
+    if (!brand && boxName && qaName && boxName.length > qaName.length && boxName.endsWith(qaName)) {
+        brand = boxName.slice(0, boxName.length - qaName.length).trim();
+    }
+    const bestName = [boxName, titleAttr, qaName].filter(Boolean).sort((x, y) => y.length - x.length)[0] || null;
     const rawImg = [...a.querySelectorAll('img')]
         .map(i => i.currentSrc || i.src || i.getAttribute('data-src') || i.getAttribute('srcset')?.split(' ')[0])
         .find(s => s && s.includes('nooncdn.com/p/')) || null;
     return {
         href: a.getAttribute('href'),
         text: a.innerText,
-        name: qaImg ? qaImg.getAttribute('data-qa').replace('productImagePLP_', '') : (a.getAttribute('title') || null),
+        name: bestName,
+        brand: brand,
         price_text: a.querySelector('[data-qa="plp-product-box-price"]')?.innerText || null,
         express: !!a.querySelector('[data-qa="product-noon-express"]'),
         img: rawImg ? rawImg.split('?')[0] : null,
@@ -1092,12 +1138,17 @@ async def scrape_noon_eg(page):
             for _ in range(10):
                 for c in await page.evaluate(NOON_CARDS_JS):
                     if c["href"]:
+                        if b_hint and not c.get("brand"):
+                            c["brand"] = b_hint
                         base = c["href"].split('?')[0]
                         link = short_link(f"https://www.noon.com{base}" if base.startswith('/') else base)
                         if link not in products:
                             products[link] = c
-                        elif c.get("img") and not products[link].get("img"):
-                            products[link]["img"] = c["img"]
+                        else:
+                            if c.get("img") and not products[link].get("img"):
+                                products[link]["img"] = c["img"]
+                            if c.get("brand") and not products[link].get("brand"):
+                                products[link]["brand"] = c["brand"]
                 await page.mouse.wheel(0, 650)
                 await page.wait_for_timeout(450)
         except Exception as e:
@@ -1143,9 +1194,9 @@ async def scrape_noon_eg(page):
             break
         try:
             card_title = card.get("name") or noon_title(card["text"])
-            full_title, seller, features, image, page_promos, rev_snippets = None, None, [], None, [], []
+            full_title, pdp_brand, seller, features, image, page_promos, rev_snippets = None, None, None, [], None, [], []
             if not pdp_blocked:
-                full_title, seller, features, image, page_promos, rev_snippets = await noon_product_details(page.context, full_link)
+                full_title, pdp_brand, seller, features, image, page_promos, rev_snippets = await noon_product_details(page.context, full_link)
                 if features is None:
                     pdp_blocked = True
                     features = []
@@ -1153,6 +1204,7 @@ async def scrape_noon_eg(page):
             title = full_title or card_title
             if not title or is_blocked_title(title):
                 continue
+            brand = pdp_brand or card.get("brand")
             if not seller and card.get("express"):
                 seller = "نون (Express)"
 
@@ -1180,6 +1232,7 @@ async def scrape_noon_eg(page):
                 review_snippets=rev_snippets, bought_badge=info.get("bought"),
                 stack_promos=stack_promos, stack_howto=stack_howto, section_note=update_reason,
                 extra_pct=extra_pct, extra_egp=extra_egp, extra_label=extra_label, promo_links=promo_links,
+                brand=brand,
             )
             is_free_now = is_almost_free(eff_price, info["list_price"], discount)
             await pace_and_send(msg, image=image or card.get("img"), is_freebie=is_free_now)
