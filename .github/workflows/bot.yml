@@ -50,6 +50,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           END=$((SECONDS + RUN_MINUTES * 60))
           while [ $SECONDS -lt $END ]; do
+            git pull -q --rebase || true
             xvfb-run --auto-servernum --server-args="-screen 0 1366x768x24" python -u bot.py --once || echo "Cycle failed"
 
             # حفظ العروض المرسلة وسجل الأسعار بعد كل دورة

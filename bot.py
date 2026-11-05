@@ -206,8 +206,10 @@ AMAZON_SCROLLS = int(os.getenv("AMAZON_SCROLLS", "10"))
 async def scrape_amazon_eg(page):
     print("جاري فحص عروض أمازون مصر...")
     await page.goto("https://www.amazon.eg/deals", wait_until="domcontentloaded", timeout=60000)
+    await page.wait_for_timeout(3000)
+    await page.evaluate("window.scrollBy(0, 1500)")
     try:
-        await page.wait_for_selector('div[data-testid="product-card"]', timeout=15000)
+        await page.wait_for_selector('div[data-testid="product-card"], div[data-testid="deal-card"]', timeout=15000)
     except Exception:
         pass
 
@@ -449,12 +451,14 @@ async def run_cycle(p):
     global cycle_sent
     cycle_sent = 0
     # تشغيل المتصفح خارج حدود الشاشة لتجنب حظر الحماية (Akamai) في نون وأمازون
+    launch_args = ["--disable-blink-features=AutomationControlled"]
+    if sys.platform == "win32":
+        launch_args.append("--window-position=-32000,-32000")
+    else:
+        launch_args.extend(["--window-position=0,0", "--window-size=1366,768"])
     browser = await p.chromium.launch(
         headless=False,
-        args=[
-            "--window-position=-32000,-32000",
-            "--disable-blink-features=AutomationControlled",
-        ]
+        args=launch_args
     )
     try:
         context = await browser.new_context(
