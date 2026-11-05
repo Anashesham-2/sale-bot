@@ -110,7 +110,11 @@ def record_price(link, price):
     now = time.time()
     entry = price_history.setdefault(link, {"prices": [], "last_sent": None})
     cutoff = now - HISTORY_DAYS * 86400
-    entry["prices"] = [p for p in entry["prices"] if p[0] >= cutoff]
+    # تنظيف أي أسعار خاطئة قديمة (أقل من 10 جنيه لمنتج سعره فوق 50 جنيه)
+    entry["prices"] = [
+        p for p in entry["prices"]
+        if p[0] >= cutoff and not (price >= 50 and p[1] < 10)
+    ]
     prev_min = min((p[1] for p in entry["prices"]), default=None)
     entry["prices"].append([now, price])
     all_prices = [p[1] for p in entry["prices"]]
@@ -120,12 +124,15 @@ def record_price(link, price):
 # ---------------------------------------------------------------------------
 # أدوات مساعدة وذكاء العروض
 # ---------------------------------------------------------------------------
+_AR_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩٬٫", "0123456789,.")
+
 def clean(text):
-    return re.sub(r'[\u200e\u200f\xa0]', ' ', text or "")
+    s = (text or "").translate(_AR_DIGITS)
+    return re.sub(r'[\u200e\u200f\xa0\u2009\u202f]', ' ', s)
 
 def to_float(s):
     try:
-        return float(s.replace(',', ''))
+        return float(clean(s).replace(',', '').strip())
     except Exception:
         return None
 
@@ -139,15 +146,16 @@ def is_blocked_title(text):
     return any(s in t for s in ("access denied", "robot check", "captcha", "verify you are human",
                                  "sorry", "something went wrong", "حصل خطأ", "page not found"))
 
-def is_almost_free(price, list_price):
-    """يكتشف العروض اللي تعتبر ببلاش (مثلاً سعرها كان 300+ ونزل تحت 100، أو نزل لـ 20 جنيه وأقل)."""
-    if price is None:
+def is_almost_free(price, list_price, badge_discount=None):
+    """يكتشف العروض الحقيقية اللي تعتبر ببلاش (لما السعر الفعلي يكون نزل من 300+ لتحت 100 ونسبة الخصم متطابقة)."""
+    if price is None or price < 10 or not list_price or list_price <= price:
         return False
-    if list_price and list_price >= 300 and price < 100:
+    calc_disc = (1 - price / list_price) * 100
+    if badge_discount is not None and abs(calc_disc - badge_discount) > 12:
+        return False
+    if list_price >= 300 and price < 100 and calc_disc >= 68:
         return True
-    if list_price and list_price >= 150 and price <= 25:
-        return True
-    if price <= 15 and list_price and list_price >= 80:
+    if list_price >= 150 and price <= 25 and calc_disc >= 80:
         return True
     return False
 
@@ -177,10 +185,8 @@ def clean_image_url(url):
     u = url.strip()
     if not u.startswith("http"):
         return None
-    # صور نون بيكون آخرها ?format=avif&width=240 وتليجرام بيرفض avif، فلما نشيل الـ query بتتحول لـ JPG أصلية
     if "nooncdn.com/" in u:
         u = u.split("?")[0]
-    # صور أمازون المصغرة في الكروت نكبر جودتها
     if "media-amazon.com/images/I/" in u:
         u = re.sub(r'\._AC_[A-Z0-9,_]+_\.', '._AC_SL1000_.', u)
     return u
@@ -231,13 +237,13 @@ def _is_bank_promo(text):
     t = (text or "").lower()
     bank_words = (
         "visa", "mastercard", "credit card", "debit", "بطاقات", "بطاقة", "بنك", "bank",
-        "nbe", "qnb", "aaib", "alex", "cib", "hsbc", "fab", "bm", "valu", "فاليو",
+        "nbe", "qnb", "aaib", "alex", "cib", "hsbc", "fab", "valu", "فاليو",
         "تقسيط", "قسط", "شهرياً", "فائدة", "installment", "ائتمان", "ائتمانية",
     )
     return any(b in t for b in bank_words)
 
 def detect_stacking_promos(card_text, page_promos=None, promo_links=None):
-    """يكتشف فرص دمج الخصومات الحقيقية (كوبونات، أكواد مثل FLASH، خصم الـ Checkout) بدون عروض الفيزا/البنوك."""
+    """يكتشف فرص دمج الخصومات (خصم الـ Checkout، أكواد الخصم مثل FLASH، عروض اشترِ 1 والثانية هدية، وعروض الفئة)."""
     promos = []
     how_to = []
     extra_pct = 0.0
@@ -245,10 +251,16 @@ def detect_stacking_promos(card_text, page_promos=None, promo_links=None):
     extra_label = None
     t = clean(card_text or "")
 
+    bogo_words = ("اشترِ", "اشتري", "اشتر ", "واحصل على", "مجانية", "مجاناً", "هدية", "قطعتين", "2 بسعر 1", "buy 1", "get 1")
+
     # 1. فحص نص الكارت (نون وأمازون) مع تجاهل أي عروض بنكية/فيزا
     for line in t.split('\n'):
         l = line.strip()
         if not l or _is_bank_promo(l):
+            continue
+        if any(bw in l.lower() for bw in bogo_words) and len(l) < 120:
+            promos.append(f"🎁 عرض خاص: {l}")
+            how_to.append("أضف الكمية المطلوبة (أو القطعة الثانية من العرض) للسلة وهيتطبق عرض الهدية/الخصم تلقائياً عند الدفع!")
             continue
         m_egp = re.search(r'(?:خصم|وفر|وفِّر)\s+(\d+(?:\.\d+)?)\s*(?:جنيه|ج\.م)', l)
         if m_egp and any(k in l for k in ("كوبون", "كود", "إضافي", "سلة", "الدفع")):
@@ -258,45 +270,52 @@ def detect_stacking_promos(card_text, page_promos=None, promo_links=None):
                 extra_label = "بعد الكوبون/الخصم الإضافي"
             promos.append(f"كوبون خصم إضافي: {l}")
             how_to.append("فعّل الكوبون الظاهر تحت السعر أو في السلة قبل الدفع.")
-        elif "متاح عرض ترويجي بخصم" in l:
+        elif "متاح عرض ترويجي بخصم" in l or "عند الدفع" in l:
             m_pct = re.search(r'(\d+)\s*[%٪]', l)
             if m_pct:
                 extra_pct = max(extra_pct, float(m_pct.group(1)))
-                extra_label = "بعد العرض الترويجي الإضافي"
+                extra_label = "بعد الخصم التلقائي عند الدفع (Checkout)" if "عند الدفع" in l else "بعد العرض الترويجي الإضافي"
             promos.append(l)
-            how_to.append("اضغط على (تفعيل العرض الترويجي) تحت السعر أو اكتب الكود في صفحة الدفع.")
-        elif any(k in l for k in ("مع الكوبون", "كوبون خصم", "كود خصم", "استخدم الكود", "كود:", "اشترِ", "اشتري")):
+            how_to.append("أضف المنتج للسلة وادخل صفحة الدفع (Checkout) هتلاقي الخصم الإضافي اتخصم تلقائياً!")
+        elif any(k in l for k in ("مع الكوبون", "كوبون خصم", "كود خصم", "استخدم الكود", "كود:")):
             if not re.fullmatch(r'خصم\s*\d+%', l) and len(l) < 110:
                 promos.append(l)
                 m_pct = re.search(r'(\d+)\s*[%٪]', l)
                 if m_pct and any(w in l for w in ("كوبون", "كود", "وفر", "إضافي")):
                     extra_pct = max(extra_pct, float(m_pct.group(1)))
                     extra_label = "بعد الكوبون"
-                if "كوبون" in l or "كود" in l:
-                    how_to.append("علّم على مربع الكوبون تحت السعر أو اكتب الكود في صفحة الدفع.")
-                elif "اشتر" in l:
-                    how_to.append("أضف العدد المطلوب للسلة وهيتخصم العرض الإضافي تلقائياً عند الدفع.")
+                how_to.append("علّم على مربع الكوبون تحت السعر أو اكتب الكود في صفحة الدفع.")
 
-    # 2. فحص العروض وأكواد الخصم من صفحة المنتج (أكواد عامة مثل FLASH أو كوبونات نون أو خصم برايم التلقائي فقط)
+    # 2. فحص العروض وأكواد الخصم من صفحة المنتج (خصم الـ Checkout، كود FLASH، وعروض اشترِ 1 والثانية هدية)
     all_p_lines = []
     for p in (page_promos or []):
         p_no_css = re.sub(r'\.cxcwEmphasisLink\s*\{[^}]*\}', ' ', clean(p))
         for sub in p_no_css.split('\n'):
             s_clean = re.sub(r'^تسجيل الدخول للاستفادة من الكوبون\.?\s*', '', sub).strip()
             s_clean = re.sub(r'\s+', ' ', s_clean)
-            if len(s_clean) >= 8 and not s_clean.startswith('{') and "margin-" not in s_clean:
+            if len(s_clean) >= 6 and not s_clean.startswith('{') and "margin-" not in s_clean:
                 if not _is_bank_promo(s_clean):
                     all_p_lines.append(s_clean)
 
     page_found_promos = []
     page_found_howto = []
     for p_clean in all_p_lines:
+        short_p = p_clean.split("الشروط")[0].replace("تسوق المنتجات", "").strip()[:115]
+        if not short_p:
+            continue
         code_m = re.search(r'(?:أدخل الرمز|رمز العرض الترويجي:?|استخدم الكود:?|كود الخصم:?|كود:?|رمز:?|code:?)\s*([A-Z0-9]{3,20})', p_clean, re.IGNORECASE)
         pct_m = re.search(r'(\d+)\s*[%٪]', p_clean)
         egp_m = re.search(r'(\d+(?:\.\d+)?)\s*(?:جنيه|ج\.م|EGP)', p_clean, re.IGNORECASE)
+
+        # أ) عروض اشترِ 1 والثانية هدية / اشترِ 2 بخصم
+        if any(bw in short_p.lower() for bw in bogo_words):
+            page_found_promos.insert(0, f"🎁 عرض خاص: {short_p}")
+            page_found_howto.insert(0, "أضف القطعتين (أو الكمية المطلوبة من العرض) في السلة وهيتطبق عرض الهدية/الخصم تلقائياً عند الدفع!")
+            continue
+
+        # ب) كود خصم صريح (مثل FLASH)
         if code_m and code_m.group(1).upper() not in ("OFF", "EGP", "VIP"):
             code = code_m.group(1).upper()
-            short_p = p_clean.split("الشروط")[0].replace("تسوق المنتجات", "").strip()[:110]
             page_found_promos.insert(0, f"🔥 {short_p} (كود: {code})")
             if pct_m:
                 extra_pct = max(extra_pct, float(pct_m.group(1)))
@@ -308,15 +327,20 @@ def detect_stacking_promos(card_text, page_promos=None, promo_links=None):
                 page_found_howto.insert(0, f"اكتب كود ({code}) عند الدفع لخصم {egp_m.group(1)} ج.م إضافي!")
             else:
                 page_found_howto.insert(0, f"استخدم كود ({code}) في صفحة الدفع للحصول على الخصم الإضافي.")
-        elif "التوفير مع خدمة برايم" in p_clean or "خصم تلقائي" in p_clean:
-            short_p = p_clean.split("الشروط")[0].replace("تسوق المنتجات", "").strip()[:110]
-            page_found_promos.insert(0, f"⚡ {short_p} (خصم تلقائي في الـ Checkout)")
+
+        # ج) خصم تلقائي عند الدفع (Checkout) أو خصم برايم
+        elif any(w in p_clean for w in ("عند الدفع", "التوفير مع خدمة برايم", "خصم تلقائي", "عند إتمام الشراء")):
+            page_found_promos.insert(0, f"⚡ {short_p} (بيخصم تلقائياً في الـ Checkout)")
             if pct_m:
                 extra_pct = max(extra_pct, float(pct_m.group(1)))
                 extra_label = "بعد الخصم التلقائي في الـ Checkout"
+            elif egp_m:
+                extra_egp = max(extra_egp, float(egp_m.group(1)))
+                extra_label = "بعد الخصم التلقائي في الـ Checkout"
             page_found_howto.insert(0, "أضف المنتج للسلة وادخل صفحة الدفع (Checkout) هتلاقي الخصم الإضافي اتخصم تلقائياً!")
-        elif any(w in p_clean for w in ("كوبون", "وفر", "وفِّر", "اشتر", "خصم إضافي", "كاش باك")):
-            short_p = p_clean.split("الشروط")[0].replace("تسوق المنتجات", "").strip()[:110]
+
+        # د) كوبونات وعروض توفير إضافية
+        elif any(w in p_clean for w in ("كوبون", "وفر", "وفِّر", "خصم إضافي", "كاش باك")):
             page_found_promos.append(short_p)
             if pct_m and any(w in short_p for w in ("كوبون", "وفر", "وفِّر", "إضافي")):
                 extra_pct = max(extra_pct, float(pct_m.group(1)))
@@ -336,7 +360,6 @@ def detect_stacking_promos(card_text, page_promos=None, promo_links=None):
     unique_howto = list(dict.fromkeys(combined_howto))[:1]
     if unique_promos and not unique_howto:
         unique_howto.append("فعّل العرض الإضافي من تحت السعر أو في صفحة الدفع لدمجه مع خصم المنتج.")
-    # لا نحتفظ برابط العرض الترويجي إلا لو فيه خصم إضافي حقيقي غير بنكي
     valid_links = (promo_links or [])[:1] if (unique_promos or extra_pct > 0 or extra_egp > 0) else []
     return unique_promos, unique_howto, extra_pct, extra_egp, extra_label, valid_links
 
@@ -357,7 +380,7 @@ def build_message(store, title, price, list_price, discount, link,
             final_price = round(price - extra_egp, 2)
 
     effective_price = final_price if final_price is not None else price
-    freebie = is_almost_free(effective_price, list_price)
+    freebie = is_almost_free(effective_price, list_price, discount)
     if freebie:
         header = f"🚨🔥 ببلاش حرفياً على {store_ar}! (نزل من {fmt(list_price)} ج.م لـ {fmt(effective_price)} ج.م)"
     else:
@@ -384,9 +407,6 @@ def build_message(store, title, price, list_price, discount, link,
     if rating:
         lines.append(f"⭐ التقييم: {rating}" + (f" ({reviews} تقييم)" if reviews else ""))
 
-    if section_note:
-        lines += ["", f"🏷️ <b>{html.escape(section_note)}</b>"]
-
     # وصف المنتج (مختصر وواضح)
     desc = build_description(title, features)
     if desc:
@@ -397,17 +417,17 @@ def build_message(store, title, price, list_price, discount, link,
     if rev_summary:
         lines += ["", f"💬 <b>مراجعة المشترين:</b>\n{html.escape(rev_summary)}"]
 
-    # دمج الخصومات وطريقة تحقيقه (بدون عروض الفيزا المملة)
+    # دمج الخصومات أو عروض اشترِ 1 والثانية هدية أو عروض الفئة
     if stack_promos:
-        lines += ["", "🎁 <b>فرصة دمج خصومات:</b>"]
+        lines += ["", "🎁 <b>عروض إضافية ودمج خصومات:</b>"]
         for sp in stack_promos[:2]:
             lines.append(f"• {html.escape(sp)}")
         if stack_howto:
             lines.append(f"💡 <b>طريقة التفعيل:</b> {html.escape(stack_howto[0])}")
         for pl in (promo_links or [])[:1]:
-            lines.append(f"🛒 <b>منتجات تانية في نفس العرض الإضافي:</b>\n{pl}")
+            lines.append(f"🏷️ <b>{store_ar} عاملة عرض إضافي على الفئة دي هنا:</b>\n{pl}")
 
-    if max_price is not None and min_price is not None and max_price > min_price:
+    if max_price is not None and min_price is not None and max_price > min_price and min_price >= 10:
         lines += [
             "",
             f"📊 أعلى سعر مسجّل: {fmt(max_price)} ج.م | أقل سعر: {fmt(min_price)} ج.م",
@@ -557,8 +577,13 @@ async def amazon_product_details(context, link):
                     ...[...document.querySelectorAll('#altImages img, #imageBlock img')].map(i => i.src)
                 ].find(u => u && u.startsWith('http') && !u.includes(' play-button') && !u.includes('transparent-pixel'));
             }
-            const promos = [...document.querySelectorAll('#promoPriceBlockMessage_feature_div, #couponBadgeRegularVpc, [id*="coupon" i], #sopp_feature_div')]
-                .map(e => e.innerText.trim()).filter(x => x && x.length > 5 && x.length < 3000);
+            const promos = [
+                ...document.querySelectorAll(
+                    '#promoPriceBlockMessage_feature_div .promoPriceBlockMessage > div, ' +
+                    '#promoPriceBlockMessage_feature_div .a-section, ' +
+                    '#promoPriceBlockMessage_feature_div, #couponBadgeRegularVpc, [id*="coupon" i], #sopp_feature_div'
+                )
+            ].map(e => e.innerText.trim()).filter(x => x && x.length > 5 && x.length < 1500);
             const promo_links = [...new Set(
                 [...document.querySelectorAll('#promoPriceBlockMessage_feature_div a[href*="/promotion/psp/"], a[href*="/promotion/psp/"]')]
                     .map(a => a.href.split('&ref=')[0].split('?ref=')[0])
@@ -566,7 +591,7 @@ async def amazon_product_details(context, link):
             )];
             const revs = [...document.querySelectorAll('[data-hook="reviewText"], [data-hook="review-collapsed"], .review-text-content')]
                 .map(e => e.innerText.trim()).filter(x => x.length > 15).slice(0, 3);
-            return {seller, feats, image, promos: promos.slice(0, 5), promo_links: promo_links.slice(0, 2), revs};
+            return {seller, feats, image, promos: promos.slice(0, 10), promo_links: promo_links.slice(0, 2), revs};
         }""")
         seller = data.get("seller")
         features = data.get("feats") or []
@@ -637,13 +662,11 @@ async def scrape_amazon_eg(page):
                 if sc.get("asin") and sc.get("price") and sc.get("list_price"):
                     link = f"https://www.amazon.eg/dp/{sc['asin']}"
                     synth_text = f"سعر العرض: {sc['price']}\nسعر القائمه: {sc['list_price']}\n{sc.get('title') or ''}\n{sc.get('text') or ''}"
-                    is_brand = any(section_label == b[0] for b in HOT_BRANDS)
                     if link not in products:
                         products[link] = {
                             "href": link,
                             "text": synth_text,
                             "img": sc.get("img"),
-                            "brand_section": (section_label, search_url) if is_brand else (None, None),
                         }
                     elif sc.get("img") and not products[link].get("img"):
                         products[link]["img"] = sc.get("img")
@@ -653,56 +676,36 @@ async def scrape_amazon_eg(page):
     print(f"تم العثور على {len(products)} عرض في أمازون مصر.")
 
     candidates = []
-    brand_clusters = {}
     for full_link, card in products.items():
         try:
             text_content = card["text"]
             info = parse_amazon_card(text_content)
-            if not info["price"] or is_blocked_title(info["title"]):
+            if not info["price"] or info["price"] < 5 or is_blocked_title(info["title"]):
                 continue
             match = re.search(r'(\d+)%', text_content)
-            discount = int(match.group(1)) if match else 0
+            badge_disc = int(match.group(1)) if match else None
+            discount = badge_disc or 0
             if info["list_price"] and info["list_price"] > info["price"]:
                 discount = (1 - info["price"] / info["list_price"]) * 100
             if discount <= 0:
                 continue
 
             prev_min, max_p, min_p = record_price(full_link, info["price"])
-            freebie = is_almost_free(info["price"], info["list_price"])
-            has_card_promo = any(w in text_content for w in ("متاح عرض ترويجي", "مع الكوبون", "كوبون خصم", "وفر "))
-
-            # تجميع عروض البراندات والأقسام (زي أبو عوف و Fogg و UGREEN و Vitrac)
-            b_label = card.get("brand_section", (None, None))[0] or detect_brand(info["title"])
-            if b_label and discount >= 20:
-                b_url = card.get("brand_section", (None, None))[1] or f"https://www.amazon.eg/s?k={quote_plus(b_label.split()[0])}"
-                brand_clusters.setdefault(b_label, {"url": b_url, "items": []})["items"].append({
-                    "title": info["title"], "price": info["price"], "list_price": info["list_price"],
-                    "discount": discount, "link": full_link, "img": card.get("img")
-                })
+            freebie = is_almost_free(info["price"], info["list_price"], badge_disc)
+            has_card_promo = any(w in text_content for w in ("متاح عرض ترويجي", "مع الكوبون", "كوبون خصم", "وفر ", "اشترِ", "اشتري"))
 
             if (discount >= MIN_DISCOUNT or freebie or (discount >= 22 and has_card_promo)) and full_link not in sent_deals:
-                candidates.append((1 if freebie else 0, discount, full_link, card, info, prev_min, max_p, min_p, b_label))
+                candidates.append((1 if freebie else 0, discount, full_link, card, info, prev_min, max_p, min_p))
         except Exception as e:
             print(f"خطأ في كارت أمازون: {e}")
             continue
-
-    # إرسال تنبيه مجمع لو فيه قسم/براند كامل عليه خصومات قوية
-    today_key = time.strftime("%Y-%m-%d")
-    for b_label, b_data in brand_clusters.items():
-        b_items = sorted(b_data["items"], key=lambda x: x["discount"], reverse=True)
-        alert_id = f"section:amazon:{b_label}:{today_key}"
-        if len(b_items) >= 3 and b_items[0]["discount"] >= 25 and alert_id not in sent_deals:
-            mark_deal_sent(alert_id)
-            alert_msg = build_section_alert("Amazon", b_label, b_data["url"], b_items)
-            send_telegram_msg(alert_msg, image=b_items[0].get("img"))
-            await asyncio.sleep(3)
 
     # ترتيب العروض: عروض "ببلاش" أولاً ثم الأعلى خصماً
     candidates.sort(key=lambda x: (x[0], x[1]), reverse=True)
     amazon_sent = 0
     pdp_blocked = False
 
-    for _, discount, full_link, card, info, prev_min, max_p, min_p, b_label in candidates:
+    for _, discount, full_link, card, info, prev_min, max_p, min_p in candidates:
         if amazon_sent >= MAX_PER_CYCLE:
             break
         try:
@@ -719,16 +722,13 @@ async def scrape_amazon_eg(page):
             stack_promos, stack_howto, extra_pct, extra_egp, extra_label, promo_links = detect_stacking_promos(
                 card["text"], page_promos, promo_links
             )
-            sec_note = None
-            if b_label and len(brand_clusters.get(b_label, {}).get("items", [])) >= 2:
-                sec_note = f"قسم {b_label} عليه خصومات مجمعة حالياً على أمازون!"
 
             msg = build_message(
                 "Amazon", info["title"], info["price"], info["list_price"], discount, full_link,
                 seller=seller, rating=info["rating"], reviews=info["reviews"], features=features,
                 prev_min=prev_min, max_price=max_p, min_price=min_p,
                 review_snippets=rev_snippets, bought_badge=info.get("bought"),
-                stack_promos=stack_promos, stack_howto=stack_howto, section_note=sec_note,
+                stack_promos=stack_promos, stack_howto=stack_howto,
                 extra_pct=extra_pct, extra_egp=extra_egp, extra_label=extra_label, promo_links=promo_links,
             )
             send_telegram_msg(msg, image=image or card.get("img"))
@@ -740,7 +740,7 @@ async def scrape_amazon_eg(page):
 # ---------------------------------------------------------------------------
 # نون مصر (تغطية شاملة + البراندات والأقسام + دمج الخصومات + المراجعات)
 # ---------------------------------------------------------------------------
-def parse_noon_card(text, price_text=None):
+def parse_noon_card(text, price_text=None, badge_discount=None):
     t = clean(text)
     lines = [l.strip() for l in t.split('\n') if l.strip()]
     price = list_price = rating = reviews = None
@@ -764,6 +764,15 @@ def parse_noon_card(text, price_text=None):
                 if len(nums) > 1 and nums[1] > price:
                     list_price = nums[1]
                 break
+    # التحقق الصارم من السعر لمنع أي رقم مقسوم بالخطأ
+    if price is not None and list_price is not None and badge_discount:
+        calc_d = (1 - price / list_price) * 100
+        if abs(calc_d - badge_discount) > 15:
+            # لو السعر القديم أو الجديد اتقرأ غلط نحسب السعر القديم بدقة من نسبة الخصم المكتوبة على الكارت
+            if price < 15 and badge_discount < 85:
+                price = None
+            else:
+                list_price = round(price / (1 - badge_discount / 100.0), 2)
     for j, l in enumerate(lines):
         if re.fullmatch(r'\d\.\d', l):
             rating = l
@@ -921,8 +930,6 @@ async def scrape_noon_eg(page):
                     if c["href"]:
                         base = c["href"].split('?')[0]
                         link = short_link(f"https://www.noon.com{base}" if base.startswith('/') else base)
-                        if b_hint:
-                            c["brand_section"] = (b_hint, url)
                         if link not in products:
                             products[link] = c
                         elif c.get("img") and not products[link].get("img"):
@@ -936,48 +943,28 @@ async def scrape_noon_eg(page):
     print(f"تم العثور على {len(products)} منتج في نون مصر.")
 
     candidates = []
-    brand_clusters = {}
     for full_link, card in products.items():
         try:
             card_text = card["text"]
-            match = re.search(r'(?:خصم\s*(\d+)%|(\d+)%\s*(?:خصم|OFF))', card_text, re.IGNORECASE)
+            match = re.search(r'(?:خصم\s*(\d+)%|(\d+)%\s*(?:خصم|OFF))', clean(card_text), re.IGNORECASE)
             if not match:
                 continue
-            info = parse_noon_card(card_text, card.get("price_text"))
-            if not info["price"]:
+            badge_disc = int(match.group(1) or match.group(2))
+            info = parse_noon_card(card_text, card.get("price_text"), badge_disc)
+            if not info["price"] or info["price"] < 5:
                 continue
-            discount = int(match.group(1) or match.group(2))
+            discount = float(badge_disc)
             if info["list_price"] and info["list_price"] > info["price"]:
                 discount = (1 - info["price"] / info["list_price"]) * 100
 
             prev_min, max_p, min_p = record_price(full_link, info["price"])
-            freebie = is_almost_free(info["price"], info["list_price"])
-            has_card_promo = any(w in card_text for w in ("مع الكوبون", "كوبون", "كود", "وفر ", "اشتر"))
-            c_title = card.get("name") or noon_title(card_text)
-
-            b_label = card.get("brand_section", (None, None))[0] or detect_brand(c_title)
-            if b_label and discount >= 20:
-                b_url = card.get("brand_section", (None, f"https://www.noon.com/egypt-ar/search/?q={quote_plus(b_label.split()[0])}"))[1]
-                brand_clusters.setdefault(b_label, {"url": b_url, "items": []})["items"].append({
-                    "title": c_title, "price": info["price"], "list_price": info["list_price"],
-                    "discount": discount, "link": full_link, "img": card.get("img")
-                })
+            freebie = is_almost_free(info["price"], info["list_price"], badge_disc)
+            has_card_promo = any(w in card_text for w in ("مع الكوبون", "كوبون", "كود", "وفر ", "اشترِ", "اشتري"))
 
             if (discount >= MIN_DISCOUNT or freebie or (discount >= 22 and has_card_promo)) and full_link not in sent_deals:
-                candidates.append((1 if freebie else 0, discount, full_link, card, info, prev_min, max_p, min_p, b_label))
+                candidates.append((1 if freebie else 0, discount, full_link, card, info, prev_min, max_p, min_p))
         except Exception:
             continue
-
-    # إرسال تنبيه مجمع لو فيه قسم/براند كامل عليه خصومات قوية في نون
-    today_key = time.strftime("%Y-%m-%d")
-    for b_label, b_data in brand_clusters.items():
-        b_items = sorted(b_data["items"], key=lambda x: x["discount"], reverse=True)
-        alert_id = f"section:noon:{b_label}:{today_key}"
-        if len(b_items) >= 3 and b_items[0]["discount"] >= 25 and alert_id not in sent_deals:
-            mark_deal_sent(alert_id)
-            alert_msg = build_section_alert("Noon", b_label, b_data["url"], b_items)
-            send_telegram_msg(alert_msg, image=b_items[0].get("img"))
-            await asyncio.sleep(3)
 
     # ترتيب العروض: عروض "ببلاش" أولاً ثم الأعلى خصماً
     candidates.sort(key=lambda x: (x[0], x[1]), reverse=True)
@@ -985,7 +972,7 @@ async def scrape_noon_eg(page):
 
     noon_sent = 0
     pdp_blocked = False
-    for _, discount, full_link, card, info, prev_min, max_p, min_p, b_label in candidates:
+    for _, discount, full_link, card, info, prev_min, max_p, min_p in candidates:
         if noon_sent >= MAX_PER_CYCLE:
             break
         try:
@@ -1006,9 +993,6 @@ async def scrape_noon_eg(page):
             stack_promos, stack_howto, extra_pct, extra_egp, extra_label, promo_links = detect_stacking_promos(
                 card["text"], page_promos
             )
-            sec_note = None
-            if b_label and len(brand_clusters.get(b_label, {}).get("items", [])) >= 2:
-                sec_note = f"قسم {b_label} عليه خصومات مجمعة حالياً على نون!"
 
             mark_deal_sent(full_link)
             noon_sent += 1
@@ -1017,7 +1001,7 @@ async def scrape_noon_eg(page):
                 seller=seller, rating=info["rating"], reviews=info["reviews"], features=features,
                 prev_min=prev_min, max_price=max_p, min_price=min_p,
                 review_snippets=rev_snippets, bought_badge=info.get("bought"),
-                stack_promos=stack_promos, stack_howto=stack_howto, section_note=sec_note,
+                stack_promos=stack_promos, stack_howto=stack_howto,
                 extra_pct=extra_pct, extra_egp=extra_egp, extra_label=extra_label, promo_links=promo_links,
             )
             send_telegram_msg(msg, image=image or card.get("img"))
