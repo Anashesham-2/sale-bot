@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import html
 import json
 import os
@@ -82,6 +83,34 @@ def short_link(link):
     if m and "noon.com" in link:
         return f"https://www.noon.com/egypt-ar/{m.group(1)}/p/"
     return link
+
+_branded_cache = {}
+
+def branded_url(url):
+    """يختصر الرابط ويضيف فيه اسم القناة (loqta) مثل https://is.gd/loqta_7f3a9c."""
+    if not url or not url.startswith("http"):
+        return url
+    if url in _branded_cache:
+        return _branded_cache[url]
+    slug_hash = hashlib.md5(url.encode("utf-8")).hexdigest()[:6]
+    custom_slug = f"loqta_{slug_hash}"
+    try:
+        r = requests.get(
+            "https://is.gd/create.php",
+            params={"format": "simple", "url": url, "shorturl": custom_slug},
+            timeout=8,
+        )
+        if r.status_code == 200 and r.text.strip().startswith("http"):
+            res = r.text.strip()
+            _branded_cache[url] = res
+            return res
+        if "already exists" in r.text.lower():
+            res = f"https://is.gd/{custom_slug}"
+            _branded_cache[url] = res
+            return res
+    except Exception:
+        pass
+    return url
 
 sent_deals = set()
 if os.path.exists(SENT_DEALS_FILE):
@@ -339,19 +368,19 @@ def detect_stacking_promos(card_text, page_promos=None, promo_links=None):
                 extra_label = "بعد الخصم التلقائي في الـ Checkout"
             page_found_howto.insert(0, "أضف المنتج للسلة وادخل صفحة الدفع (Checkout) هتلاقي الخصم الإضافي اتخصم تلقائياً!")
 
-        # د) كوبونات وعروض توفير إضافية
-        elif any(w in p_clean for w in ("كوبون", "وفر", "وفِّر", "خصم إضافي", "كاش باك")):
+        # د) كوبونات وعروض توفير إضافية (بالجنيه أو بالنسبة المئوية)
+        elif any(w in p_clean.lower() for w in ("كوبون", "coupon", "وفر", "وفِّر", "توفير", "خصم إضافي", "كاش باك")):
             page_found_promos.append(short_p)
-            if pct_m and any(w in short_p for w in ("كوبون", "وفر", "وفِّر", "إضافي")):
+            if pct_m and any(w in short_p.lower() for w in ("كوبون", "coupon", "وفر", "وفِّر", "توفير", "إضافي")):
                 extra_pct = max(extra_pct, float(pct_m.group(1)))
                 if not extra_label:
                     extra_label = "بعد الكوبون/العرض الإضافي"
-                page_found_howto.append("فعّل الكوبون تحت السعر في صفحة المنتج عشان يتدمج مع الخصم الأساسي.")
-            elif egp_m and any(w in short_p for w in ("كوبون", "وفر", "وفِّر", "إضافي")):
+                page_found_howto.append("علّم على مربع الكوبون تحت السعر في صفحة المنتج عشان يتدمج مع الخصم الأساسي.")
+            elif egp_m and any(w in short_p.lower() for w in ("كوبون", "coupon", "وفر", "وفِّر", "توفير", "إضافي", "apply")):
                 extra_egp = max(extra_egp, float(egp_m.group(1)))
                 if not extra_label:
-                    extra_label = "بعد الكوبون/العرض الإضافي"
-                page_found_howto.append("فعّل الكوبون تحت السعر في صفحة المنتج قبل الإضافة للسلة.")
+                    extra_label = "بعد الكوبون"
+                page_found_howto.append("علّم على مربع (تطبيق الكوبون) تحت السعر في صفحة المنتج قبل الإضافة للسلة.")
 
     combined_promos = page_found_promos + [p for p in promos if not (page_found_promos and "متاح عرض ترويجي" in p)]
     combined_howto = page_found_howto + how_to
@@ -425,7 +454,7 @@ def build_message(store, title, price, list_price, discount, link,
         if stack_howto:
             lines.append(f"💡 <b>طريقة التفعيل:</b> {html.escape(stack_howto[0])}")
         for pl in (promo_links or [])[:1]:
-            lines.append(f"🏷️ <b>{store_ar} عاملة عرض إضافي على الفئة دي هنا:</b>\n{pl}")
+            lines.append(f"🏷️ <b>{store_ar} عاملة عرض إضافي على الفئة دي هنا:</b>\n{branded_url(pl)}")
 
     if max_price is not None and min_price is not None and max_price > min_price and min_price >= 10:
         lines += [
@@ -433,11 +462,12 @@ def build_message(store, title, price, list_price, discount, link,
             f"📊 أعلى سعر مسجّل: {fmt(max_price)} ج.م | أقل سعر: {fmt(min_price)} ج.م",
         ]
 
+    short_branded_link = branded_url(link)
     lines += [
         "",
         "⚠️ <i>ملحوظة: ده مجرد ترشيح للعرض، والتجربة وقرار الشراء عليك.</i>",
         "",
-        f"🔗 رابط العرض:\n{link}",
+        f"🔗 رابط العرض:\n{short_branded_link}",
         "",
         HASHTAG,
     ]
