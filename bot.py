@@ -91,14 +91,14 @@ def short_link(link):
 _branded_cache = {}
 
 def add_affiliate_tag(url):
-    """يضيف كود أفلييت أمازون مصر (Tracking ID) لأي رابط أمازون تلقائياً."""
+    """يضيف كود أفلييت أمازون مصر (Tracking ID) بنفس صيغة SiteStripe الرسمية تلقائياً."""
     if not url or not url.startswith("http"):
         return url
     if "amazon." in url and AMAZON_TAG:
         if "tag=" in url:
             return re.sub(r'tag=[^&#]+', f'tag={AMAZON_TAG}', url)
         sep = "&" if "?" in url else "?"
-        return f"{url}{sep}tag={AMAZON_TAG}&linkCode=ll1"
+        return f"{url}{sep}linkCode=ll2&tag={AMAZON_TAG}&ref_=as_li_ss_tl"
     return url
 
 def branded_url(url):
