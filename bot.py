@@ -30,6 +30,8 @@ CHAT_IDS = [c.strip() for c in CHAT_ID.split(",") if c.strip()]
 MIN_DISCOUNT = 30
 MAX_PER_CYCLE = 20  # أقصى عدد عروض تتبعت لكل متجر في الدورة الواحدة
 HASHTAG = "#عروض_يستاهل"
+# كود الخصم الخاص بالقناة على نون (10% خصم إضافي)
+NOON_COUPON = os.getenv("NOON_COUPON", "LOQ1")
 HISTORY_DAYS = 90
 # المدة بين كل فحص والتاني بالثواني (افتراضياً 3 دقايق - فترة العروض)
 CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", "180"))
@@ -407,6 +409,11 @@ def build_message(store, title, price, list_price, discount, link,
             final_price = round(price * (1 - extra_pct / 100.0), 2)
         elif extra_egp > 0 and price > extra_egp:
             final_price = round(price - extra_egp, 2)
+        elif store.lower() == "noon" and NOON_COUPON:
+            noon_saving = round(min(price * 0.10, 50.0), 2)
+            if noon_saving >= 1:
+                final_price = round(price - noon_saving, 2)
+                extra_label = f"بعد كود خصم نون ({NOON_COUPON})"
 
     effective_price = final_price if final_price is not None else price
     freebie = is_almost_free(effective_price, list_price, discount)
@@ -425,6 +432,8 @@ def build_message(store, title, price, list_price, discount, link,
     if final_price is not None and final_price < price:
         lbl = extra_label or "بعد دمج الخصم الإضافي"
         lines.append(f"🔥 <b>السعر النهائي {html.escape(lbl)}: {fmt(final_price)} ج.م فقط!</b>")
+    if store.lower() == "noon" and NOON_COUPON:
+        lines.append(f"🎟️ <b>كود خصم نون الإضافي (10%):</b> <code>{html.escape(NOON_COUPON)}</code> <i>(اضغط على الكود لنسخه)</i>")
     if effective_price is not None and list_price and list_price > effective_price:
         eff_disc = (1 - effective_price / list_price) * 100
         lines.append(f"📉 إجمالي الخصم: <b>{eff_disc:.0f}%</b> (وفّرت {fmt(list_price - effective_price)} ج.م)")
