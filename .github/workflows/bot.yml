@@ -1,0 +1,64 @@
+name: Telegram Deals Bot
+
+on:
+  schedule:
+    # كل 30 دقيقة بيتأكد إن فيه تشغيلة شغالة؛ لو التشغيلة الحالية شغالة،
+    # الجديدة بتستنى وتبدأ أول ما القديمة تخلص (فالبوت ما بيقفش)
+    - cron: '*/30 * * * *'
+  workflow_dispatch: # تشغيل يدوي بزر Run workflow
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deals-bot
+  cancel-in-progress: false
+
+jobs:
+  scrape-deals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+
+    env:
+      # المدة بين كل فحص والتاني بالثواني (180 = 3 دقايق)
+      CHECK_INTERVAL: "180"
+      # مدة التشغيلة الواحدة بالدقايق (أقصى حد في GitHub 6 ساعات)
+      RUN_MINUTES: "340"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies and Chromium
+        run: |
+          pip install -r requirements.txt
+          playwright install --with-deps chromium
+          sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Run deals bot in a loop
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          END=$((SECONDS + RUN_MINUTES * 60))
+          while [ $SECONDS -lt $END ]; do
+            xvfb-run --auto-servernum --server-args="-screen 0 1366x768x24" python -u bot.py --once || echo "Cycle failed"
+
+            # حفظ العروض المرسلة وسجل الأسعار بعد كل دورة
+            git add sent_deals.txt price_history.json
+            if ! git diff --staged --quiet; then
+              git commit -q -m "chore: update deals data [skip ci]"
+              git pull -q --rebase && git push -q || echo "Push failed"
+            fi
+
+            echo "Waiting ${CHECK_INTERVAL}s..."
+            sleep "$CHECK_INTERVAL"
+          done
