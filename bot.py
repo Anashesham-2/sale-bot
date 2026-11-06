@@ -562,16 +562,249 @@ def clean_image_url(url):
         u = re.sub(r'\._AC_[A-Z0-9,_]+_\.', '._AC_SL1000_.', u)
     return u
 
-def build_description(title, features=None, extra_desc=None):
-    """يكوّن وصف مختصر وسريع للمنتج بدون إطالة مملة."""
+BILINGUAL_BRANDS = {
+    "انكر": ("أنكر", "Anker"), "anker": ("أنكر", "Anker"),
+    "soundcore": ("ساوند كور", "Soundcore"), "ساوند كور": ("ساوند كور", "Soundcore"), "ساوندكور": ("ساوند كور", "Soundcore"),
+    "eufy": ("يوفي", "Eufy"), "يوفي": ("يوفي", "Eufy"),
+    "اي لوك": ("آي لوك", "iLock"), "آي لوك": ("آي لوك", "iLock"), "ilock": ("آي لوك", "iLock"), "i-lock": ("آي لوك", "iLock"),
+    "يوجرين": ("يوغرين", "UGREEN"), "يوغرين": ("يوغرين", "UGREEN"), "ugreen": ("يوغرين", "UGREEN"),
+    "شاومي": ("شاومي", "Xiaomi"), "xiaomi": ("شاومي", "Xiaomi"), "redmi": ("ريدمي", "Redmi"), "ريدمي": ("ريدمي", "Redmi"),
+    "poco": ("بوكو", "POCO"), "بوكو": ("بوكو", "POCO"),
+    "سامسونج": ("سامسونج", "Samsung"), "samsung": ("سامسونج", "Samsung"),
+    "ابل": ("أبل", "Apple"), "أبل": ("أبل", "Apple"), "apple": ("أبل", "Apple"),
+    "تورنيدو": ("تورنيدو", "Tornado"), "tornado": ("تورنيدو", "Tornado"),
+    "سنوز": ("سنوز", "Snooze"), "snooze": ("سنوز", "Snooze"),
+    "اديداس": ("أديداس", "Adidas"), "أديداس": ("أديداس", "Adidas"), "adidas": ("أديداس", "Adidas"),
+    "نايكي": ("نايكي", "Nike"), "نايك": ("نايكي", "Nike"), "nike": ("نايكي", "Nike"),
+    "بوما": ("بوما", "Puma"), "puma": ("بوما", "Puma"),
+    "ريبوك": ("ريبوك", "Reebok"), "reebok": ("ريبوك", "Reebok"),
+    "سكيتشرز": ("سكيتشرز", "Skechers"), "skechers": ("سكيتشرز", "Skechers"),
+    "سوكاني": ("سوكاني", "Sokany"), "sokany": ("سوكاني", "Sokany"),
+    "فريش": ("فريش", "Fresh"), "fresh": ("فريش", "Fresh"),
+    "فيليبس": ("فيليبس", "Philips"), "philips": ("فيليبس", "Philips"),
+    "براون": ("براون", "Braun"), "braun": ("براون", "Braun"),
+    "بيسوس": ("بيسوس", "Baseus"), "baseus": ("بيسوس", "Baseus"),
+    "جوي روم": ("جوي روم", "Joyroom"), "joyroom": ("جوي روم", "Joyroom"),
+    "اورايمو": ("أورايمو", "Oraimo"), "أورايمو": ("أورايمو", "Oraimo"), "oraimo": ("أورايمو", "Oraimo"),
+    "لدنيو": ("لدنيو", "LDNIO"), "ldnio": ("لدنيو", "LDNIO"),
+    "سوني": ("سوني", "Sony"), "sony": ("سوني", "Sony"),
+    "جي بي ال": ("جي بي إل", "JBL"), "جي بي إل": ("جي بي إل", "JBL"), "jbl": ("جي بي إل", "JBL"),
+    "بوز": ("بوز", "Bose"), "bose": ("بوز", "Bose"),
+    "ديل": ("ديل", "Dell"), "dell": ("ديل", "Dell"),
+    "اتش بي": ("إتش بي", "HP"), "إتش بي": ("إتش بي", "HP"), "hp": ("إتش بي", "HP"),
+    "لينوفو": ("لينوفو", "Lenovo"), "lenovo": ("لينوفو", "Lenovo"),
+    "اسوس": ("أسوس", "ASUS"), "أسوس": ("أسوس", "ASUS"), "asus": ("أسوس", "ASUS"),
+    "راش براش": ("راش براش", "Rush Brush"), "rush brush": ("راش براش", "Rush Brush"),
+    "بيبي ليس": ("بيبي ليس", "BaByliss"), "babyliss": ("بيبي ليس", "BaByliss"),
+    "كيمي": ("كيمي", "Kemei"), "kemei": ("كيمي", "Kemei"),
+    "في جي ار": ("في جي آر", "VGR"), "vgr": ("في جي آر", "VGR"),
+    "apt": ("APT", "APT"),
+    "توتال": ("توتال", "Total"), "total": ("توتال", "Total"),
+    "انجكو": ("إنجكو", "Ingco"), "إنجكو": ("إنجكو", "Ingco"), "ingco": ("إنجكو", "Ingco"),
+    "كينوود": ("كينوود", "Kenwood"), "kenwood": ("كينوود", "Kenwood"),
+    "مولينكس": ("مولينكس", "Moulinex"), "moulinex": ("مولينكس", "Moulinex"),
+    "تيفال": ("تيفال", "Tefal"), "tefal": ("تيفال", "Tefal"),
+    "ديلونجي": ("ديلونجي", "DeLonghi"), "delonghi": ("ديلونجي", "DeLonghi"),
+    "ميانتا": ("ميانتا", "Mienta"), "mienta": ("ميانتا", "Mienta"),
+    "شارب": ("شارب", "Sharp"), "sharp": ("شارب", "Sharp"),
+    "توشيبا": ("توشيبا", "Toshiba"), "toshiba": ("توشيبا", "Toshiba"),
+    "ال جي": ("إل جي", "LG"), "إل جي": ("إل جي", "LG"), "lg": ("إل جي", "LG"),
+    "بوش": ("بوش", "Bosch"), "bosch": ("بوش", "Bosch"),
+    "بيكو": ("بيكو", "Beko"), "beko": ("بيكو", "Beko"),
+    "ريدراجون": ("ريدراجون", "Redragon"), "redragon": ("ريدراجون", "Redragon"),
+    "لوجيتك": ("لوجيتك", "Logitech"), "logitech": ("لوجيتك", "Logitech"),
+    "ريزر": ("ريزر", "Razer"), "razer": ("ريزر", "Razer"),
+    "هواوي": ("هواوي", "Huawei"), "huawei": ("هواوي", "Huawei"),
+    "هونر": ("هونر", "Honor"), "honor": ("هونر", "Honor"),
+    "ريلمي": ("ريلمي", "Realme"), "realme": ("ريلمي", "Realme"),
+    "اوبو": ("أوبو", "OPPO"), "أوبو": ("أوبو", "OPPO"), "oppo": ("أوبو", "OPPO"),
+    "انفينكس": ("إنفينيكس", "Infinix"), "infinix": ("إنفينيكس", "Infinix"),
+    "كاماي": ("كاماي", "Camay"), "camay": ("كاماي", "Camay"),
+    "نيفيا": ("نيفيا", "Nivea"), "nivea": ("نيفيا", "Nivea"),
+    "لوريال": ("لوريال", "L'Oreal"), "loreal": ("لوريال", "L'Oreal"),
+    "غارنييه": ("غارنييه", "Garnier"), "garnier": ("غارنييه", "Garnier"),
+    "دوف": ("دوف", "Dove"), "dove": ("دوف", "Dove"),
+    "سيرافي": ("سيرافي", "CeraVe"), "cerave": ("سيرافي", "CeraVe"),
+    "لاروش": ("لا روش بوزيه", "La Roche-Posay"), "la roche": ("لا روش بوزيه", "La Roche-Posay"),
+    "فيتراك": ("فيتراك", "Vitrac"), "vitrac": ("فيتراك", "Vitrac"),
+    "ابو عوف": ("أبو عوف", "Abu Auf"), "أبو عوف": ("أبو عوف", "Abu Auf"), "abu auf": ("أبو عوف", "Abu Auf"),
+    "نسكافيه": ("نسكافيه", "Nescafe"), "nescafe": ("نسكافيه", "Nescafe"),
+}
+
+BILINGUAL_CATEGORIES = [
+    (r'مشترك\s*كهربائ?ي?|مشترك|power\s*strip', 'مشترك كهربائي', 'Power Strip'),
+    (r'باور\s*بانك|بطارية\s*متنقلة|power\s*bank', 'باور بانك', 'Power Bank'),
+    (r'شاحن\s*سيارة|car\s*charger', 'شاحن سيارة سريع', 'Fast Car Charger'),
+    (r'شاحن\s*(?:حائط|جداري|سريع|منزلي|راس|رأس)|wall\s*charger', 'شاحن سريع', 'Fast Wall Charger'),
+    (r'كابل\s*شحن|سلك\s*شحن|وصلة\s*شحن|charging\s*cable', 'كابل شحن سريع', 'Fast Charging Cable'),
+    (r'سماعة\s*(?:اذن|أذن|بلوتوث|لاسلكية|ايربودز?)|earbuds|airpods', 'سماعة أذن لاسلكية', 'True Wireless Earbuds'),
+    (r'سماعة\s*(?:راس|رأس|العاب|ألعاب)|gaming\s*headset|headphones', 'سماعة رأس', 'Gaming Headset'),
+    (r'ساعة\s*(?:ذكية|سمارت)|smart\s*watch', 'ساعة ذكية', 'Smartwatch'),
+    (r'موبايل|هاتف\s*(?:ذكي|محمول)?|smartphone', 'موبايل', 'Smartphone'),
+    (r'ماكينة\s*(?:تحضير\s*)?ال?قهوة|صانعة\s*ال?قهوة|coffee\s*maker', 'ماكينة تحضير قهوة', 'Coffee Maker'),
+    (r'ماكينة\s*حلاقة|shaver|clipper|trimmer', 'ماكينة حلاقة', 'Hair Clipper & Shaver'),
+    (r'قلاية\s*(?:هوائية|بدون\s*زيت)|اير\s*فراير|air\s*fryer', 'قلاية هوائية', 'Air Fryer'),
+    (r'خلاط\s*(?:كهربائي|يدوي)?|هاند\s*بلندر|blender', 'خلاط كهربائي', 'Blender'),
+    (r'مكواة\s*بخار|steam\s*iron', 'مكواة بخار', 'Steam Iron'),
+    (r'كرسي\s*(?:بوسادة|طبي|مريح)?|مسند\s*(?:ظهر|طبي)|وسادة\s*(?:ظهر|جلوس)|cushion', 'كرسي ومسند ظهر مريح', 'Back Support Cushion Chair'),
+    (r'حذاء\s*رياضي|كوتشي|running\s*shoes|sneakers', 'حذاء رياضي', 'Running Shoes'),
+    (r'طقم\s*مفكات|screwdriver\s*set', 'طقم مفكات براغي', 'Screwdriver Set'),
+    (r'جل\s*استحمام|شاور\s*جل|shower\s*gel', 'جل استحمام', 'Shower Gel'),
+    (r'غسول\s*(?:للوجه|وجه)|cleanser|face\s*wash', 'غسول للوجه', 'Face Cleanser'),
+    (r'كريم\s*(?:مرطب|للوجه)|سيروم|moisturizer|serum', 'كريم مرطب للعناية بالبشرة', 'Moisturizing Cream'),
+    (r'شامبو|بلسم|shampoo|conditioner', 'شامبو للعناية بالشعر', 'Hair Care Shampoo'),
+]
+
+def extract_bilingual_product_names(title, brand=None, features=None):
+    """
+    يستخرج اسم المنتج الذكي والمختصر ببراعة بالعربي وبالإنجليزي:
+    - الاسم بالعربي: الماركة بالعربي + نوع المنتج الأساسي + الموديل/المواصفة الجوهرية (مختصر وواضح بدون حشو).
+    - الاسم بالإنجليزي: الماركة بالإنجليزي + نوع المنتج بالإنجليزي + الموديل/المواصفة.
+    يمنع حشو الوصف في الاسم، ويجعل بداية الرسالة أنيقة ومفهومة ومباشرة.
+    """
+    clean_t = clean(title or "").strip()
+    b_ar, b_en = "", ""
+    clean_b = (brand or "").strip().lower()
+
+    # 1. تحديد الماركة بالعربي والإنجليزي
+    if clean_b and clean_b in BILINGUAL_BRANDS:
+        b_ar, b_en = BILINGUAL_BRANDS[clean_b]
+    else:
+        for k, (ar_v, en_v) in BILINGUAL_BRANDS.items():
+            if re.search(r'\b' + re.escape(k) + r'\b', clean_t.lower()):
+                b_ar, b_en = ar_v, en_v
+                break
+        if not b_ar and brand:
+            b_ar = brand.strip()
+            b_en = brand.strip()
+
+    # 2. تحديد نوع وفئة المنتج بالعربي والإنجليزي
+    cat_ar, cat_en = "", ""
+    for pat, c_ar, c_en in BILINGUAL_CATEGORIES:
+        if re.search(pat, clean_t, re.IGNORECASE):
+            cat_ar, cat_en = c_ar, c_en
+            break
+
+    # 3. استخراج الموديل أو المواصفات الجوهرية
+    spec_ar_list, spec_en_list = [], []
+
+    model_m = re.search(r'\b(R50i|R100|P20i|737|A1289|14T\s*Pro|13C|14\s*Ultra|TCME-100|IL-102|IL-103|H510|Zeus|Lite\s*Racer|Galaxy\s*S\d+|Air\s*3)\b', clean_t, re.I)
+    if model_m:
+        m_val = model_m.group(1).strip()
+        spec_ar_list.append(m_val)
+        spec_en_list.append(m_val)
+
+    outlets_m = re.search(r'(\d+)\s*(?:منافذ|مخارج|عيون|outlets?|ports?)', clean_t, re.I)
+    if outlets_m:
+        cnt = outlets_m.group(1)
+        spec_ar_list.append(f"{cnt} منافذ")
+        spec_en_list.append(f"{cnt}-Outlet")
+
+    if re.search(r'type-?c|نوع\s*سي|usb-?c', clean_t, re.I):
+        spec_ar_list.append("و USB-C")
+        spec_en_list.append("with USB-C")
+
+    watt_m = re.search(r'(\d+)\s*(?:وات|واط|W\b)', clean_t, re.I)
+    if watt_m:
+        w = watt_m.group(1)
+        spec_ar_list.append(f"{w}W")
+        spec_en_list.append(f"{w}W")
+
+    mah_m = re.search(r'(\d[\d,.]*)\s*(?:مللي\s*أمبير|مللي\s*امبير|mah)', clean_t, re.I)
+    if mah_m:
+        spec_ar_list.append(f"{mah_m.group(1)} مللي أمبير")
+        spec_en_list.append(f"{mah_m.group(1)}mAh")
+    else:
+        rom_m = re.search(r'(\d+)\s*(?:جيجا(?:بايت)?|GB)\b', clean_t, re.I)
+        if rom_m:
+            spec_ar_list.append(f"{rom_m.group(1)} جيجا")
+            spec_en_list.append(f"{rom_m.group(1)}GB")
+
+    spec_ar = " ".join(spec_ar_list).strip()
+    spec_en = " ".join(spec_en_list).strip()
+
+    if cat_ar:
+        name_ar = f"{cat_ar} {b_ar} {spec_ar}".strip() if b_ar else f"{cat_ar} {spec_ar}".strip()
+    else:
+        clean_words = [
+            w for w in re.sub(r'[\(\[\{].*?[\)\]\}]', ' ', clean_t).split()
+            if len(w) > 1 and not any(sw in w.lower() for sw in ('متوافق', 'اصلي', 'أصلي', 'جودة', 'جديد', 'ماركة', 'للجنسين', 'لون', 'عرض'))
+        ][:7]
+        name_ar = " ".join(clean_words)
+        if b_ar and b_ar.lower() not in name_ar.lower():
+            name_ar = f"{b_ar} — {name_ar}"
+
+    if cat_en:
+        name_en = f"{b_en} {spec_en} {cat_en}".strip() if b_en else f"{spec_en} {cat_en}".strip()
+    else:
+        en_part = re.findall(r'[A-Za-z0-9][A-Za-z0-9\s\-_]{3,50}', clean_t)
+        if en_part:
+            best_en = max(en_part, key=len).strip()
+            name_en = f"{b_en} {best_en}".strip() if (b_en and b_en.lower() not in best_en.lower()) else best_en
+        else:
+            name_en = f"{b_en} {spec_en}".strip() if b_en else name_ar
+
+    name_ar = re.sub(r'\s+', ' ', name_ar).strip()[:85]
+    name_en = re.sub(r'\s+', ' ', name_en).strip()[:85]
+    return name_ar, name_en
+
+def build_description(title, features=None, extra_desc=None, brand=None):
+    """
+    يكوّن وصفاً ذكياً ومفهوماً للمنتج باللغة العربية فقط، يشرح القيمة الحقيقية
+    ووظائف ومميزات المنتج بدقة وبدون أخطاء أو حشو غير مفهوم، وبشكل مستقل تماماً عن الاسم.
+    """
+    clean_feats = []
     if features:
-        clean_feats = [re.sub(r'\s+', ' ', f).strip() for f in features if len(f.strip()) > 12]
-        if clean_feats:
-            return "؛ ".join(clean_feats[:2])[:150]
+        for f in features:
+            f_clean = re.sub(r'\s+', ' ', f).strip()
+            if any(w in f_clean for w in ('حول هذه السلعة', 'بلد المنشأ', 'رقم الموديل', 'تاريخ توفر', 'ضمان', 'أبعاد', 'الوزن:', 'وزن السلعة')):
+                continue
+            if len(f_clean) >= 15:
+                clean_feats.append(f_clean)
+
+    ar_feats = [f for f in clean_feats if re.search(r'[\u0600-\u06FF]', f)]
+    if ar_feats:
+        desc_text = '؛ '.join(ar_feats[:2])
+        if not desc_text.endswith('.'):
+            desc_text += '.'
+        return desc_text[:220]
+
     if extra_desc and len(extra_desc.strip()) > 15:
-        return re.sub(r'\s+', ' ', extra_desc.strip())[:140]
-    clean_t = re.sub(r'\s+', ' ', title).strip()
-    return f"{clean_t[:120]} — عرض خاص لفترة محدودة."
+        clean_extra = re.sub(r'\s+', ' ', extra_desc.strip())
+        if re.search(r'[\u0600-\u06FF]', clean_extra):
+            return clean_extra[:200]
+
+    tl = title.lower()
+    b_txt = (brand or '').strip()
+    b_suffix = f' من {b_txt}' if b_txt else ''
+
+    if any(w in tl for w in ('مشترك', 'power strip')):
+        return f'مشترك كهربائي متين وموثوق{b_suffix}، مزود بمنافذ كهربائية متعددة ومخارج شحن ذكية وسريعة للأجهزة، ومصنوع من خامات مقاومة للحرارة مع حماية متكاملة ضد التذبذب والماس الكهربائي لضمان أمان أجهزتك.'
+    elif any(w in tl for w in ('باور بانك', 'power bank')):
+        return f'باور بانك عالي الكفاءة والاعتمادية{b_suffix}، يتميز بسعة شحن حقيقية وتقنية شحن سريع آمنة للحفاظ على بطارية أجهزتك أثناء التنقل والسفر مع حماية متكاملة من زيادة التيار.'
+    elif any(w in tl for w in ('سماعة', 'earbuds', 'headset', 'headphones')):
+        return f'سماعة أذن لاسلكية متطورة تمنحك صوتاً نقياً وباس قوي مع ميكروفون مدمج لمكالمات فائقة الوضوح، وتصميم مريح ومحكم داخل الأذن للاستخدام الرياضي واليومي لساعات طويلة.'
+    elif any(w in tl for w in ('قهوة', 'coffee')):
+        return f'ماكينة قهوة عملية وسريعة التحضير{b_suffix}، تمنحك فنجان قهوة مثالي برغوة غنية وقوام متوازن في وقت قياسي، مع لوحة تحكم سهلة ونظام أمان متطور يمنع الفوران.'
+    elif any(w in tl for w in ('حذاء', 'shoes', 'sneakers')):
+        return f'حذاء رياضي أنيق ومريح{b_suffix}، مصمم بنعل مرن ممتص للصدمات مع خامات خفيفة الوزن تسمح بتهوية القدم لتوفير أقصى درجات الراحة أثناء الجري والمشي اليومي.'
+    elif any(w in tl for w in ('كرسي', 'وسادة', 'مسند', 'cushion')):
+        return f'وسادة دعم ومقعد طبي مصمم هندسياً لتخفيف الضغط عن أسفل الظهر والعمود الفقري، مصنوع من حشوات فوم متينة عالية المرونة تدوم طويلاً ومثالية للسيارة أو المكتب أو المنزل.'
+    elif any(w in tl for w in ('موبايل', 'هاتف', 'smartphone')):
+        return f'هاتف ذكي متكامل{b_suffix}، يجمع بين شاشة سريعة وواضحة ومعالج قوي للأداء اليومي والألعاب، مع كاميرات عالية الدقة وبطارية تدوم طوال اليوم وتدعم الشحن السريع.'
+    elif any(w in tl for w in ('قلاية', 'air fryer')):
+        return f'قلاية هوائية صحية وعملية{b_suffix}، تتيح لك طهي الأطعمة المفضلة بقرمشة مثالية وبأقل كمية دهون، مع برامج طهي متعددة وسهولة تامة في التنظيف اليومي.'
+    elif any(w in tl for w in ('حلاقة', 'shaver', 'trimmer')):
+        return f'ماكينة حلاقة وتشذيب دقيقة وعملية{b_suffix}، مزودة بشفرات حادة ولطيفة على البشرة مع بطارية قوية قابلة للشحن للاستخدام السهل في أي وقت.'
+    elif any(w in tl for w in ('مفك', 'screwdriver', 'tools')):
+        return f'طقم مفكات براغي عالي الجودة والصلابة{b_suffix}، يضم رؤوساً متعددة القياسات لتناسب كافة أعمال الصيانة المنزلية والإلكترونية بدقة وسهولة.'
+    elif any(w in tl for w in ('استحمام', 'shower gel', 'صابون')):
+        return f'جل استحمام منعش وغني برائحة مميزة تدوم طويلاً، مع تركيبة لطيفة تنظف البشرة بعمق وتمنحها ترطيباً ونعومة فائقة طوال اليوم.'
+    else:
+        clean_t = re.sub(r'[\(\[\{].*?[\)\]\}]', ' ', title)
+        words = [w for w in clean_t.split() if len(w) > 2 and not any(sw in w for sw in ('متوافق', 'اصلي', 'أصلي', 'جودة', 'جديد', 'ماركة'))][:7]
+        short_title = ' '.join(words)
+        return f'منتج عالي الجودة والاعتمادية{b_suffix} ({short_title})، مصنوع بخامات متينة ومصمم لتقديم أداء ممتاز وقيمة حقيقية مقابل السعر في الاستخدام اليومي.'
 
 def rewrite_channel_insight(raw_text):
     """
@@ -780,9 +1013,7 @@ def build_message(store, title, price, list_price, discount, link,
     icon = "🔥" if store.lower() == "amazon" else "🟡"
 
     brand_clean = (brand or detect_brand(title) or "").strip()
-    display_title = title.strip()
-    if brand_clean and brand_clean.lower() not in display_title.lower():
-        display_title = f"{brand_clean} — {display_title}"
+    name_ar, name_en = extract_bilingual_product_names(title, brand=brand_clean, features=features)
 
     final_price = None
     if price is not None:
@@ -805,7 +1036,13 @@ def build_message(store, title, price, list_price, discount, link,
     else:
         header = f"{icon} على {store_ar}"
 
-    lines = [f"<b>{header}</b>", "", f"📦 <b>{html.escape(display_title[:140])}</b>", ""]
+    lines = [
+        f"<b>{header}</b>",
+        "",
+        f"📦 <b>{html.escape(name_ar)}</b>",
+        f"🇬🇧 <b>{html.escape(name_en)}</b>",
+        "",
+    ]
 
     if list_price and list_price > (price or 0):
         lines.append(f"❌ السعر القديم: <s>{fmt(list_price)} ج.م</s>")
@@ -845,8 +1082,8 @@ def build_message(store, title, price, list_price, discount, link,
         f"🔗 <b>رابط المنتج:</b>\n{short_branded_link}",
     ]
 
-    # 3) وصف المنتج (مختصر وواضح)
-    desc = build_description(title, features)
+    # 3) وصف المنتج (مختصر ومفهوم وذكي بالعربي فقط)
+    desc = build_description(title, features=features, brand=brand_clean)
     if desc:
         lines += ["", f"📝 <b>وصف المنتج:</b>\n{html.escape(desc)}"]
 
@@ -1681,6 +1918,35 @@ def extract_urls_from_message(msg):
     # ترتيب الروابط بحيث روابط المنتج المباشرة تيجي قبل روابط صفحات العروض الفرعية
     filtered.sort(key=lambda x: (1 if "/promotion/psp/" in x.lower() else 0))
     return filtered
+
+def split_message_into_deals(text, urls):
+    """
+    يفصل رسالة المستخدم التي تحتوي على أكثر من عرض إلى عروض مستقلة،
+    بحيث يرتبط كل رابط بالنص والوصف والأسعار الخاصة به بدقة، تمهيداً لمعالجة كل عرض بمفرده.
+    """
+    if not urls:
+        return []
+    unique_urls = []
+    for u in urls:
+        if u not in unique_urls:
+            unique_urls.append(u)
+    if len(unique_urls) <= 1:
+        return [(unique_urls[0], text)]
+
+    lines = [l.strip() for l in (text or "").splitlines() if l.strip()]
+    chunks_by_url = {}
+    cur_chunk = []
+    for l in lines:
+        cur_chunk.append(l)
+        found_u = next((u for u in unique_urls if u in l and u not in chunks_by_url), None)
+        if found_u:
+            chunks_by_url[found_u] = "\n".join(cur_chunk)
+            cur_chunk = []
+
+    out = []
+    for u in unique_urls:
+        out.append((u, chunks_by_url.get(u, text)))
+    return out
 
 def _strip_foreign_affiliate_params(url):
     """يحذف أي كود أفلييت أو باراميتر تتبع خاص بقنوات أخرى من الرابط."""
@@ -2649,95 +2915,105 @@ async def poll_private_chat_once(context):
         photos = msg.get("photo") or []
         fallback_img_id = photos[-1].get("file_id") if photos else None
 
-        ack_prod_txt = (
-            "📦 <b>فهمت إن ده عرض ومنتج!</b>\n"
-            "🧠 <b>جاري تحليله والتعلّم منه فوراً</b> (حفظ الماركة وفئة المنتج للبحث التلقائي عنها مستقبلاً).\n"
-            "⏳ <b>وجاري الآن:</b> التأكد من التوفر وسريان الخصم على المتجر، صياغة البوست بأسلوب «لقطة»، إضافة كود الأفلييت الخاص بينا (<code>is.gd/loqta_...</code>)، وتجهيز الصورة لنشره في قناتنا... 🚀"
-        )
+        deal_items = split_message_into_deals(text, urls)
+        if len(deal_items) > 1:
+            ack_prod_txt = (
+                f"📦 <b>فهمت إن الرسالة فيها {len(deal_items)} عروض ومنتجات!</b>\n"
+                "🧠 <b>جاري فصل كل عرض، تحليله، والتعلم منه فوراً</b> (حفظ الماركات وفئات المنتجات للبحث التلقائي عنها مستقبلاً).\n"
+                "⏳ <b>وجاري الآن:</b> التأكد من التوفر وسريان الخصم لكل عرض في المتجر، صياغة كل بوست بالاسم العربي والإنجليزي ووصف «لقطة»، إضافة كود الأفلييت الخاص بينا (<code>is.gd/loqta_...</code>)، ونشر كل عرض بالصورة في قناتنا... 🚀"
+            )
+        else:
+            ack_prod_txt = (
+                "📦 <b>فهمت إن ده عرض ومنتج!</b>\n"
+                "🧠 <b>جاري تحليله والتعلّم منه فوراً</b> (حفظ الماركة وفئة المنتج للبحث التلقائي عنها مستقبلاً).\n"
+                "⏳ <b>وجاري الآن:</b> التأكد من التوفر وسريان الخصم على المتجر، صياغة البوست بالاسم العربي والإنجليزي ووصف «لقطة»، إضافة كود الأفلييت الخاص بينا (<code>is.gd/loqta_...</code>)، وتجهيز الصورة لنشره في قناتنا... 🚀"
+            )
         await asyncio.to_thread(send_telegram_msg, ack_prod_txt, None, [user_chat_id])
 
-        try:
-            # لو البوست المحوّل فيه أكتر من رابط مختصر (مثلاً رابط عرض الفئة + رابط المنتج)، نختار رابط المنتج الفعلي
-            target_url = urls[0]
-            if len(urls) > 1:
-                for cand_u in urls:
-                    resolved_cand = await resolve_original_url(context, cand_u)
-                    if "/dp/" in resolved_cand or "/p/" in resolved_cand:
-                        target_url = resolved_cand
-                        break
+        total_posted = 0
+        for target_url, deal_chunk in deal_items:
+            try:
+                deal_msg, deal_img, orig_url, our_short_url, title, eff_p, promo_sig, is_active, active_reason, brand = await scrape_single_product(
+                    context, target_url, fallback_text=deal_chunk, fallback_image=fallback_img_id, is_user_submission=True
+                )
+                # منع نشر نفس الرابط مرتين لو اتبعت في خلال دقيقتين
+                now_ts = time.time()
+                if orig_url in _recent_private_urls and (now_ts - _recent_private_urls[orig_url]) < 120:
+                    continue
+                _recent_private_urls[orig_url] = now_ts
 
-            deal_msg, deal_img, orig_url, our_short_url, title, eff_p, promo_sig, is_active, active_reason, brand = await scrape_single_product(
-                context, target_url, fallback_text=text, fallback_image=fallback_img_id, is_user_submission=True
-            )
-            # منع نشر نفس الرابط مرتين لو اتبعت في خلال دقيقتين
-            now_ts = time.time()
-            if orig_url in _recent_private_urls and (now_ts - _recent_private_urls[orig_url]) < 120:
-                continue
-            _recent_private_urls[orig_url] = now_ts
+                if not deal_msg or not title:
+                    # لو الرابط لصفحة عامة في أمازون/نون مش منتج مفرد
+                    summary_txt = (
+                        "✅ <b>تم استخراج الرابط الأصلي وتحويله لكود الأفلييت الخاص بينا:</b>\n\n"
+                        f"🔗 <b>الرابط الأصلي:</b>\n{html.escape(orig_url)}\n\n"
+                        f"💰 <b>رابط الأفلييت المختصر:</b>\n{html.escape(our_short_url)}"
+                    )
+                    await asyncio.to_thread(send_telegram_msg, summary_txt, None, [user_chat_id])
+                    continue
 
-            if not deal_msg or not title:
-                # لو الرابط لصفحة عامة في أمازون/نون مش منتج مفرد
+                # 1) فحص هل العرض لسه متاح وساري حالياً في المتجر (مش مخلص أو انتهى)
+                if not is_active:
+                    warn_txt = (
+                        "⚠️ <b>نتيجة فحص العرض:</b>\n"
+                        f"❌ <i>العرض حالياً غير متاح أو انتهى على المتجر ({html.escape(active_reason)})، لذلك تم منع نشره في القناة حتى لا يكون مضللاً للمتابعين.</i>\n\n"
+                        f"🧠 <b>لكن تم التعلّم منه بنجاح:</b> تم حفظ ماركة <b>{html.escape(brand or 'المنتج')}</b> وفئة المنتج في ذاكرة البوت عشان يبحث عن عروض جديدة عليها تلقائياً ويجيبها فوراً!\n\n"
+                        f"🔗 <b>الرابط الأصلي الصافي:</b>\n{html.escape(orig_url)}\n\n"
+                        f"💰 <b>رابط الأفلييت الخاص بيك:</b>\n{html.escape(our_short_url)}"
+                    )
+                    await asyncio.to_thread(send_telegram_msg, warn_txt, None, [user_chat_id])
+                    continue
+
+                # 2) فحص هل العرض نزل قبل كده في القناة بدون أي تغيير جديد (منع التكرار)
+                should_send, change_reason = should_send_deal(orig_url, title, eff_p, promo_sig)
+                if not should_send:
+                    already_txt = (
+                        "ℹ️ <b>العرض ده منشور بالفعل في القناة بنفس السعر والمواصفات ومحصلش عليه أي تغيير جديد!</b>\n"
+                        "<i>(تم منع تكرار النشر في القناة لمنع إزعاج المتابعين، وتم تأكيد تعلّم الماركة):</i>\n\n"
+                        f"🧠 <b>الماركة المتعلمة:</b> {html.escape(brand or 'معروفة')}\n"
+                        f"🔗 <b>الرابط الأصلي الصافي:</b>\n{html.escape(orig_url)}\n\n"
+                        f"💰 <b>رابط الأفلييت الخاص بينا:</b>\n{html.escape(our_short_url)}"
+                    )
+                    await asyncio.to_thread(send_telegram_msg, already_txt, None, [user_chat_id])
+                    continue
+
+                # 3) العرض ساري وجديد أو نزل سعره أكتر: نشره في القناة وفي الشات
+                mark_deal_sent(orig_url, title, eff_p, promo_sig)
+                total_posted += 1
+                channel_only_ids = [cid for cid in CHAT_IDS if str(cid) != str(user_chat_id)]
+                if channel_only_ids:
+                    await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, channel_only_ids)
+                await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, [user_chat_id])
+                channel_note = f"\n📡 <i>وتم حفظ قناة @{html.escape(ch_ref)} في ذاكرة المتابعة التلقائية للبوت!</i>" if ch_kind == "public" else ""
                 summary_txt = (
-                    "✅ <b>تم استخراج الرابط الأصلي وتحويله لكود الأفلييت الخاص بينا:</b>\n\n"
-                    f"🔗 <b>الرابط الأصلي:</b>\n{html.escape(orig_url)}\n\n"
-                    f"💰 <b>رابط الأفلييت المختصر:</b>\n{html.escape(our_short_url)}"
+                    "✅ <b>تم استلام العرض، والتعلّم منه، ونشره بنجاح في القناة!</b>\n\n"
+                    f"🧠 <b>ما تعلمه البوت:</b> تم حفظ ماركة <b>{html.escape(brand or 'المنتج')}</b> وفئة المنتج في ذاكرة البحث التلقائي المستمر.\n"
+                    f"📦 <b>المنتج:</b> {html.escape(title[:60])}...\n"
+                    f"💰 <b>السعر النهائي:</b> {eff_p} ج.م\n"
+                    f"🚀 <b>النشر:</b> نزل بالصورة والاسم العربي والإنجليزي ووصف «لقطة» وكود الأفلييت على قناتنا (@loqta78)."
+                    f"{channel_note}\n\n"
+                    f"🔗 <b>الرابط الأصلي الصافي:</b>\n{html.escape(orig_url)}\n\n"
+                    f"💰 <b>رابط الأفلييت المختصر الخاص بينا:</b>\n{html.escape(our_short_url)}"
                 )
                 await asyncio.to_thread(send_telegram_msg, summary_txt, None, [user_chat_id])
-                continue
-
-            # 1) فحص هل العرض لسه متاح وساري حالياً في المتجر (مش مخلص أو انتهى)
-            if not is_active:
-                warn_txt = (
-                    "⚠️ <b>نتيجة فحص العرض:</b>\n"
-                    f"❌ <i>العرض حالياً غير متاح أو انتهى على المتجر ({html.escape(active_reason)})، لذلك تم منع نشره في القناة حتى لا يكون مضللاً للمتابعين.</i>\n\n"
-                    f"🧠 <b>لكن تم التعلّم منه بنجاح:</b> تم حفظ ماركة <b>{html.escape(brand or 'المنتج')}</b> وفئة المنتج في ذاكرة البوت عشان يبحث عن عروض جديدة عليها تلقائياً ويجيبها فوراً!\n\n"
-                    f"🔗 <b>الرابط الأصلي الصافي:</b>\n{html.escape(orig_url)}\n\n"
-                    f"💰 <b>رابط الأفلييت الخاص بيك:</b>\n{html.escape(our_short_url)}"
+                if len(deal_items) > 1:
+                    await asyncio.sleep(2)
+            except Exception as e:
+                print(f"خطأ أثناء تحويل الرابط ({target_url}): {e}")
+                await asyncio.to_thread(
+                    send_telegram_msg,
+                    f"❌ حصل خطأ أثناء فحص الرابط: {html.escape(str(e)[:120])}",
+                    None,
+                    [user_chat_id],
                 )
-                await asyncio.to_thread(send_telegram_msg, warn_txt, None, [user_chat_id])
-                continue
 
-            # 2) فحص هل العرض نزل قبل كده في القناة بدون أي تغيير جديد (منع التكرار)
-            should_send, change_reason = should_send_deal(orig_url, title, eff_p, promo_sig)
-            if not should_send:
-                already_txt = (
-                    "ℹ️ <b>العرض ده منشور بالفعل في القناة بنفس السعر والمواصفات ومحصلش عليه أي تغيير جديد!</b>\n"
-                    "<i>(تم منع تكرار النشر في القناة لمنع إزعاج المتابعين، وتم تأكيد تعلّم الماركة):</i>\n\n"
-                    f"🧠 <b>الماركة المتعلمة:</b> {html.escape(brand or 'معروفة')}\n"
-                    f"🔗 <b>الرابط الأصلي الصافي:</b>\n{html.escape(orig_url)}\n\n"
-                    f"💰 <b>رابط الأفلييت الخاص بينا:</b>\n{html.escape(our_short_url)}"
-                )
-                await asyncio.to_thread(send_telegram_msg, already_txt, None, [user_chat_id])
-                continue
-
-            # 3) العرض ساري وجديد أو نزل سعره أكتر: نشره في القناة وفي الشات
-            mark_deal_sent(orig_url, title, eff_p, promo_sig)
-            # 1) نشر الرسالة الكاملة بالصورة في القناة مرة واحدة فقط
-            channel_only_ids = [cid for cid in CHAT_IDS if str(cid) != str(user_chat_id)]
-            if channel_only_ids:
-                await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, channel_only_ids)
-            # 2) إرسال نسخة لصاحب البوت في الشات الخاص
-            await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, [user_chat_id])
-            channel_note = f"\n📡 <i>وتم حفظ قناة @{html.escape(ch_ref)} في ذاكرة المتابعة التلقائية للبوت!</i>" if ch_kind == "public" else ""
-            summary_txt = (
-                "✅ <b>تم استلام العرض، والتعلّم منه، ونشره بنجاح في القناة!</b>\n\n"
-                f"🧠 <b>ما تعلمه البوت:</b> تم حفظ ماركة <b>{html.escape(brand or 'المنتج')}</b> وفئة المنتج في ذاكرة البحث التلقائي المستمر.\n"
-                f"📦 <b>المنتج:</b> {html.escape(title[:60])}...\n"
-                f"💰 <b>السعر النهائي:</b> {eff_p} ج.م\n"
-                f"🚀 <b>النشر:</b> نزل بالصورة وأسلوب «لقطة» وكود الأفلييت على قناتنا (@loqta78)."
-                f"{channel_note}\n\n"
-                f"🔗 <b>الرابط الأصلي الصافي:</b>\n{html.escape(orig_url)}\n\n"
-                f"💰 <b>رابط الأفلييت المختصر الخاص بينا:</b>\n{html.escape(our_short_url)}"
+        if len(deal_items) > 1:
+            multi_done_txt = (
+                f"🏁 <b>تم الانتهاء من معالجة كل العروض في رسالتك ({len(deal_items)} عروض)!</b>\n\n"
+                f"✅ <b>تم نشر:</b> {total_posted} عرض في قناتنا (@loqta78) بالصور والأسماء العربية والإنجليزية وأسلوب «لقطة» بروابط الأفلييت.\n"
+                "🧠 <b>تم التعلم منها جميعاً:</b> تم حفظ كل الماركات والأصناف في ذاكرة البوت لمتابعتها والبحث التلقائي عنها!"
             )
-            await asyncio.to_thread(send_telegram_msg, summary_txt, None, [user_chat_id])
-        except Exception as e:
-            print(f"خطأ أثناء تحويل الرابط من الشات الخاص: {e}")
-            await asyncio.to_thread(
-                send_telegram_msg,
-                f"❌ حصل خطأ أثناء فحص الرابط: {html.escape(str(e)[:120])}",
-                None,
-                [user_chat_id],
-            )
+            await asyncio.to_thread(send_telegram_msg, multi_done_txt, None, [user_chat_id])
 
 async def private_chat_listener_loop(context, stop_event):
     """يفحص رسائل الشات الخاص كل 3 ثواني في الخلفية طوال فترة تشغيل البوت."""
