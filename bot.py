@@ -27,6 +27,8 @@ BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")
 # ممكن تحط أكتر من ID مفصولين بفاصلة (مثلاً حسابك + الجروب): "6725805788,-100xxxxxxxxxx"
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "YOUR_CHAT_ID")
 CHAT_IDS = [c.strip() for c in CHAT_ID.split(",") if c.strip()]
+# الـ Chat ID الخاص بصاحب البوت لاستقبال أي لينك في الخاص وتحويله لأفلييت القناة ونشره فوراً
+OWNER_CHAT_ID = int(os.getenv("OWNER_CHAT_ID", "6725805788"))
 MIN_DISCOUNT = 30
 MAX_PER_CYCLE = 20  # أقصى عدد عروض تتبعت لكل متجر في الدورة الواحدة
 HASHTAG = "#عروض_يستاهل"
@@ -81,13 +83,15 @@ _amz_cat_rot_idx = 0
 # حفظ العروض المرسلة وسجل الأسعار
 # ---------------------------------------------------------------------------
 def short_link(link):
-    """رابط قصير وثابت للمنتج (بيفضل شغال لما حد ينسخ الرسالة)."""
-    m = re.search(r'/dp/([A-Z0-9]{10})', link)
-    if m and "amazon" in link:
-        return f"https://www.amazon.eg/dp/{m.group(1)}"
-    m = re.search(r'/([A-Z0-9]{8,})/p/?', link)
-    if m and "noon.com" in link:
-        return f"https://www.noon.com/egypt-ar/{m.group(1)}/p/"
+    """رابط قصير وثابت للمنتج (بيفضل شغال لما حد ينسخ الرسالة ويشيل أي كود أفلييت قديم)."""
+    if not link:
+        return link
+    m = re.search(r'/(?:dp|gp/product|gp/aw/d|product)/([A-Z0-9]{10})', link, re.IGNORECASE)
+    if m and ("amazon" in link.lower() or "amzn" in link.lower()):
+        return f"https://www.amazon.eg/dp/{m.group(1).upper()}"
+    m = re.search(r'/([A-Z0-9]{8,})/p/?', link, re.IGNORECASE)
+    if m and "noon.com" in link.lower():
+        return f"https://www.noon.com/egypt-ar/{m.group(1).upper()}/p/"
     return link
 
 _branded_cache = {}
@@ -615,7 +619,7 @@ def build_message(store, title, price, list_price, discount, link,
     if effective_price is not None and list_price and list_price > effective_price:
         eff_disc = (1 - effective_price / list_price) * 100
         lines.append(f"📉 إجمالي الخصم: <b>{eff_disc:.0f}%</b> (وفّرت {fmt(list_price - effective_price)} ج.م)")
-    else:
+    elif discount and discount > 0:
         lines.append(f"📉 الخصم: <b>{discount:.0f}%</b>")
 
     if brand_clean:
@@ -690,21 +694,24 @@ def build_section_alert(store, brand_label, section_url, items):
     ]
     return "\n".join(lines)
 
-def send_telegram_msg(text, image=None):
-    """يبعت العرض بصورة المنتج دائماً (سواء برابط مباشر أو بتحميل الصورة ورفعها لتليجرام)."""
+def send_telegram_msg(text, image=None, target_chat_ids=None):
+    """يبعت العرض بصورة المنتج دائماً (سواء برابط مباشر أو بتحميل الصورة ورفعها لتليجرام أو file_id)."""
     img_url = clean_image_url(image)
-    for chat_id in CHAT_IDS:
+    is_tg_file_id = bool(image and isinstance(image, str) and not image.startswith("http") and len(image) > 20)
+    destinations = target_chat_ids if target_chat_ids is not None else CHAT_IDS
+    for chat_id in destinations:
         try:
             resp = None
-            if img_url:
-                # 1. محاولة إرسال الصورة بالرابط المباشر
+            if img_url or is_tg_file_id:
+                photo_val = img_url if img_url else image
+                # 1. محاولة إرسال الصورة بالرابط المباشر أو file_id
                 resp = requests.post(
                     f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
-                    json={"chat_id": chat_id, "photo": img_url, "caption": text, "parse_mode": "HTML"},
+                    json={"chat_id": chat_id, "photo": photo_val, "caption": text, "parse_mode": "HTML"},
                     timeout=20,
                 )
                 # 2. لو تليجرام رفض تحميل الرابط مباشرة (مثلاً بسبب حماية CDN)، نحمّل الصورة ونرفعها كملف
-                if not resp.ok:
+                if not resp.ok and img_url:
                     try:
                         img_r = requests.get(
                             img_url,
@@ -1331,7 +1338,513 @@ async def scrape_noon_eg(page):
             print(f"خطأ في منتج نون: {e}")
             continue
 
-async def run_cycle(p):
+# ---------------------------------------------------------------------------
+# تحويل روابط المنتجات في الشات الخاص إلى أفلييت القناة ونشرها تلقائياً
+# ---------------------------------------------------------------------------
+_IGNORE_DOMAINS = (
+    "t.me/", "telegram.me/", "telegram.org/", "facebook.com/", "fb.watch/",
+    "instagram.com/", "youtube.com/", "youtu.be/", "whatsapp.com/", "wa.me/",
+    "twitter.com/", "x.com/", "tiktok.com/",
+)
+
+def extract_urls_from_message(msg):
+    """يستخرج كل روابط المنتجات أو الروابط المختصرة من الرسالة أو البوست المحوّل (Forwarded)."""
+    raw_urls = []
+    for field in ("text", "caption"):
+        txt = msg.get(field) or ""
+        for u in re.findall(r'https?://[^\s<>"\'()]+', txt):
+            raw_urls.append(u.rstrip(".,;:!?)>]"))
+    for ent_field in ("entities", "caption_entities"):
+        for ent in (msg.get(ent_field) or []):
+            if ent.get("type") == "text_link" and ent.get("url"):
+                raw_urls.append(ent["url"].strip())
+    reply_markup = msg.get("reply_markup") or {}
+    for row in (reply_markup.get("inline_keyboard") or []):
+        for btn in row:
+            if isinstance(btn, dict) and btn.get("url"):
+                raw_urls.append(btn["url"].strip())
+
+    filtered = []
+    for u in raw_urls:
+        ul = u.lower()
+        if any(d in ul for d in _IGNORE_DOMAINS):
+            continue
+        if u not in filtered:
+            filtered.append(u)
+    # ترتيب الروابط بحيث روابط المنتج المباشرة تيجي قبل روابط صفحات العروض الفرعية
+    filtered.sort(key=lambda x: (1 if "/promotion/psp/" in x.lower() else 0))
+    return filtered
+
+def _strip_foreign_affiliate_params(url):
+    """يحذف أي كود أفلييت أو باراميتر تتبع خاص بقنوات أخرى من الرابط."""
+    if not url:
+        return url
+    s = short_link(url)
+    if s != url:
+        return s
+    if "amazon." in url.lower() or "noon.com" in url.lower():
+        return url.split("?")[0].split("#")[0]
+    return url
+
+async def resolve_original_url(context, raw_url):
+    """يفك أي رابط مختصر (مثل amzn.eu أو sal7.ly أو is.gd أو bit.ly) ويجيب الرابط الأصلي الصافي للمنتج."""
+    u = (raw_url or "").strip()
+    if not u:
+        return u
+    direct = short_link(u)
+    if direct != u and ("/dp/" in direct or "/p/" in direct):
+        return direct
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept-Language": "ar-EG,ar;q=0.9,en;q=0.8",
+    }
+    try:
+        r = await asyncio.to_thread(
+            requests.get, u, headers=headers, allow_redirects=True, timeout=15
+        )
+        final_u = r.url or u
+        s = short_link(final_u)
+        if "/dp/" in s or "/p/" in s:
+            return s
+        # فحص محتوى الصفحة لو فيه تحويل بالـ HTML أو JavaScript
+        body = r.text or ""
+        m_amz = re.search(r'https?://(?:www\.)?amazon\.eg[^\s"\'<>]+/(?:dp|gp/product)/([A-Z0-9]{10})', body, re.IGNORECASE)
+        if m_amz:
+            return f"https://www.amazon.eg/dp/{m_amz.group(1).upper()}"
+        m_noon = re.search(r'https?://(?:www\.)?noon\.com/[^\s"\'<>]*?/([A-Z0-9]{8,})/p', body, re.IGNORECASE)
+        if m_noon:
+            return f"https://www.noon.com/egypt-ar/{m_noon.group(1).upper()}/p/"
+        if "amazon." in final_u.lower() or "noon.com" in final_u.lower():
+            return _strip_foreign_affiliate_params(final_u)
+    except Exception:
+        pass
+
+    # لو الرابط المختصر بيستخدم تحويل JavaScript أو Cloudflare، نفتحه بالمتصفح
+    if context is not None:
+        page = await context.new_page()
+        try:
+            await page.goto(u, wait_until="domcontentloaded", timeout=35000)
+            for _ in range(8):
+                cur = page.url
+                s = short_link(cur)
+                if "/dp/" in s or "/p/" in s:
+                    return s
+                if ("amazon." in cur.lower() or "noon.com" in cur.lower()) and cur != u:
+                    await page.wait_for_timeout(1000)
+                    return _strip_foreign_affiliate_params(page.url)
+                await page.wait_for_timeout(700)
+            return _strip_foreign_affiliate_params(page.url)
+        except Exception as e:
+            print(f"تعذر فك الرابط بالمتصفح ({u}): {e}")
+        finally:
+            await page.close()
+    return _strip_foreign_affiliate_params(u)
+
+def _parse_fallback_message_info(text):
+    """يستخرج الاسم والسعر القديم والجديد احتياطياً لو المستخدم محوّل بوست جاهز وصفحة المنتج محجوبة."""
+    t = clean(text or "")
+    old_m = re.search(r'(?:السعر القديم|بدلاً من|بدل من|سعر القائمه|كان)\s*:?\s*([\d,]+(?:\.\d+)?)', t)
+    new_m = re.search(r'(?:السعر الجديد|السعر النهائي|سعر العرض|بسعر|السعر)\s*:?\s*([\d,]+(?:\.\d+)?)', t)
+    if not new_m:
+        new_m = re.search(r'([\d,]+(?:\.\d+)?)\s*(?:ج\.م|جنيه)', t)
+    disc_m = re.search(r'(\d+)\s*%', t)
+    title_cand = None
+    for line in [l.strip() for l in t.split('\n') if l.strip()]:
+        clean_l = re.sub(r'^[📦🔥🟡🚨🏷️✨•\-]+\s*', '', line).strip()
+        if (
+            len(clean_l) >= 12
+            and not clean_l.startswith("http")
+            and not any(w in clean_l for w in ("السعر", "إجمالي الخصم", "الخصم:", "البائع:", "التقييم:", "على أمازون", "على نون", "رابط العرض", "ملحوظة:"))
+        ):
+            title_cand = clean_l[:140]
+            break
+    return {
+        "title": title_cand,
+        "price": to_float(new_m.group(1)) if new_m else None,
+        "list_price": to_float(old_m.group(1)) if old_m else None,
+        "discount": float(disc_m.group(1)) if disc_m else 0.0,
+    }
+
+async def scrape_single_product(context, raw_url, fallback_text="", fallback_image=None):
+    """
+    يستقبل أي رابط منتج (أمازون أو نون أو رابط مختصر)، يستخرج الرابط الأصلي الصافي،
+    يسحب كل بيانات المنتج، يضيف كود الأفلييت الخاص بالقناة، ويبني الرسالة الكاملة.
+    """
+    canonical_url = await resolve_original_url(context, raw_url)
+    fb = _parse_fallback_message_info(fallback_text)
+    ul = canonical_url.lower()
+
+    if "amazon." in ul or "amzn." in ul:
+        page = await context.new_page()
+        try:
+            await page.goto(canonical_url, wait_until="domcontentloaded", timeout=45000)
+            try:
+                await page.wait_for_selector('#productTitle, #title', timeout=10000)
+            except Exception:
+                await page.wait_for_timeout(2500)
+            if "/dp/" not in canonical_url:
+                canonical_url = _strip_foreign_affiliate_params(page.url)
+            await page.evaluate("window.scrollTo(0, document.body.scrollHeight * 0.55)")
+            await page.wait_for_timeout(1000)
+            data = await page.evaluate("""() => {
+                const q = s => document.querySelector(s)?.innerText?.trim();
+                const title = q('#productTitle') || q('#title') || document.querySelector('meta[property="og:title"]')?.content || '';
+                const priceSelectors = [
+                    '#corePriceDisplay_desktop_feature_div .priceToPay .a-offscreen',
+                    '#corePrice_feature_div .a-price .a-offscreen',
+                    '#apex_desktop .priceToPay .a-offscreen',
+                    '#priceblock_dealprice',
+                    '#priceblock_ourprice',
+                    '#price_inside_buybox',
+                    '#tp_price_block_total_price_ww .a-offscreen',
+                    '#ppd .a-price .a-offscreen',
+                ];
+                let priceTxt = priceSelectors.map(q).find(x => x && /\\d/.test(x)) || null;
+                if (!priceTxt) {
+                    const whole = q('#corePriceDisplay_desktop_feature_div .priceToPay .a-price-whole');
+                    const frac = q('#corePriceDisplay_desktop_feature_div .priceToPay .a-price-fraction') || '00';
+                    if (whole) priceTxt = whole.replace(/[^0-9,]/g, '') + '.' + frac.replace(/[^0-9]/g, '');
+                }
+                const listSelectors = [
+                    '#corePriceDisplay_desktop_feature_div .basisPrice .a-offscreen',
+                    '#corePriceDisplay_desktop_feature_div span[data-a-strike="true"] .a-offscreen',
+                    '#apex_desktop .basisPrice .a-offscreen',
+                    '.basisPrice .a-offscreen',
+                    '#price .a-text-price .a-offscreen',
+                ];
+                const listTxt = listSelectors.map(q).find(x => x && /\\d/.test(x)) || null;
+                const savingsTxt = q('#corePriceDisplay_desktop_feature_div .savingsPercentage') || q('.savingsPercentage');
+                const bought = q('#social-proofing-faceout-title-tk_bought');
+                const seller = q('#sellerProfileTriggerId')
+                    || q('#merchantInfoFeature_feature_div .offer-display-feature-text-message')
+                    || q('#merchant-info a') || q('#merchant-info');
+                let brand = q('tr.po-brand td.a-span9') || q('#bylineInfo');
+                if (brand) {
+                    brand = brand
+                        .replace(/^(زيارة متجر|العلامة التجارية:|الماركة:|Visit the|Brand:)\\s*/i, '')
+                        .replace(/\\s*Store$/i, '')
+                        .trim();
+                }
+                const ratingTxt = document.querySelector('#acrPopover')?.getAttribute('title') || q('#acrPopover .a-size-base');
+                const reviewsTxt = q('#acrCustomerReviewText');
+                const feats = [...document.querySelectorAll('#feature-bullets li span.a-list-item')]
+                    .map(e => e.innerText.trim()).filter(x => x.length > 10);
+                const img = document.querySelector('#landingImage, #imgBlkFront, #main-image, #imgTagWrapperId img');
+                let image = img?.getAttribute('data-old-hires');
+                if (!image || !image.startsWith('http')) {
+                    const dyn = img?.getAttribute('data-a-dynamic-image');
+                    if (dyn) {
+                        try { image = Object.keys(JSON.parse(dyn))[0]; } catch (e) {}
+                    }
+                }
+                if (!image || !image.startsWith('http')) {
+                    image = [
+                        img?.currentSrc,
+                        img?.getAttribute('src'),
+                        document.querySelector('meta[property="og:image"]')?.content,
+                        ...[...document.querySelectorAll('#altImages img, #imageBlock img')].map(i => i.src)
+                    ].find(u => u && u.startsWith('http') && !u.includes('play-button') && !u.includes('transparent-pixel'));
+                }
+                const promos = [
+                    ...document.querySelectorAll(
+                        '#promoPriceBlockMessage_feature_div .promoPriceBlockMessage > div, ' +
+                        '#promoPriceBlockMessage_feature_div .a-section, ' +
+                        '#promoPriceBlockMessage_feature_div, #couponBadgeRegularVpc, [id*="coupon" i], #sopp_feature_div'
+                    )
+                ].map(e => e.innerText.trim()).filter(x => x && x.length > 5 && x.length < 1500);
+                const promo_links = [...new Set(
+                    [...document.querySelectorAll('#promoPriceBlockMessage_feature_div a[href*="/promotion/psp/"], a[href*="/promotion/psp/"]')]
+                        .map(a => a.href.split('&ref=')[0].split('?ref=')[0])
+                        .filter(Boolean)
+                )];
+                const revs = [...document.querySelectorAll('[data-hook="reviewText"], [data-hook="review-collapsed"], .review-text-content')]
+                    .map(e => e.innerText.trim()).filter(x => x.length > 15).slice(0, 3);
+                return {title, priceTxt, listTxt, savingsTxt, bought, seller, brand, ratingTxt, reviewsTxt, feats, image, promos: promos.slice(0, 10), promo_links: promo_links.slice(0, 2), revs};
+            }""")
+        finally:
+            await page.close()
+
+        raw_t = data.get("title") or ""
+        title = (raw_t if raw_t and not is_blocked_title(raw_t) else fb["title"]) or "منتج مميز على أمازون مصر"
+        p_m = re.search(r'([\d,]+(?:\.\d+)?)', clean(data.get("priceTxt") or ""))
+        l_m = re.search(r'([\d,]+(?:\.\d+)?)', clean(data.get("listTxt") or ""))
+        price = to_float(p_m.group(1)) if p_m else fb["price"]
+        list_price = to_float(l_m.group(1)) if l_m else fb["list_price"]
+        s_m = re.search(r'(\d+)\s*%', clean(data.get("savingsTxt") or ""))
+        discount = float(s_m.group(1)) if s_m else (fb["discount"] or 0.0)
+        if price and list_price and list_price > price:
+            discount = (1 - price / list_price) * 100
+        elif price and discount > 0 and not list_price:
+            list_price = round(price / (1 - discount / 100.0), 2)
+
+        r_m = re.search(r'(\d\.\d)', clean(data.get("ratingTxt") or ""))
+        rating = r_m.group(1) if r_m else None
+        rv_m = re.search(r'([\d,]+)', clean(data.get("reviewsTxt") or ""))
+        reviews = rv_m.group(1) if rv_m else None
+        brand = data.get("brand")
+        seller = data.get("seller")
+        features = data.get("feats") or []
+        image = clean_image_url(data.get("image")) or fallback_image
+        promos_list = data.get("promos") or []
+        promo_links = data.get("promo_links") or []
+        rev_snippets = data.get("revs") or []
+        bought_badge = data.get("bought")
+
+        prev_min, max_p, min_p = record_price(canonical_url, price) if price else (None, None, None)
+        stack_promos, stack_howto, extra_pct, extra_egp, extra_label, promo_links = detect_stacking_promos(
+            fallback_text, promos_list, promo_links
+        )
+        eff_price = price
+        if eff_price and extra_pct > 0:
+            eff_price = round(eff_price * (1 - extra_pct / 100.0), 2)
+        elif eff_price and extra_egp > 0 and eff_price > extra_egp:
+            eff_price = round(eff_price - extra_egp, 2)
+
+        msg = build_message(
+            "Amazon", title, price, list_price, discount, canonical_url,
+            seller=seller, rating=rating, reviews=reviews, features=features,
+            prev_min=prev_min, max_price=max_p, min_price=min_p,
+            review_snippets=rev_snippets, bought_badge=bought_badge,
+            stack_promos=stack_promos, stack_howto=stack_howto,
+            extra_pct=extra_pct, extra_egp=extra_egp, extra_label=extra_label, promo_links=promo_links,
+            brand=brand,
+        )
+        return msg, image, canonical_url, branded_url(canonical_url), title, eff_price, "|".join(stack_promos)
+
+    if "noon.com" in ul:
+        page = await context.new_page()
+        try:
+            await page.goto(canonical_url, wait_until="domcontentloaded", timeout=45000)
+            try:
+                await page.wait_for_selector('[data-qa="pdp-product-name"], h1', timeout=10000)
+            except Exception:
+                await page.wait_for_timeout(3000)
+            if "/p/" not in canonical_url:
+                canonical_url = _strip_foreign_affiliate_params(page.url)
+            await page.evaluate("window.scrollTo(0, document.body.scrollHeight * 0.5)")
+            await page.wait_for_timeout(900)
+            data = await page.evaluate("""() => {
+                const h1El = document.querySelector('[data-qa="pdp-product-name"]') || document.querySelector('h1');
+                const full_title = h1El?.innerText?.trim() || document.querySelector('meta[property="og:title"]')?.content || '';
+                let brand = document.querySelector('[data-qa*="brand" i], a[class*="brand" i]')?.innerText;
+                if (!brand && h1El?.previousElementSibling) {
+                    const prevTxt = (h1El.previousElementSibling.innerText || '').replace(/[>›]/g, '').trim();
+                    if (prevTxt.length >= 2 && prevTxt.length <= 35 && !prevTxt.includes('عرض')) {
+                        brand = prevTxt;
+                    }
+                }
+                let ldPrice = null, ldRating = null, ldReviews = null;
+                for (const s of document.querySelectorAll('script[type="application/ld+json"]')) {
+                    try {
+                        const j = JSON.parse(s.textContent);
+                        const b = j?.brand?.name || (typeof j?.brand === 'string' ? j.brand : null);
+                        if (!brand && b) brand = b;
+                        const off = Array.isArray(j?.offers) ? j.offers[0] : j?.offers;
+                        if (off?.price && !ldPrice) ldPrice = String(off.price);
+                        if (j?.aggregateRating?.ratingValue) ldRating = String(j.aggregateRating.ratingValue);
+                        if (j?.aggregateRating?.reviewCount) ldReviews = String(j.aggregateRating.reviewCount);
+                    } catch (e) {}
+                }
+                if (brand) brand = brand.replace(/[>›]/g, '').split('\\n')[0].trim();
+                const priceNow = document.querySelector('[data-qa="div-price-now"], [class*="priceNow" i]')?.innerText || ldPrice;
+                const priceWas = document.querySelector('[data-qa="div-price-was"], [class*="priceWas" i], [class*="oldPrice" i]')?.innerText || null;
+                const savingTxt = document.querySelector('[data-qa="div-price-saving"], [class*="priceSaving" i], [class*="profit" i]')?.innerText || null;
+                const ratingTxt = ldRating || document.querySelector('[data-qa*="rating" i], [class*="ratingValue" i]')?.innerText || null;
+                const reviewsTxt = ldReviews || document.querySelector('[data-qa*="review-count" i], [class*="count" i]')?.innerText || null;
+                let image = document.querySelector('meta[property="og:image"]')?.content;
+                if (!image || !image.startsWith('http')) {
+                    image = [...document.querySelectorAll('img')]
+                        .map(i => i.currentSrc || i.src || i.getAttribute('data-src'))
+                        .find(s => s && s.includes('nooncdn.com/p/'));
+                }
+                let seller = null;
+                for (const el of document.querySelectorAll('a[href*="seller"], [class*="seller" i], [class*="partner" i], div, span')) {
+                    const t = (el.innerText || '').trim();
+                    if (t.startsWith('يتم البيع عبر') || t.startsWith('البائع')) {
+                        seller = t.split('\\n')[0].replace('يتم البيع عبر', '').replace('البائع:', '').replace('البائع', '').trim();
+                        if (seller) break;
+                    }
+                }
+                const container = document.querySelector('[data-qa="pdp-container"]');
+                const feats = container
+                    ? [...container.querySelectorAll('ul li')]
+                        .filter(e => !e.querySelector('a') && !e.closest('a') && !e.closest('header') && !e.closest('nav') && !e.closest('footer'))
+                        .map(e => e.innerText.trim())
+                        .filter(x => x.length > 20 && x.length < 220 && !x.includes('\\n'))
+                    : [];
+                const promos = container
+                    ? [...container.querySelectorAll('[class*="coupon" i], [class*="voucher" i], [class*="promo" i], [data-qa*="coupon" i], [class*="cashback" i]')]
+                        .map(e => e.innerText.trim()).filter(x => x.length > 6 && x.length < 220)
+                    : [];
+                const revs = [...document.querySelectorAll('[class*="reviewComment" i], [class*="reviewDesc" i], [data-qa*="review" i] p')]
+                    .map(e => e.innerText.trim()).filter(x => x.length > 15 && x.length < 220).slice(0, 2);
+                return {full_title, brand, seller, priceNow, priceWas, savingTxt, ratingTxt, reviewsTxt, feats, image, promos: promos.slice(0, 5), revs};
+            }""")
+        finally:
+            await page.close()
+
+        raw_t = data.get("full_title") or ""
+        title = (raw_t if raw_t and not is_blocked_title(raw_t) else fb["title"]) or "منتج مميز على نون مصر"
+        p_m = re.search(r'([\d,]+(?:\.\d+)?)', clean(data.get("priceNow") or ""))
+        l_m = re.search(r'([\d,]+(?:\.\d+)?)', clean(data.get("priceWas") or ""))
+        price = to_float(p_m.group(1)) if p_m else fb["price"]
+        list_price = to_float(l_m.group(1)) if l_m else fb["list_price"]
+        s_m = re.search(r'(\d+)\s*%', clean(data.get("savingTxt") or ""))
+        discount = float(s_m.group(1)) if s_m else (fb["discount"] or 0.0)
+        if price and list_price and list_price > price:
+            discount = (1 - price / list_price) * 100
+        elif price and discount > 0 and not list_price:
+            list_price = round(price / (1 - discount / 100.0), 2)
+
+        r_m = re.search(r'(\d\.\d)', clean(data.get("ratingTxt") or ""))
+        rating = r_m.group(1) if r_m else None
+        rv_m = re.search(r'([\d.,]+K?)', clean(data.get("reviewsTxt") or ""))
+        reviews = rv_m.group(1) if rv_m else None
+        brand = data.get("brand")
+        seller = data.get("seller") or "نون (Express)"
+        features = data.get("feats") or []
+        image = clean_image_url(data.get("image")) or fallback_image
+        promos_list = data.get("promos") or []
+        rev_snippets = data.get("revs") or []
+
+        prev_min, max_p, min_p = record_price(canonical_url, price) if price else (None, None, None)
+        stack_promos, stack_howto, extra_pct, extra_egp, extra_label, promo_links = detect_stacking_promos(
+            fallback_text, promos_list
+        )
+        eff_price = price
+        if eff_price and extra_pct > 0:
+            eff_price = round(eff_price * (1 - extra_pct / 100.0), 2)
+        elif eff_price and extra_egp > 0 and eff_price > extra_egp:
+            eff_price = round(eff_price - extra_egp, 2)
+
+        msg = build_message(
+            "Noon", title, price, list_price, discount, canonical_url,
+            seller=seller, rating=rating, reviews=reviews, features=features,
+            prev_min=prev_min, max_price=max_p, min_price=min_p,
+            review_snippets=rev_snippets,
+            stack_promos=stack_promos, stack_howto=stack_howto,
+            extra_pct=extra_pct, extra_egp=extra_egp, extra_label=extra_label, promo_links=promo_links,
+            brand=brand,
+        )
+        return msg, image, canonical_url, branded_url(canonical_url), title, eff_price, "|".join(stack_promos)
+
+    return None, None, canonical_url, branded_url(canonical_url), None, None, ""
+
+_last_tg_offset = None
+
+async def poll_private_chat_once(context):
+    """يتحقق من رسائل الشات الخاص مع البوت لتحويل أي رابط مرسل إلى رابط أفلييت القناة ونشره."""
+    global _last_tg_offset
+    params = {"timeout": 1, "allowed_updates": json.dumps(["message"])}
+    if _last_tg_offset is not None:
+        params["offset"] = _last_tg_offset
+    try:
+        r = await asyncio.to_thread(
+            requests.get,
+            f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates",
+            params=params,
+            timeout=8,
+        )
+        if not r.ok:
+            return
+        updates = r.json().get("result") or []
+    except Exception:
+        return
+
+    for upd in updates:
+        upd_id = upd.get("update_id", 0)
+        _last_tg_offset = upd_id + 1
+        msg = upd.get("message")
+        if not msg:
+            continue
+        chat = msg.get("chat") or {}
+        if chat.get("type") != "private":
+            continue
+        user_chat_id = chat.get("id")
+        text = (msg.get("text") or msg.get("caption") or "").strip()
+
+        if text.startswith("/start"):
+            welcome_reply = (
+                "👋 <b>أهلاً بيك في بوت قناة «لقطة» (@loqta78)!</b>\n\n"
+                "🔗 ابعتلي أي <b>لينك منتج</b> من أمازون مصر أو نون مصر (أو اعمل <b>Forward</b> لأي بوست عرض من أي قناة تانية حتى لو الرابط مختصر)، "
+                "وهقوم فوراً بـ:\n"
+                "1️⃣ فك الاختصار واستخراج <b>الرابط الأصلي الصافي</b> للمنتج (وحذف أي كود أفلييت قديم).\n"
+                "2️⃣ إضافة <b>كود الأفلييت الخاص بينا</b> واختصاره باسم القناة (<code>is.gd/loqta_...</code>).\n"
+                "3️⃣ سحب تفاصيل المنتج كاملة وإرسال بوست العرض جاهز في الشات ونشره في القناة! 🚀💰"
+            )
+            await asyncio.to_thread(send_telegram_msg, welcome_reply, None, [user_chat_id])
+            continue
+
+        if user_chat_id != OWNER_CHAT_ID:
+            continue
+
+        urls = extract_urls_from_message(msg)
+        if not urls:
+            await asyncio.to_thread(
+                send_telegram_msg,
+                "⚠️ مبعتليش رابط في الرسالة! ابعت أي رابط منتج من أمازون أو نون (أو اعمل Forward لبوست فيه رابط) وهحوله للينك الأفلييت بتاعنا فوراً.",
+                None,
+                [user_chat_id],
+            )
+            continue
+
+        target_url = urls[0]
+        photos = msg.get("photo") or []
+        fallback_img_id = photos[-1].get("file_id") if photos else None
+
+        await asyncio.to_thread(
+            send_telegram_msg,
+            "⏳ <i>جاري فتح الرابط واستخراج اللينك الأصلي وتحويله للأفلييت الخاص بينا وتجهيز العرض...</i>",
+            None,
+            [user_chat_id],
+        )
+
+        try:
+            deal_msg, deal_img, orig_url, our_short_url, title, eff_p, promo_sig = await scrape_single_product(
+                context, target_url, fallback_text=text, fallback_image=fallback_img_id
+            )
+            if deal_msg:
+                if title:
+                    mark_deal_sent(orig_url, title, eff_p, promo_sig)
+                # 1) نشر الرسالة الكاملة في القناة
+                await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, CHAT_IDS)
+                # 2) إرسال نسخة لصاحب البوت في الشات الخاص (لو الشات الخاص مش مضاف أصلاً في CHAT_IDS)
+                if str(user_chat_id) not in CHAT_IDS:
+                    await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, [user_chat_id])
+                summary_txt = (
+                    "✅ <b>تم تحويل الرابط ونشر العرض في القناة بنجاح!</b>\n\n"
+                    f"🔗 <b>الرابط الأصلي الصافي:</b>\n{html.escape(orig_url)}\n\n"
+                    f"💰 <b>رابط الأفلييت الخاص بينا:</b>\n{html.escape(our_short_url)}"
+                )
+                await asyncio.to_thread(send_telegram_msg, summary_txt, None, [user_chat_id])
+            else:
+                # لو الرابط لصفحة عامة في أمازون/نون مش منتج مفرد
+                summary_txt = (
+                    "✅ <b>تم استخراج الرابط الأصلي وتحويله لكود الأفلييت الخاص بينا:</b>\n\n"
+                    f"🔗 <b>الرابط الأصلي:</b>\n{html.escape(orig_url)}\n\n"
+                    f"💰 <b>رابط الأفلييت المختصر:</b>\n{html.escape(our_short_url)}"
+                )
+                await asyncio.to_thread(send_telegram_msg, summary_txt, None, [user_chat_id])
+        except Exception as e:
+            print(f"خطأ أثناء تحويل الرابط من الشات الخاص: {e}")
+            await asyncio.to_thread(
+                send_telegram_msg,
+                f"❌ حصل خطأ أثناء فحص الرابط: {html.escape(str(e)[:120])}",
+                None,
+                [user_chat_id],
+            )
+
+async def private_chat_listener_loop(context, stop_event):
+    """يفحص رسائل الشات الخاص كل 3 ثواني في الخلفية طوال فترة تشغيل البوت."""
+    while not stop_event.is_set():
+        await poll_private_chat_once(context)
+        try:
+            await asyncio.wait_for(stop_event.wait(), timeout=3.0)
+        except asyncio.TimeoutError:
+            pass
+
+async def run_cycle(p, listen_only_seconds=0):
     launch_args = ["--disable-blink-features=AutomationControlled"]
     if sys.platform == "win32":
         launch_args.append("--window-position=-32000,-32000")
@@ -1341,22 +1854,41 @@ async def run_cycle(p):
         headless=False,
         args=launch_args
     )
+    stop_event = asyncio.Event()
+    listener_task = None
     try:
         context = await browser.new_context(
             locale="ar-EG",
             viewport={"width": 1366, "height": 768}
         )
         await context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-        page = await context.new_page()
-        for scraper in (scrape_amazon_eg, scrape_noon_eg):
-            try:
-                await scraper(page)
-            except Exception as e:
-                print(f"Scraping error ({scraper.__name__}): {e}")
+        listener_task = asyncio.create_task(private_chat_listener_loop(context, stop_event))
+        if listen_only_seconds > 0:
+            await asyncio.sleep(listen_only_seconds)
+        else:
+            page = await context.new_page()
+            for scraper in (scrape_amazon_eg, scrape_noon_eg):
+                try:
+                    await scraper(page)
+                except Exception as e:
+                    print(f"Scraping error ({scraper.__name__}): {e}")
     finally:
+        stop_event.set()
+        if listener_task:
+            try:
+                await listener_task
+            except Exception:
+                pass
         await browser.close()
 
 async def main():
+    if "--listen-only" in sys.argv:
+        idx = sys.argv.index("--listen-only")
+        wait_secs = int(sys.argv[idx + 1]) if idx + 1 < len(sys.argv) else CHECK_INTERVAL
+        async with async_playwright() as p:
+            await run_cycle(p, listen_only_seconds=wait_secs)
+        return
+
     run_once = "--once" in sys.argv or os.getenv("RUN_ONCE") == "1" or os.getenv("GITHUB_ACTIONS") == "true"
     async with async_playwright() as p:
         while True:
@@ -1370,8 +1902,12 @@ async def main():
                 print("اكتملت دورة الفحص بنجاح.")
                 break
 
-            print(f"انتظار {CHECK_INTERVAL // 60} دقيقة قبل الفحص القادم...")
-            await asyncio.sleep(CHECK_INTERVAL)
+            print(f"انتظار {CHECK_INTERVAL // 60} دقيقة قبل الفحص القادم (مع الاستماع لرسائل الخاص)...")
+            try:
+                await run_cycle(p, listen_only_seconds=CHECK_INTERVAL)
+            except Exception as e:
+                print(f"Listen interval error: {e}")
+                await asyncio.sleep(CHECK_INTERVAL)
 
 if __name__ == "__main__":
     asyncio.run(main())
