@@ -335,6 +335,11 @@ def record_price(link, price):
     save_history()
     return prev_min, max(all_prices), min(all_prices)
 
+def is_deal_already_sent(link, title=None, current_price=None, promo_sig=""):
+    """يرجع True إذا كان العرض مرسلاً سابقاً بنفس السعر والمواصفات بدون تغيير جديد يبرر إعادة النشر."""
+    should_send, _ = should_send_deal(link, title, current_price, promo_sig)
+    return not should_send
+
 # ---------------------------------------------------------------------------
 # أدوات مساعدة وذكاء العروض
 # ---------------------------------------------------------------------------
@@ -446,6 +451,40 @@ def has_famous_brand(title, brand=None):
     if any(kw in combined for kw in TRUSTED_BRAND_KEYWORDS):
         return True
     return any(lb.lower() in combined for lb in learned_prefs.get("brands", []) if len(lb) >= 2)
+
+def is_deal_currently_active(price, list_price, discount, is_available=True, stack_promos=None, extra_pct=0, extra_egp=0, brand=None, title="", prev_min=None):
+    """
+    يتحقق بدقة أن العرض ما زال سارياً ومتاحاً للشراء في المتجر وليس منتهياً أو نافداً:
+    1) أن المنتج متوفر في المخزون (غير نافد أو غير متاح).
+    2) أن السعر الحالي موجود ومسحوب مباشرة من المتجر وليس مجرد نص قديم.
+    3) أن هناك خصم حقيقي ساري (نسبة خصم، أو كوبونات ودمج خصومات، أو فرق سعر ملحوظ، أو وصول لأقل سعر تاريخي).
+    """
+    if not is_available:
+        return False, "المنتج غير متوفر في المخزون (Out of Stock / غير متاح حالياً)"
+    if price is None or price <= 0:
+        return False, "السعر غير متاح على صفحة المتجر أو تم إيقاف البيع"
+
+    has_promos = bool(stack_promos) or (extra_pct and extra_pct > 0) or (extra_egp and extra_egp > 0)
+    is_famous = has_famous_brand(title, brand)
+
+    # 1) لو عليه كوبون أو كود خصم أو برومو نشط
+    if has_promos:
+        return True, "العرض ساري مع كود خصم/كوبون إضافي"
+
+    # 2) لو فيه نسبة خصم سارية ومسجلة على المتجر
+    min_disc = 8.0 if is_famous else 10.0
+    if discount and discount >= min_disc:
+        return True, f"العرض ساري بخصم {discount:.0f}%"
+
+    # 3) لو فرق السعر القديم والجديد 25 جنيه أو أكتر
+    if list_price and price and (list_price - price) >= 25:
+        return True, f"العرض ساري بفرق سعر {list_price - price:.0f} ج.م"
+
+    # 4) لو السعر الحالي عند أو أقل من أقل سعر تاريخي مسجل
+    if prev_min and price <= prev_min * 1.02:
+        return True, "العرض ساري عند أقل سعر تاريخي مسجل للمنتج"
+
+    return False, "العرض انتهى على المتجر ورجع للسعر الأصلي بدون خصم كافي"
 
 def is_trusted_product(title, brand=None, rating=None, reviews=None):
     """
@@ -1783,7 +1822,9 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                 )];
                 const revs = [...document.querySelectorAll('[data-hook="reviewText"], [data-hook="review-collapsed"], .review-text-content')]
                     .map(e => e.innerText.trim()).filter(x => x.length > 15).slice(0, 3);
-                return {title, priceTxt, listTxt, savingsTxt, bought, seller, brand, ratingTxt, reviewsTxt, feats, image, promos: promos.slice(0, 10), promo_links: promo_links.slice(0, 2), revs};
+                const unavailTxt = (document.querySelector('#availability, #outOfStock, #availability_feature_div')?.innerText || '').trim();
+                const isOutOfStock = /غير متوفر|غير متاح|currently unavailable|out of stock|temporarily out/i.test(unavailTxt);
+                return {title, priceTxt, listTxt, savingsTxt, bought, seller, brand, ratingTxt, reviewsTxt, feats, image, promos: promos.slice(0, 10), promo_links: promo_links.slice(0, 2), revs, isOutOfStock};
             }""")
         finally:
             await page.close()
@@ -1807,6 +1848,7 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
         bought_badge = data.get("bought")
 
         # لو صفحة المنتج في أمازون محجوبة على السحابة أو الصورة/السعر مظهروش، نجيبهم فوراً من بحث أمازون بالـ ASIN (مبيتحجبش أبداً)
+        live_price_found = bool(price)
         asin_m = re.search(r'/dp/([A-Z0-9]{10})', canonical_url, re.IGNORECASE)
         if asin_m and (not image or not price or not raw_t or is_blocked_title(raw_t)):
             asin_code = asin_m.group(1).upper()
@@ -1836,6 +1878,7 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                         spm = re.search(r'([\d,]+(?:\.\d+)?)', clean(sdata["price"]))
                         if spm:
                             price = to_float(spm.group(1))
+                            live_price_found = True
                     if not list_price and sdata.get("list_price"):
                         slm = re.search(r'([\d,]+(?:\.\d+)?)', clean(sdata["list_price"]))
                         if slm:
@@ -1880,8 +1923,17 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
         elif eff_price and extra_egp > 0 and eff_price > extra_egp:
             eff_price = round(eff_price - extra_egp, 2)
 
+        # 🧠 التعلم من أي منتج يمر على البوت (الماركة وفئة المنتج) حتى لو العرض منتهي
         learn_from_product(title, brand)
         custom_insight = rewrite_channel_insight(fallback_text)
+
+        # 🔎 التحقق الصارم أن العرض لسه متاح وساري على المتجر
+        is_available = (not data.get("isOutOfStock")) and live_price_found
+        is_active, active_reason = is_deal_currently_active(
+            price, list_price, discount, is_available=is_available,
+            stack_promos=stack_promos, extra_pct=extra_pct, extra_egp=extra_egp,
+            brand=brand, title=title, prev_min=prev_min
+        )
 
         msg = build_message(
             "Amazon", title, price, list_price, discount, canonical_url,
@@ -1892,7 +1944,7 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
             extra_pct=extra_pct, extra_egp=extra_egp, extra_label=extra_label, promo_links=promo_links,
             brand=brand, custom_insight=custom_insight,
         )
-        return msg, image, canonical_url, branded_url(canonical_url), title, eff_price, "|".join(stack_promos)
+        return msg, image, canonical_url, branded_url(canonical_url), title, eff_price, "|".join(stack_promos), is_active, active_reason
 
     if "noon.com" in ul:
         page = await context.new_page()
@@ -1961,7 +2013,10 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                     : [];
                 const revs = [...document.querySelectorAll('[class*="reviewComment" i], [class*="reviewDesc" i], [data-qa*="review" i] p')]
                     .map(e => e.innerText.trim()).filter(x => x.length > 15 && x.length < 220).slice(0, 2);
-                return {full_title, brand, seller, priceNow, priceWas, savingTxt, ratingTxt, reviewsTxt, feats, image, promos: promos.slice(0, 5), revs};
+                const unavailEl = document.querySelector('[data-qa="pdp-out-of-stock"], [class*="outOfStock" i], [class*="soldOut" i]');
+                const unavailTxt = (unavailEl?.innerText || document.querySelector('[data-qa*="stock" i]')?.innerText || '').trim();
+                const isOutOfStock = Boolean(unavailEl) || /غير متوفر|نفدت|out of stock|sold out|غير متاح/i.test(unavailTxt);
+                return {full_title, brand, seller, priceNow, priceWas, savingTxt, ratingTxt, reviewsTxt, feats, image, promos: promos.slice(0, 5), revs, isOutOfStock};
             }""")
         finally:
             await page.close()
@@ -1970,6 +2025,7 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
         title = (raw_t if raw_t and not is_blocked_title(raw_t) else fb["title"]) or "منتج مميز على نون مصر"
         p_m = re.search(r'([\d,]+(?:\.\d+)?)', clean(data.get("priceNow") or ""))
         l_m = re.search(r'([\d,]+(?:\.\d+)?)', clean(data.get("priceWas") or ""))
+        live_price_found = bool(p_m)
         price = to_float(p_m.group(1)) if p_m else fb["price"]
         list_price = to_float(l_m.group(1)) if l_m else fb["list_price"]
         s_m = re.search(r'(\d+)\s*%', clean(data.get("savingTxt") or ""))
@@ -2000,8 +2056,17 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
         elif eff_price and extra_egp > 0 and eff_price > extra_egp:
             eff_price = round(eff_price - extra_egp, 2)
 
+        # 🧠 التعلم من أي منتج يمر على البوت (الماركة وفئة المنتج) حتى لو العرض منتهي
         learn_from_product(title, brand)
         custom_insight = rewrite_channel_insight(fallback_text)
+
+        # 🔎 التحقق الصارم أن العرض لسه متاح وساري على المتجر
+        is_available = (not data.get("isOutOfStock")) and live_price_found
+        is_active, active_reason = is_deal_currently_active(
+            price, list_price, discount, is_available=is_available,
+            stack_promos=stack_promos, extra_pct=extra_pct, extra_egp=extra_egp,
+            brand=brand, title=title, prev_min=prev_min
+        )
 
         msg = build_message(
             "Noon", title, price, list_price, discount, canonical_url,
@@ -2012,9 +2077,9 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
             extra_pct=extra_pct, extra_egp=extra_egp, extra_label=extra_label, promo_links=promo_links,
             brand=brand, custom_insight=custom_insight,
         )
-        return msg, image, canonical_url, branded_url(canonical_url), title, eff_price, "|".join(stack_promos)
+        return msg, image, canonical_url, branded_url(canonical_url), title, eff_price, "|".join(stack_promos), is_active, active_reason
 
-    return None, None, canonical_url, branded_url(canonical_url), None, None, ""
+    return None, None, canonical_url, branded_url(canonical_url), None, None, "", False, "رابط غير مدعوم"
 
 def extract_telegram_channel_info(text, msg=None):
     """يستخرج اسم قناة تليجرام (ورقم البوست ونوع الرابط) من أي رابط t.me أو معرّف @channel أو رسالة محولة (Forward)."""
@@ -2288,12 +2353,21 @@ async def scan_monitored_channels(context, target_channel=None, specific_post_id
                         break
 
             try:
-                deal_msg, deal_img, orig_url, our_short_url, title, eff_p, promo_sig = await scrape_single_product(
+                deal_msg, deal_img, orig_url, our_short_url, title, eff_p, promo_sig, is_active, active_reason = await scrape_single_product(
                     context, target_url, fallback_text=p_text, fallback_image=p_photo
                 )
                 if not deal_msg or not title:
                     continue
-                if not specific_post_id and is_deal_already_sent(orig_url, title, eff_p, promo_sig):
+
+                # 1) التحقق الصارم أن العرض لسه متاح وساري على المتجر حالياً (مش منتهي أو مخلص أو نافد)
+                if not is_active:
+                    print(f"⚠️ تخطي نشر عرض من @{ch} لأن العرض غير متاح أو انتهى على المتجر: {title[:50]} ({active_reason})")
+                    continue
+
+                # 2) التحقق أن العرض لم يتم نشره مسبقاً بنفس السعر والمواصفات (يمنع التكرار إلا لو السعر نزل أكتر أو اتضاف كود جديد)
+                should_send, change_reason = should_send_deal(orig_url, title, eff_p, promo_sig)
+                if not should_send and not specific_post_id:
+                    print(f"⏩ تخطي نشر العرض من @{ch} لأنه منشور سابقاً في القناة ومحصلش فيه أي تغيير: {title[:50]}")
                     continue
 
                 mark_deal_sent(orig_url, title, eff_p, promo_sig)
@@ -2303,7 +2377,7 @@ async def scan_monitored_channels(context, target_channel=None, specific_post_id
                 if notify_chat_id:
                     await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, [notify_chat_id])
                 total_posted += 1
-                print(f"✅ تم التعلم من @{ch} وتحويل ونشر عرض: {title[:55]}")
+                print(f"✅ تم التعلم من @{ch} وتحويل ونشر عرض ساري ومحدث: {title[:55]} ({active_reason})")
             except Exception as e:
                 print(f"خطأ في تحويل بوست {post_id} من @{ch}: {e}")
 
@@ -2469,7 +2543,7 @@ async def poll_private_chat_once(context):
                         target_url = resolved_cand
                         break
 
-            deal_msg, deal_img, orig_url, our_short_url, title, eff_p, promo_sig = await scrape_single_product(
+            deal_msg, deal_img, orig_url, our_short_url, title, eff_p, promo_sig, is_active, active_reason = await scrape_single_product(
                 context, target_url, fallback_text=text, fallback_image=fallback_img_id
             )
             # منع نشر نفس الرابط مرتين لو اتبعت في خلال دقيقتين
@@ -2478,25 +2552,7 @@ async def poll_private_chat_once(context):
                 continue
             _recent_private_urls[orig_url] = now_ts
 
-            if deal_msg:
-                if title:
-                    mark_deal_sent(orig_url, title, eff_p, promo_sig)
-                # 1) نشر الرسالة الكاملة بالصورة في القناة مرة واحدة فقط
-                channel_only_ids = [cid for cid in CHAT_IDS if str(cid) != str(user_chat_id)]
-                if channel_only_ids:
-                    await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, channel_only_ids)
-                # 2) إرسال نسخة لصاحب البوت في الشات الخاص
-                await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, [user_chat_id])
-                channel_note = f"\n📡 <i>وتم حفظ قناة @{html.escape(ch_ref)} في ذاكرة المتابعة التلقائية للبوت!</i>" if ch_kind == "public" else ""
-                summary_txt = (
-                    "✅ <b>تم تحويل الرابط ونشر العرض بالصورة في القناة بنجاح!</b>\n"
-                    "🧠 <i>وتم حفظ الماركة وفئة المنتج في ذاكرة البوت للبحث التلقائي عن عروض مشابهة!</i>"
-                    f"{channel_note}\n\n"
-                    f"🔗 <b>الرابط الأصلي الصافي:</b>\n{html.escape(orig_url)}\n\n"
-                    f"💰 <b>رابط الأفلييت الخاص بينا:</b>\n{html.escape(our_short_url)}"
-                )
-                await asyncio.to_thread(send_telegram_msg, summary_txt, None, [user_chat_id])
-            else:
+            if not deal_msg or not title:
                 # لو الرابط لصفحة عامة في أمازون/نون مش منتج مفرد
                 summary_txt = (
                     "✅ <b>تم استخراج الرابط الأصلي وتحويله لكود الأفلييت الخاص بينا:</b>\n\n"
@@ -2504,6 +2560,49 @@ async def poll_private_chat_once(context):
                     f"💰 <b>رابط الأفلييت المختصر:</b>\n{html.escape(our_short_url)}"
                 )
                 await asyncio.to_thread(send_telegram_msg, summary_txt, None, [user_chat_id])
+                continue
+
+            # 1) فحص هل العرض لسه متاح وساري حالياً في المتجر (مش مخلص أو انتهى)
+            if not is_active:
+                warn_txt = (
+                    "⚠️ <b>تنبيه: العرض ده حالياً غير متاح أو انتهى على المتجر!</b>\n"
+                    f"<i>السبب: {html.escape(active_reason)}</i>\n\n"
+                    "🧠 <b>لكن تم حفظ الماركة ونوع المنتج</b> في ذاكرة البوت عشان يبحث عن عروض جديدة عليها تلقائياً ويجيبها فوراً!\n\n"
+                    f"🔗 <b>الرابط الأصلي الصافي:</b>\n{html.escape(orig_url)}\n\n"
+                    f"💰 <b>رابط الأفلييت الخاص بينا:</b>\n{html.escape(our_short_url)}"
+                )
+                await asyncio.to_thread(send_telegram_msg, warn_txt, None, [user_chat_id])
+                continue
+
+            # 2) فحص هل العرض نزل قبل كده في القناة بدون أي تغيير جديد (منع التكرار)
+            should_send, change_reason = should_send_deal(orig_url, title, eff_p, promo_sig)
+            if not should_send:
+                already_txt = (
+                    "ℹ️ <b>العرض ده منشور بالفعل في القناة بنفس السعر والمواصفات ومحصلش عليه أي تغيير جديد!</b>\n"
+                    "<i>(تم منع تكرار النشر في القناة لمنع إزعاج المتابعين، وده رابط الأفلييت الخاص بيك):</i>\n\n"
+                    f"🔗 <b>الرابط الأصلي الصافي:</b>\n{html.escape(orig_url)}\n\n"
+                    f"💰 <b>رابط الأفلييت الخاص بينا:</b>\n{html.escape(our_short_url)}"
+                )
+                await asyncio.to_thread(send_telegram_msg, already_txt, None, [user_chat_id])
+                continue
+
+            # 3) العرض ساري وجديد أو نزل سعره أكتر: نشره في القناة وفي الشات
+            mark_deal_sent(orig_url, title, eff_p, promo_sig)
+            # 1) نشر الرسالة الكاملة بالصورة في القناة مرة واحدة فقط
+            channel_only_ids = [cid for cid in CHAT_IDS if str(cid) != str(user_chat_id)]
+            if channel_only_ids:
+                await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, channel_only_ids)
+            # 2) إرسال نسخة لصاحب البوت في الشات الخاص
+            await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, [user_chat_id])
+            channel_note = f"\n📡 <i>وتم حفظ قناة @{html.escape(ch_ref)} في ذاكرة المتابعة التلقائية للبوت!</i>" if ch_kind == "public" else ""
+            summary_txt = (
+                "✅ <b>تم تحويل الرابط ونشر العرض بالصورة في القناة بنجاح!</b>\n"
+                "🧠 <i>وتم حفظ الماركة وفئة المنتج في ذاكرة البوت للبحث التلقائي عن عروض مشابهة!</i>"
+                f"{channel_note}\n\n"
+                f"🔗 <b>الرابط الأصلي الصافي:</b>\n{html.escape(orig_url)}\n\n"
+                f"💰 <b>رابط الأفلييت الخاص بينا:</b>\n{html.escape(our_short_url)}"
+            )
+            await asyncio.to_thread(send_telegram_msg, summary_txt, None, [user_chat_id])
         except Exception as e:
             print(f"خطأ أثناء تحويل الرابط من الشات الخاص: {e}")
             await asyncio.to_thread(
