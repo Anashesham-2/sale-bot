@@ -443,10 +443,18 @@ def is_almost_free(price, list_price, badge_discount=None):
     return False
 
 def detect_brand(title):
-    t = (title or "").lower()
+    if not title:
+        return None
+    # نفحص أول 5 كلمات من العنوان فقط لمنع التضارب مع أجهزة التوافق (مثل: متوافق مع سامسونج وآيفون)
+    t_words = (title or "").lower().split()[:5]
+    t_head = " ".join(t_words)
+    t_head_norm = _normalize_ar(t_head)
     for label, keywords in HOT_BRANDS:
-        if any(k.lower() in t for k in keywords):
-            return label
+        for k in keywords:
+            k_low = k.lower()
+            k_norm = _normalize_ar(k_low)
+            if re.search(r'\b' + re.escape(k_low) + r'\b', t_head) or re.search(r'\b' + re.escape(k_norm) + r'\b', t_head_norm):
+                return label
     return None
 
 def parse_reviews_count(reviews_str):
@@ -620,7 +628,7 @@ def clean_image_url(url):
     return u
 
 BILINGUAL_BRANDS = {
-    "انكر": ("أنكر", "Anker"), "anker": ("أنكر", "Anker"),
+    "انكر": ("أنكر", "Anker"), "أنكر": ("أنكر", "Anker"), "anker": ("أنكر", "Anker"),
     "soundcore": ("ساوند كور", "Soundcore"), "ساوند كور": ("ساوند كور", "Soundcore"), "ساوندكور": ("ساوند كور", "Soundcore"),
     "eufy": ("يوفي", "Eufy"), "يوفي": ("يوفي", "Eufy"),
     "اي لوك": ("آي لوك", "iLock"), "آي لوك": ("آي لوك", "iLock"), "ilock": ("آي لوك", "iLock"), "i-lock": ("آي لوك", "iLock"),
@@ -691,6 +699,23 @@ BILINGUAL_BRANDS = {
     "jepeerbz": ("جيبيربز", "JEPEErbz"), "جيبيربز": ("جيبيربز", "JEPEErbz"),
 }
 
+def _norm_ar_brand(text):
+    """توحيد وتبسيط اسم الماركة بالعربي والإنجليزي للمقارنة والمطابقة الدقيقة."""
+    if not text:
+        return ""
+    t = str(text).lower()
+    t = re.sub(r'[أإآا]', 'ا', t)
+    t = re.sub(r'[ةه]', 'ه', t)
+    t = re.sub(r'[يى]', 'ي', t)
+    t = re.sub(r'[\u064B-\u065F\u0640]', '', t)
+    t = re.sub(r'[^\w\s]', ' ', t)
+    return re.sub(r'\s+', ' ', t).strip()
+
+_NORM_BILINGUAL_BRANDS = {}
+for _k, _v in BILINGUAL_BRANDS.items():
+    _NORM_BILINGUAL_BRANDS[_norm_ar_brand(_k)] = _v
+    _NORM_BILINGUAL_BRANDS[_k.lower().strip()] = _v
+
 BILINGUAL_CATEGORIES = [
     # 1. كروت التسجيل والكابتشر كارد
     (r'كابتشر\s*كارد|كرت\s*تسجيل|video\s*capture|capture\s*card', 'كابتشر كارد', 'Video Capture Card'),
@@ -698,43 +723,51 @@ BILINGUAL_CATEGORIES = [
     # 2. الطابعات الحرارية والمحمولة
     (r'طابعة\s*(?:حرارية|صغيرة|ملصقات|محمولة|جيب)?|mini\s*printer|thermal\s*printer|label\s*(?:maker|printer)|printer\b', 'طابعة حرارية محمولة', 'Mini Thermal Portable Printer'),
 
-    # 3. إكسسوارات وملحقات الأجهزة (يجب فحصها قبل الأجهزة نفسها حتى لا يُصنف الشاحن أو الجراب كجهاز تابلت أو موبايل)
+    # 3. إكسسوارات الكمبيوتر واللابتوب (يجب فحصها قبل أجهزة اللابتوب والكمبيوتر حتى لا يُصنف الماوس أو الشنطة كلابتوب)
+    (r'ماوس\s*باد|بساط\s*(?:ماوس|فأرة)|mouse\s*pad', 'ماوس باد', 'Mouse Pad'),
+    (r'ماوس\s*(?:ألعاب|العاب|جيمنج)|فأرة\s*(?:ألعاب|العاب)|gaming\s*mouse', 'ماوس ألعاب', 'Gaming Mouse'),
+    (r'ماوس|فأرة|mouse\b', 'ماوس كمبيوتر', 'Computer Mouse'),
+    (r'كيبورد\s*(?:ألعاب|العاب|جيمنج|ميكانيك|ميكانيكي)|لوحة\s*مفاتيح\s*(?:ألعاب|العاب)|gaming\s*keyboard|mechanical\s*keyboard', 'كيبورد ألعاب ميكانيكي', 'Gaming Keyboard'),
+    (r'كيبورد|لوحة\s*مفاتيح|keyboard\b', 'لوحة مفاتيح', 'Keyboard'),
+    (r'شنطة\s*لابتوب|حقيبة\s*لابتوب|جراب\s*لابتوب|laptop\s*(?:bag|backpack|sleeve|case)', 'حقيبة لابتوب', 'Laptop Backpack & Bag'),
+    (r'قاعدة\s*تبريد\s*لابتوب|مروحة\s*تبريد\s*لابتوب|cooling\s*pad|laptop\s*cooler', 'قاعدة تبريد لابتوب', 'Laptop Cooling Pad'),
+    (r'حامل\s*لابتوب|ستاند\s*لابتوب|laptop\s*stand', 'حامل لابتوب مريح', 'Laptop Stand Holder'),
+
+    # 4. إكسسوارات وملحقات الموبايل والتابلت (يجب فحصها قبل الهواتف والتابلت حتى لا يُصنف الشاحن أو الكابل كجهاز موبايل أو تابلت)
+    (r'باور\s*بانك|شاحن\s*متنقل|بطارية\s*متنقلة|شاحن\s*محمول|power\s*bank|portable\s*charger', 'باور بانك', 'Power Bank'),
     (r'لاصقة\s*حماية|سكرين\s*بروتكتور|شاشة\s*حماية|حامي\s*شاشة|screen\s*protector|tempered\s*glass', 'لاصقة حماية شاشة', 'Screen Protector Glass'),
     (r'جراب|كفر|غطاء\s*حماية|حافظة|phone\s*case|tablet\s*case|protective\s*case|case\s*cover', 'جراب حماية', 'Protective Case'),
     (r'شاحن\s*سيارة|car\s*charger', 'شاحن سيارة سريع', 'Fast Car Charger'),
     (r'شاحن\s*لاسلكي|wireless\s*charger', 'شاحن لاسلكي', 'Wireless Charger'),
     (r'شاحن\s*(?:حائط|جداري|سريع|منزلي|مكتبي|راس|رأس)?|راس\s*شاحن|رأس\s*شاحن|مهايئ\s*شحن|wall\s*charger|fast\s*charger|charger\b|adapter\b', 'شاحن سريع', 'Fast Charger'),
-    (r'كابل\s*شحن|سلك\s*شحن|وصلة\s*شحن|charging\s*cable|usb\s*cable|cable\b', 'كابل شحن سريع', 'Fast Charging Cable'),
-    (r'باور\s*بانك|بطارية\s*متنقلة|شاحن\s*متنقل|power\s*bank', 'باور بانك', 'Power Bank'),
+    (r'كابل\s*شحن|سلك\s*شحن|وصلة\s*شحن|charging\s*cable|usb\s*cable|كابل\b|سلك\b|cable\b', 'كابل شحن سريع', 'Fast Charging Cable'),
     (r'مشترك\s*كهربائ?ي?|مشترك|power\s*strip', 'مشترك كهربائي', 'Power Strip'),
-    (r'ستاند|حامل\s*(?:موبايل|هاتف|لابتوب|شاشة|تابلت)|stand\b|holder\b', 'حامل ستاند مريح', 'Adjustable Stand Holder'),
+    (r'ستاند|حامل\s*(?:موبايل|هاتف|شاشة|تابلت)|stand\b|holder\b', 'حامل ستاند مريح', 'Adjustable Stand Holder'),
 
-    # 4. أجهزة اللابتوب والكمبيوتر المحمول (تُفحص قبل الشاشات لأن عناوين اللابتوب تذكر مقاس الشاشة!)
+    # 5. أجهزة اللابتوب والكمبيوتر المحمول
     (r'لابتوب|حاسوب\s*محمول|كمبيوتر\s*محمول|laptop\b|notebook\b|vivobook\b|zenbook\b|ideapad\b|thinkpad\b|legion\b|macbook\b', 'لابتوب', 'Laptop'),
 
-    # 5. أجهزة التابلت واللوحي (بعد فحص الشواحن والإكسسوارات لضمان عدم الخلط)
+    # 6. أجهزة التابلت واللوحي
     (r'\b(?:تابلت|جهاز\s*لوحي|ipad|tablet)\b', 'تابلت ذكي', 'Smart Tablet'),
 
-    # 6. الشاشات والتلفزيونات (الآن لن تخلط مع شاشات اللابتوب)
+    # 7. الشاشات والتلفزيونات
     (r'(?:^|[^\w])(?:شاشة\s*(?:كمبيوتر|ألعاب|تلفزيون|عرض|سمارت|ذكية)|تلفزيون|تلفاز|smart\s*tv|tv\b|monitor\b)', 'شاشة ذكية', 'Smart TV & Monitor'),
 
-    # 7. الهواتف الذكية والموبايل
+    # 8. الهواتف الذكية والموبايل
     (r'موبايل|هاتف\s*(?:ذكي|محمول)?|smartphone\b|iphone\b', 'موبايل', 'Smartphone'),
 
-    # 8. السماعات والصوتيات
+    # 9. السماعات والصوتيات
     (r'سماعة\s*(?:اذن|أذن|بلوتوث|لاسلكية|ايربودز?|داخل\s*الأذن)?|earbuds|airpods|true\s*wireless|tws\b', 'سماعة أذن لاسلكية', 'True Wireless Earbuds'),
     (r'سماعة\s*(?:راس|رأس|العاب|ألعاب|محيطية)|gaming\s*headset|headphones|headset\b', 'سماعة رأس', 'Gaming Headset'),
     (r'مكبر\s*صوت|ساوند\s*بار|سبيكر|speaker\b|soundbar\b', 'مكبر صوت ساوند بار', 'Bluetooth Speaker'),
 
-    # 9. الساعات الذكية
+    # 10. الساعات الذكية
     (r'ساعة\s*(?:ذكية|سمارت)|smart\s*watch|smartwatch', 'ساعة ذكية', 'Smartwatch'),
 
-    # 10. ملحقات الكمبيوتر
-    (r'ماوس|فأرة|mouse\b', 'ماوس لاسلكي', 'Wireless Mouse'),
-    (r'كيبورد|لوحة\s*مفاتيح|keyboard\b', 'لوحة مفاتيح', 'Keyboard'),
+    # 11. مراوح التبريد
     (r'مروحة\s*(?:تبريد|مكتب|عمود)?|cooling\s*fan|fan\b', 'مروحة تبريد', 'Cooling Fan'),
 
-    # 11. الأجهزة المنزلية وأجهزة المطبخ
+    # 12. الأجهزة المنزلية وأجهزة المطبخ
     (r'ماكينة\s*(?:تحضير\s*)?ال?قهوة|صانعة\s*ال?قهوة|coffee\s*maker', 'ماكينة تحضير قهوة', 'Coffee Maker'),
     (r'ماكينة\s*حلاقة|shaver\b|clipper\b|trimmer\b', 'ماكينة حلاقة', 'Hair Clipper & Shaver'),
     (r'قلاية\s*(?:هوائية|بدون\s*زيت)|اير\s*فراير|air\s*fryer', 'قلاية هوائية', 'Air Fryer'),
@@ -744,7 +777,7 @@ BILINGUAL_CATEGORIES = [
     (r'مفرمة|كبة|chopper\b|food\s*processor', 'كبة ومفرمة كهربائية', 'Electric Food Chopper'),
     (r'مكنسة\s*(?:كهربائية|روبوت|لاسلكية)?|vacuum\s*cleaner', 'مكنسة كهربائية', 'Vacuum Cleaner'),
 
-    # 12. الأدوات والأزياء والعناية الشخصية
+    # 13. الأدوات والأزياء والعناية الشخصية
     (r'كرسي\s*(?:بوسادة|طبي|مريح)?|مسند\s*(?:ظهر|طبي)|وسادة\s*(?:ظهر|جلوس)|cushion\b', 'كرسي ومسند ظهر مريح', 'Back Support Cushion Chair'),
     (r'حذاء\s*رياضي|كوتشي|running\s*shoes|sneakers\b', 'حذاء رياضي', 'Running Shoes'),
     (r'طقم\s*مفكات|screwdriver\s*set', 'طقم مفكات براغي', 'Screwdriver Set'),
@@ -757,30 +790,48 @@ BILINGUAL_CATEGORIES = [
 def extract_bilingual_product_names(title, brand=None, features=None):
     """
     يستخرج اسم المنتج الذكي والمختصر ببراعة بالعربي وبالإنجليزي:
-    - الاسم بالعربي: الماركة بالعربي + نوع المنتج الأساسي + الموديل/المواصفة الجوهرية (مختصر وواضح بدون حشو).
-    - الاسم بالإنجليزي: الماركة بالإنجليزي + نوع المنتج بالإنجليزي + الموديل/المواصفة.
+    - الاسم بالعربي: نوع المنتج الأساسي + الماركة بالعربي + الموديل/المواصفة الجوهرية (مختصر وواضح بدون حشو).
+    - الاسم بالإنجليزي: الماركة بالإنجليزي + الموديل/المواصفة + نوع المنتج بالإنجليزي.
     يمنع حشو الوصف في الاسم، ويجعل بداية الرسالة أنيقة ومفهومة ومباشرة.
     """
     clean_t = clean(title or "").strip()
     b_ar, b_en = "", ""
 
-    # تنظيف الماركة لو كانت مركبة مثل "أنكر / ساوند كور (Anker)"
+    # 1. تحديد الماركة: إعطاء الأولوية القصوى لماركة المتجر الأصلية
     clean_b_raw = (brand or "").strip()
-    if "/" in clean_b_raw:
-        clean_b_raw = clean_b_raw.split("/")[0].split("(")[0].strip()
-    clean_b = clean_b_raw.lower()
+    if clean_b_raw and clean_b_raw.lower() not in _GENERIC_BRAND_NAMES:
+        tokens = re.split(r'[/,\|\(\)]', clean_b_raw)
+        for tok in tokens:
+            tok = tok.strip()
+            if not tok or tok.lower() in _GENERIC_BRAND_NAMES:
+                continue
+            tok_norm = _norm_ar_brand(tok)
+            tok_low = tok.lower()
+            if tok_norm in _NORM_BILINGUAL_BRANDS:
+                b_ar, b_en = _NORM_BILINGUAL_BRANDS[tok_norm]
+                break
+            elif tok_low in _NORM_BILINGUAL_BRANDS:
+                b_ar, b_en = _NORM_BILINGUAL_BRANDS[tok_low]
+                break
 
-    # 1. تحديد الماركة بالعربي والإنجليزي
-    if clean_b and clean_b in BILINGUAL_BRANDS:
-        b_ar, b_en = BILINGUAL_BRANDS[clean_b]
-    else:
+        # إذا كانت الماركة معطاة رسمياً من المتجر ولكنها غير موجودة بالقاموس:
+        if not b_ar and clean_b_raw:
+            primary_tokens = [t.strip() for t in tokens if t.strip() and t.strip().lower() not in _GENERIC_BRAND_NAMES]
+            chosen_brand = primary_tokens[0] if primary_tokens else clean_b_raw
+            b_ar = chosen_brand
+            b_en = chosen_brand
+
+    # إذا لم توجد ماركة رسمية من المتجر، نبحث فقط في أول 4 كلمات من العنوان
+    # لمنع التقاط أجهزة التوافق المذكورة في العنوان (مثل: متوافق مع هواتف سامسونج أو آبل)
+    if not b_ar:
+        head_words = clean_t.split()[:4]
+        head_text = " ".join(head_words)
+        head_norm = _norm_ar_brand(head_text)
         for k, (ar_v, en_v) in BILINGUAL_BRANDS.items():
-            if re.search(r'\b' + re.escape(k) + r'\b', clean_t.lower()):
+            k_norm = _norm_ar_brand(k)
+            if re.search(r'\b' + re.escape(k_norm) + r'\b', head_norm, re.I) or re.search(r'\b' + re.escape(k) + r'\b', head_text, re.I):
                 b_ar, b_en = ar_v, en_v
                 break
-        if not b_ar and brand:
-            b_ar = clean_b_raw or brand.strip()
-            b_en = clean_b_raw or brand.strip()
 
     # 2. تحديد نوع وفئة المنتج بالعربي والإنجليزي
     cat_ar, cat_en = "", ""
@@ -789,8 +840,9 @@ def extract_bilingual_product_names(title, brand=None, features=None):
             cat_ar, cat_en = c_ar, c_en
             break
 
-    # 3. استخراج الموديل أو المواصفات الجوهرية بذكاء حسب نوع المنتج
+    # 3. استخراج الموديل أو المواصفات الجوهرية بذكاء
     spec_ar_list, spec_en_list = [], []
+    extra_en_tail = ""
 
     # مواصفات اللابتوب المخصصة
     if cat_en == 'Laptop':
@@ -815,24 +867,14 @@ def extract_bilingual_product_names(title, brand=None, features=None):
             spec_ar_list.append(f"{screen_m.group(1)} بوصة")
             spec_en_list.append(f"{screen_m.group(1)}-inch")
     else:
-        model_m = re.search(r'\b(R50i|R100|P20i|737|A1289|14T\s*Pro|13C|14\s*Ultra|TCME-100|IL-102|IL-103|H510|Zeus|Lite\s*Racer|Galaxy\s*S\d+|Air\s*3|VC321)\b', clean_t, re.I)
+        model_m = re.search(r'\b(R50i|R100|P20i|737|A1289|14T\s*Pro|13C|14\s*Ultra|TCME-100|IL-102|IL-103|H510|Zeus|Lite\s*Racer|Galaxy\s*S\d+|Air\s*3|VC321|M\d{3,4}|K\d{3,4})\b', clean_t, re.I)
         if model_m:
             m_val = model_m.group(1).strip()
             spec_ar_list.append(m_val)
             spec_en_list.append(m_val)
 
-        outlets_m = re.search(r'(\d+)\s*(?:منافذ|مخارج|عيون|outlets?|ports?)', clean_t, re.I)
-        if outlets_m:
-            cnt = outlets_m.group(1)
-            spec_ar_list.append(f"{cnt} منافذ")
-            spec_en_list.append(f"{cnt}-Outlet")
-
-        if re.search(r'type-?c|نوع\s*سي|usb-?c', clean_t, re.I):
-            spec_ar_list.append("و USB-C")
-            spec_en_list.append("with USB-C")
-
-        # فحص الواط للشواحن والأجهزة الكهربائية فقط، مع اشتراط حد كلمة حتى لا يلتصق بأحرف الموديل مثل EJ857W!
-        if cat_en in ('Fast Charger', 'Fast Wall Charger', 'Car Charger', 'Wireless Charger', 'Power Strip', 'Blender', 'Air Fryer', 'Steam Iron', 'Electric Water Kettle', 'Hair Clipper & Shaver'):
+        # فحص الواط للشواحن، الباور بانك، والأجهزة الكهربائية فقط، مع اشتراط حد كلمة
+        if cat_en in ('Power Bank', 'Fast Charger', 'Fast Wall Charger', 'Car Charger', 'Wireless Charger', 'Power Strip', 'Blender', 'Air Fryer', 'Steam Iron', 'Electric Water Kettle', 'Hair Clipper & Shaver'):
             watt_m = re.search(r'(?<![A-Za-z0-9])(\d{1,4})\s*(?:وات|واط|W\b)', clean_t, re.I)
             if watt_m:
                 w = watt_m.group(1)
@@ -843,11 +885,22 @@ def extract_bilingual_product_names(title, brand=None, features=None):
         if mah_m:
             spec_ar_list.append(f"{mah_m.group(1)} مللي أمبير")
             spec_en_list.append(f"{mah_m.group(1)}mAh")
-        elif cat_en in ('Smart Tablet', 'Smartphone'):
+
+        outlets_m = re.search(r'(\d+)\s*(?:منافذ|مخارج|عيون|outlets?|ports?)', clean_t, re.I)
+        if outlets_m:
+            cnt = outlets_m.group(1)
+            spec_ar_list.append(f"{cnt} منافذ")
+            spec_en_list.append(f"{cnt}-Outlet")
+
+        if cat_en in ('Smart Tablet', 'Smartphone'):
             rom_m = re.search(r'\b(\d+)\s*(?:جيجا(?:بايت)?|GB)\b', clean_t, re.I)
             if rom_m:
                 spec_ar_list.append(f"{rom_m.group(1)} جيجا")
                 spec_en_list.append(f"{rom_m.group(1)}GB")
+
+        if re.search(r'type-?c|نوع\s*سي|usb-?c', clean_t, re.I):
+            spec_ar_list.append("و USB-C")
+            extra_en_tail = "with USB-C"
 
     spec_ar = " ".join(spec_ar_list).strip()
     spec_en = " ".join(spec_en_list).strip()
@@ -864,7 +917,8 @@ def extract_bilingual_product_names(title, brand=None, features=None):
             name_ar = f"{b_ar} — {name_ar}"
 
     if cat_en:
-        name_en = f"{b_en} {spec_en} {cat_en}".strip() if b_en else f"{spec_en} {cat_en}".strip()
+        core_en = f"{b_en} {spec_en} {cat_en}".strip() if b_en else f"{spec_en} {cat_en}".strip()
+        name_en = f"{core_en} {extra_en_tail}".strip() if extra_en_tail else core_en
     else:
         en_part = re.findall(r'[A-Za-z0-9][A-Za-z0-9\s\-_]{3,50}', clean_t)
         if en_part:
@@ -911,12 +965,22 @@ def build_description(title, features=None, extra_desc=None, brand=None):
     b_txt = (brand or '').strip()
     b_suffix = f' من {b_txt}' if b_txt else ''
 
-    if any(w in tl for w in ('طابعة', 'printer')):
+    if any(w in tl for w in ('كابتشر كارد', 'capture card', 'video capture')):
+        return f'كارت تسجيل وبث فيديو احترافي{b_suffix}، ينقل ويسجل الصورة بدقة فائقة وسرعة نقل عالية وبدون أي تأخير، مثالي للبث المباشر وصناع المحتوى ومحبي الألعاب.'
+    elif any(w in tl for w in ('طابعة', 'printer')):
         return f'طابعة حرارية صغيرة محمولة{b_suffix}، تعمل بدون حبر بتقنية البلوتوث وتتصل بالموبايل مباشرة لطباعة الملصقات والصور واليوميات والمهام بسرعة وسهولة في أي مكان.'
+    elif any(w in tl for w in ('ماوس', 'فأرة', 'mouse')):
+        return f'ماوس عالي الدقة والاستجابة السريعة{b_suffix}، بتصميم مريح لليد يمنحك تحكماً سلساً ودقيقاً للألعاب والمهام اليومية مع متانة عالية وأداء استثنائي.'
+    elif any(w in tl for w in ('كيبورد', 'لوحة مفاتيح', 'keyboard')):
+        return f'لوحة مفاتيح متينة ومريحة في الكتابة{b_suffix}، مصممة بأزرار سريعة الاستجابة وعمر افتراضي طويل لتوفير أعلى إنتاجية وأفضل أداء في العمل والألعاب.'
     elif any(w in tl for w in ('مشترك', 'power strip')):
         return f'مشترك كهربائي متين وموثوق{b_suffix}، مزود بمنافذ كهربائية متعددة ومخارج شحن ذكية وسريعة للأجهزة، ومصنوع من خامات مقاومة للحرارة مع حماية متكاملة ضد التذبذب والماس الكهربائي لضمان أمان أجهزتك.'
-    elif any(w in tl for w in ('باور بانك', 'power bank')):
+    elif any(w in tl for w in ('باور بانك', 'شاحن متنقل', 'بطارية متنقلة', 'power bank')):
         return f'باور بانك عالي الكفاءة والاعتمادية{b_suffix}، يتميز بسعة شحن حقيقية وتقنية شحن سريع آمنة للحفاظ على بطارية أجهزتك أثناء التنقل والسفر مع حماية متكاملة من زيادة التيار.'
+    elif any(w in tl for w in ('شاحن', 'charger', 'adapter')):
+        return f'شاحن سريع وموثوق{b_suffix}، يدعم تقنيات الشحن الذكي لتوفير أقصى سرعة شحن آمنة لهواتفك وأجهزتك الذكية مع حماية متطورة ضد السخونة وتذبذب التيار.'
+    elif any(w in tl for w in ('لابتوب', 'laptop', 'notebook', 'vivobook', 'zenbook', 'ideapad', 'thinkpad', 'macbook')):
+        return f'لابتوب عملي وقوي الأداء{b_suffix}، يجمع بين السرعة وكفاءة المعالجة للمهام اليومية والدراسة والعمل، مع شاشة مريحة للعين وبطارية تدوم طويلاً.'
     elif any(w in tl for w in ('سماعة', 'earbuds', 'headset', 'headphones')):
         return f'سماعة أذن لاسلكية متطورة تمنحك صوتاً نقياً وباس قوي مع ميكروفون مدمج لمكالمات فائقة الوضوح، وتصميم مريح ومحكم داخل الأذن للاستخدام الرياضي واليومي لساعات طويلة.'
     elif any(w in tl for w in ('قهوة', 'coffee')):
@@ -1147,7 +1211,10 @@ def build_message(store, title, price, list_price, discount, link,
     store_ar = "أمازون" if store.lower() == "amazon" else ("نون" if store.lower() == "noon" else store)
     icon = "🔥" if store.lower() == "amazon" else "🟡"
 
-    brand_clean = (brand or detect_brand(title) or "").strip()
+    b_raw = (brand or "").strip()
+    if b_raw.lower() in _GENERIC_BRAND_NAMES:
+        b_raw = ""
+    brand_clean = b_raw or (detect_brand(title) or "").strip()
     name_ar, name_en = extract_bilingual_product_names(title, brand=brand_clean, features=features)
 
     final_price = None
