@@ -47,34 +47,43 @@ HISTORY_FILE = os.path.join(BASE_DIR, "price_history.json")
 
 # أشهر البراندات والأقسام اللي عليها عروض قوية في مصر (بيتم فحصها واكتشاف عروضها المجمعة)
 HOT_BRANDS = [
+    ("أنكر / ساوند كور (Anker)", ["سماعة انكر", "anker", "انكر", "أنكر", "soundcore", "ساوند كور"]),
+    ("آي لوك (iLock)", ["مشترك اي لوك", "ilock", "i-lock", "اي لوك", "آي لوك", "اى لوك"]),
     ("UGREEN (يوغرين)", ["ugreen", "يوغرين", "يوجرين"]),
+    ("تورنيدو (Tornado)", ["tornado", "تورنيدو"]),
+    ("فريش (Fresh)", ["fresh", "فريش"]),
+    ("فيليبس / براون", ["philips", "فيليبس", "braun", "براون"]),
+    ("ميانتا / بلاك اند ديكر", ["mienta", "ميانتا", "black+decker", "بلاك اند ديكر"]),
+    ("مولينكس / تيفال / كينوود", ["moulinex", "مولينكس", "tefal", "تيفال", "kenwood", "كينوود"]),
+    ("أورايمو (Oraimo)", ["oraimo", "أورايمو", "اورايمو"]),
+    ("بيسوس / جوي روم", ["baseus", "بيسوس", "joyroom", "جوي روم"]),
+    ("شاومي (Xiaomi)", ["xiaomi", "شاومي", "redmi", "ريدمي"]),
+    ("سامسونج (Samsung)", ["samsung", "سامسونج"]),
     ("Redragon (ريدراجون)", ["redragon", "ريدراجون", "ريد دراجون"]),
+    ("لوجيتك (Logitech)", ["logitech", "لوجيتك"]),
+    ("سوني / JBL", ["jbl", "جي بي ال", "sony", "سوني"]),
     ("فيتراك (Vitrac)", ["vitrac", "فيتراك"]),
     ("أبو عوف", ["ابو عوف", "أبو عوف", "abu auf"]),
     ("Fogg (فوج)", ["fogg", "فوج"]),
-    ("أنكر (Anker)", ["anker", "انكر", "أنكر", "soundcore", "ساوند كور"]),
-    ("أورايمو (Oraimo)", ["oraimo", "أورايمو", "اورايمو"]),
-    ("لوجيتك (Logitech)", ["logitech", "لوجيتك"]),
-    ("بيسوس / جوي روم", ["baseus", "بيسوس", "joyroom", "جوي روم"]),
-    ("نيفيا (Nivea)", ["nivea", "نيفيا"]),
-    ("لوريال (L'Oreal)", ["loreal", "l'oreal", "لوريال"]),
-    ("أريال (Ariel)", ["ariel", "اريال", "أريال", "ايريال"]),
-    ("برسيل (Persil)", ["persil", "برسيل"]),
-    ("تورنيدو (Tornado)", ["tornado", "تورنيدو"]),
-    ("فريش (Fresh)", ["fresh", "فريش"]),
-    ("شاومي (Xiaomi)", ["xiaomi", "شاومي", "redmi", "ريدمي"]),
-    ("سامسونج (Samsung)", ["samsung", "سامسونج"]),
-    ("أديداس (Adidas)", ["adidas", "اديداس", "أديداس"]),
+    ("نيفيا / لوريال", ["nivea", "نيفيا", "loreal", "l'oreal", "لوريال"]),
+    ("أريال / برسيل", ["ariel", "اريال", "أريال", "ايريال", "persil", "برسيل"]),
+    ("أديداس / نايكي", ["adidas", "اديداس", "أديداس", "nike", "نايكي"]),
     ("نسبرسو / نسكافيه", ["nespresso", "nescafe", "نسبرسو", "نسكافيه"]),
 ]
 
-# أقسام بحث إضافية لعروض الهاردوير والإلكترونيات والسوبرماركت في أمازون
+# أقسام بحث إضافية لعروض السماعات والمشتركات والأجهزة المنزلية والهاردوير في أمازون
 AMAZON_CATEGORY_SEARCHES = [
+    ("عروض سماعات أنكر وساوند كور", "https://www.amazon.eg/s?k=%D8%B3%D9%85%D8%A7%D8%B9%D8%A9+%D8%A7%D9%86%D9%83%D8%B1+soundcore"),
+    ("عروض مشتركات آي لوك والكهرباء", "https://www.amazon.eg/s?k=%D9%85%D8%B4%D8%AA%D8%B1%D9%83+%D8%A7%D9%8A+%D9%84%D9%88%D9%83+ilock"),
+    ("عروض القلايات وأجهزة المطبخ", "https://www.amazon.eg/s?k=%D9%82%D9%84%D8%A7%D9%8A%D8%A9+%D8%A8%D8%AF%D9%88%D9%86+%D8%B2%D9%8A%D8%AA+%D8%AE%D9%84%D8%A7%D8%B7+%D9%83%D8%A8%D8%A9"),
+    ("عروض الأجهزة المنزلية والمكاوي", "https://www.amazon.eg/s?k=%D9%85%D9%83%D9%88%D8%A7%D8%A9+%D8%A8%D8%AE%D8%A7%D8%B1+%D9%85%D9%83%D9%86%D8%B3%D8%A9+%D8%BA%D9%84%D8%A7%D9%8A%D8%A9"),
+    ("عروض الشواحن السريعة والباور بانك", "https://www.amazon.eg/s?k=%D8%B4%D8%A7%D8%AD%D9%86+%D8%B3%D8%B1%D9%8A%D8%B9+%D8%A8%D8%A7%D9%88%D8%B1+%D8%A8%D8%A7%D9%86%D9%83"),
+    ("عروض السماعات والبلوتوث", "https://www.amazon.eg/s?k=%D8%B3%D9%85%D8%A7%D8%B9%D8%A9+%D8%A8%D9%84%D9%88%D8%AA%D9%88%D8%AB&rh=p_n_deal_type%3A26901043031"),
     ("عروض الهاردوير والكمبيوتر", "https://www.amazon.eg/s?k=%D9%83%D9%8A%D8%A8%D9%88%D8%B1%D8%AF+%D9%85%D9%8A%D9%83%D8%A7%D9%86%D9%8A%D9%83%D9%8A"),
-    ("عروض الشواحن السريعة GaN", "https://www.amazon.eg/s?k=%D8%B4%D8%A7%D8%AD%D9%86+%D8%B3%D8%B1%D9%8A%D8%B9+gan"),
-    ("عروض السماعات والباور بانك", "https://www.amazon.eg/s?k=%D8%B3%D9%85%D8%A7%D8%B9%D8%A9+%D8%A8%D9%84%D9%88%D8%AA%D9%88%D8%AB&rh=p_n_deal_type%3A26901043031"),
+    ("عروض ماكينات الحلاقة والعناية", "https://www.amazon.eg/s?k=%D9%85%D8%A7%D9%83%D9%8A%D9%86%D8%A9+%D8%AD%D9%84%D8%A7%D9%82%D8%A9+%D8%A8%D8%B1%D8%A7%D9%88%D9%86+%D9%81%D9%8A%D9%84%D9%8A%D8%A8%D8%B3"),
     ("عروض السوبرماركت وفلاش", "https://www.amazon.eg/s?k=%D8%B9%D8%B1%D9%88%D8%B6&i=grocery"),
     ("عروض الإلكترونيات اليومية", "https://www.amazon.eg/s?i=electronics&rh=p_n_deal_type%3A26901043031"),
+    ("عروض المنزل والمطبخ اليومية", "https://www.amazon.eg/s?i=kitchen&rh=p_n_deal_type%3A26901043031"),
 ]
 _brand_rot_idx = 0
 _amz_cat_rot_idx = 0
@@ -316,8 +325,9 @@ _GENERIC_BRAND_NAMES = {
 }
 
 TRUSTED_BRAND_KEYWORDS = (
-    # تقنية، هاردوير، شواحن، إلكترونيات، موبايلات
+    # تقنية، هاردوير، شواحن، مشتركات، إلكترونيات، موبايلات
     "ugreen", "يوغرين", "يوجرين", "anker", "أنكر", "انكر", "soundcore", "ساوند كور", "eufy", "يوفي",
+    "ilock", "i-lock", "آي لوك", "اي لوك", "اى لوك", "ldnio", "لدنيو", "ال دي نيو",
     "redragon", "ريدراجون", "ريد دراجون", "logitech", "لوجيتك", "razer", "ريزر", "hyperx", "هايبر اكس",
     "fantech", "فانتك", "baseus", "بيسوس", "joyroom", "جوي روم", "oraimo", "أورايمو", "اورايمو",
     "xiaomi", "شاومي", "redmi", "ريدمي", "poco", "بوكو", "samsung", "سامسونج", "apple", "أبل", "ابل",
@@ -329,15 +339,16 @@ TRUSTED_BRAND_KEYWORDS = (
     "hp", "اتش بي", "dell", "ديل", "lenovo", "لينوفو", "asus", "أسوس", "اسوس", "acer", "أيسر", "msi", "gigabyte",
     "hollyland", "fujifilm", "instax", "canon", "كانون", "nikon", "نيكون", "epson", "إبسون", "casio", "كاسيو",
     "energizer", "انرجايزر", "duracell", "دوراسيل", "hama", "هاما", "belkin", "بيلكن", "promate", "بروميت",
-    # أجهزة منزلية ومطبخ وعدة
+    # أجهزة منزلية ومطبخ وعدة وعناية شخصية
     "tornado", "تورنيدو", "fresh", "فريش", "sharp", "شارب", "panasonic", "باناسونيك", "philips", "فيليبس",
     "braun", "براون", "kenwood", "كينوود", "moulinex", "مولينكس", "tefal", "تيفال", "delonghi", "ديلونجي",
-    "nespresso", "نسبرسو", "نسبريسو", "black+decker", "black & decker", "بلاك اند ديكر", "bosch", "بوش",
-    "beko", "بيكو", "lg", "ال جي", "إل جي", "toshiba", "توشيبا", "midea", "ميديا", "carrier", "كاريير",
+    "mienta", "ميانتا", "مينتا", "nespresso", "نسبرسو", "نسبريسو", "black+decker", "black & decker", "بلاك اند ديكر", "بلاك + ديكر",
+    "bosch", "بوش", "beko", "بيكو", "lg", "ال جي", "إل جي", "toshiba", "توشيبا", "midea", "ميديا", "carrier", "كاريير",
     "unionaire", "يونيون إير", "ariston", "أريستون", "اريستون", "olympic", "أوليمبيك", "اوليمبيك",
     "zanussi", "زانوسي", "hoover", "هوفر", "karcher", "كارشر", "vileda", "فيليدا", "tank", "تانك",
     "total", "توتال", "ingco", "انجكو", "إنجكو", "luminarc", "لومينارك", "pasabahce", "pyrex", "بايركس",
     "nouval", "نوفال", "zahran", "زهران", "sokany", "سوكاني", "sonai", "سوناي", "raf", "راف",
+    "rush brush", "راش براش", "babyliss", "بيبي ليس", "kemei", "كيمي", "vgr", "في جي ار", "klug", "كلوج",
     # سوبرماركت وعناية شخصية وملابس
     "vitrac", "فيتراك", "abu auf", "أبو عوف", "ابو عوف", "nescafe", "نسكافيه", "lipton", "ليبتون",
     "ahmad tea", "أحمد تي", "rich mix", "ريتش ميكس", "gullon", "جولون", "ariel", "أريال", "اريال", "ايريال",
@@ -356,29 +367,38 @@ TRUSTED_BRAND_KEYWORDS = (
     "dice", "دايس", "naviforce", "نافي فورس", "lacoste", "لاكوست", "ray-ban", "راي بان",
 )
 
+def has_famous_brand(title, brand=None):
+    """يتحقق مما إذا كان المنتج ينتمي لبراند معروف ومشهور (مثل أنكر، آي لوك، تورنيدو، فريش، يوغرين، إلخ)."""
+    combined = f"{(brand or '').strip().lower()} {(title or '').lower()}"
+    return any(kw in combined for kw in TRUSTED_BRAND_KEYWORDS)
+
 def is_trusted_product(title, brand=None, rating=None, reviews=None):
     """
-    يرفض أي منتج غير موثوق:
-    1) لازم يكون عليه تقييم فعلي (>= 3.9) وعدد تقييمات لا يقل عن 3 مشترين.
-    2) لازم تكون الماركة معروفة (أو براند رسمي صريح مش Generic/عام وله تقييمات قوية >= 4.2 من 15+ مشتري).
+    يفلتر المنتجات بذكاء:
+    1) لو المنتج من براند مشهور ومعروف (مثل أنكر، آي لوك، تورنيدو، فريش، فيليبس، براون، شاومي، سامسونج، يوغرين...):
+       يُقبل فوراً طالما تقييمه مش ضعيف (أعلى من أو يساوي 3.8 أو لو كارت العرض في أمازون مظهّرش التقييم).
+    2) لو البراند مش من القائمة المشهورة:
+       يُرفض لو مكتوب Generic/عام، ولازم يكون عليه تقييم فعلي قوي (>= 4.1) من 10 مشترين على الأقل.
     """
     r_val = to_float(rating) if rating else None
     r_cnt = parse_reviews_count(reviews)
-    # 1) رفض أي منتج معلهوش تقييمات أو تقييمه ضعيف
-    if r_val is None or r_val < 3.9 or r_cnt < 3:
+    b_clean = (brand or "").strip().lower()
+
+    # أي منتج تقييمه ضعيف فعلياً (< 3.8) يترفض دائماً
+    if r_val is not None and r_val < 3.8:
         return False
 
-    b_clean = (brand or "").strip().lower()
+    # 1) لو براند معروف ومشهور في مصر -> نقبله فوراً
+    if has_famous_brand(title, brand):
+        return True
+
+    # 2) رفض أي منتج بدون ماركة (Generic / عام)
     if b_clean in _GENERIC_BRAND_NAMES:
         return False
 
-    combined = f"{b_clean} {(title or '').lower()}"
-    if any(kw in combined for kw in TRUSTED_BRAND_KEYWORDS):
-        return True
-
-    # لو الماركة مذكورة صراحةً على الموقع (مش عام/Generic) وعليها تقييمات قوية جداً من المشترين
-    if b_clean and len(b_clean) >= 2 and b_clean not in _GENERIC_BRAND_NAMES:
-        if r_val >= 4.2 and r_cnt >= 15:
+    # 3) لو ماركة تانية غير مشهورة، لازم تقييم عالي (>= 4.1) وعدد تقييمات كافي (>= 10)
+    if r_val is not None and r_val >= 4.1 and r_cnt >= 10:
+        if b_clean and len(b_clean) >= 2 and b_clean not in _GENERIC_BRAND_NAMES:
             return True
 
     return False
@@ -891,41 +911,58 @@ async def scrape_amazon_eg(page):
         await page.mouse.wheel(0, 900)
         await page.wait_for_timeout(900)
 
-    # فحص أقسام وبراندات مختارة (مثل UGREEN و Redragon و Vitrac وأبو عوف و Fogg) + أقسام الهاردوير والسوبرماركت
+    # فحص أقسام وبراندات مختارة (مثل أنكر وآي لوك و UGREEN وتورنيدو وفريش وفيليبس وبراون) + أقسام الأجهزة والهاردوير
     brands_to_check = [
         (b_lbl, f"https://www.amazon.eg/s?k={quote_plus(kw_list[0])}")
-        for b_lbl, kw_list in (HOT_BRANDS[(_brand_rot_idx + i) % len(HOT_BRANDS)] for i in range(4))
+        for b_lbl, kw_list in (HOT_BRANDS[(_brand_rot_idx + i) % len(HOT_BRANDS)] for i in range(6))
     ]
     cats_to_check = [
         AMAZON_CATEGORY_SEARCHES[(_amz_cat_rot_idx + i) % len(AMAZON_CATEGORY_SEARCHES)]
-        for i in range(2)
+        for i in range(5)
     ]
-    _amz_cat_rot_idx = (_amz_cat_rot_idx + 2) % len(AMAZON_CATEGORY_SEARCHES)
+    _amz_cat_rot_idx = (_amz_cat_rot_idx + 5) % len(AMAZON_CATEGORY_SEARCHES)
 
     for section_label, search_url in (brands_to_check + cats_to_check):
         try:
             await page.goto(search_url, wait_until="domcontentloaded", timeout=45000)
-            await page.wait_for_timeout(2000)
-            scards = await page.evaluate("""() => [...document.querySelectorAll('div[data-component-type="s-search-result"]')].slice(0, 24).map(c => {
+            await page.wait_for_timeout(1800)
+            scards = await page.evaluate("""() => [...document.querySelectorAll('div[data-component-type="s-search-result"]')].slice(0, 28).map(c => {
                 const asin = c.getAttribute('data-asin');
                 const title = c.querySelector('h2')?.innerText?.trim();
-                const price = c.querySelector('.a-price .a-offscreen')?.innerText;
-                const list_price = c.querySelector('.a-price.a-text-price .a-offscreen')?.innerText;
+                const price = c.querySelector('.a-price:not(.a-text-price) .a-offscreen')?.innerText
+                    || c.querySelector('.a-price .a-offscreen')?.innerText;
+                const list_price = c.querySelector('.a-price.a-text-price .a-offscreen')?.innerText
+                    || c.querySelector('span[data-a-strike="true"] .a-offscreen')?.innerText;
+                const rating = c.querySelector('i[class*="a-icon-star"] span.a-icon-alt, span[aria-label*="من 5"]')?.innerText
+                    || c.querySelector('span[aria-label*="نجوم"]')?.getAttribute('aria-label');
+                const reviews = c.querySelector('a[href*="#customerReviews"] span, span.s-underline-text')?.innerText;
                 const img = c.querySelector('img.s-image')?.src;
-                return {asin, title, price, list_price, img, text: c.innerText};
+                return {asin, title, price, list_price, rating, reviews, img, text: c.innerText};
             })""")
             for sc in scards:
-                if sc.get("asin") and sc.get("price") and sc.get("list_price"):
-                    link = f"https://www.amazon.eg/dp/{sc['asin']}"
-                    synth_text = f"سعر العرض: {sc['price']}\nسعر القائمه: {sc['list_price']}\n{sc.get('title') or ''}\n{sc.get('text') or ''}"
-                    if link not in products:
-                        products[link] = {
-                            "href": link,
-                            "text": synth_text,
-                            "img": sc.get("img"),
-                        }
-                    elif sc.get("img") and not products[link].get("img"):
-                        products[link]["img"] = sc.get("img")
+                if not sc.get("asin") or not sc.get("price"):
+                    continue
+                card_txt = sc.get("text") or ""
+                has_promo_txt = any(w in card_txt for w in ("وفر ", "مع الكوبون", "كوبون", "عند الدفع", "عرض ترويجي", "اشترِ", "اشتري"))
+                if not sc.get("list_price") and not has_promo_txt:
+                    continue
+                link = f"https://www.amazon.eg/dp/{sc['asin']}"
+                list_line = f"سعر القائمه: {sc['list_price']}\n" if sc.get("list_price") else ""
+                rat_line = ""
+                if sc.get("rating"):
+                    rm = re.search(r'(\d[.,]\d)', sc["rating"])
+                    if rm:
+                        rat_line = f"{rm.group(1).replace(',', '.')} من 5\n"
+                rev_line = f"({sc['reviews']})\n" if sc.get("reviews") else ""
+                synth_text = f"سعر العرض: {sc['price']}\n{list_line}{rat_line}{rev_line}{sc.get('title') or ''}\n{card_txt}"
+                if link not in products:
+                    products[link] = {
+                        "href": link,
+                        "text": synth_text,
+                        "img": sc.get("img"),
+                    }
+                elif sc.get("img") and not products[link].get("img"):
+                    products[link]["img"] = sc.get("img")
         except Exception as e:
             print(f"تعذر فحص قسم {section_label} في أمازون: {e}")
 
@@ -938,40 +975,61 @@ async def scrape_amazon_eg(page):
             info = parse_amazon_card(text_content)
             if not info["price"] or info["price"] < 5 or is_blocked_title(info["title"]):
                 continue
-            match = re.search(r'(\d+)%', text_content)
+            match = re.search(r'(\d+)\s*%', text_content)
             badge_disc = int(match.group(1)) if match else None
-            discount = badge_disc or 0
+            discount = float(badge_disc or 0)
             if info["list_price"] and info["list_price"] > info["price"]:
                 discount = (1 - info["price"] / info["list_price"]) * 100
+
+            has_card_promo = any(w in text_content for w in ("متاح عرض ترويجي", "مع الكوبون", "كوبون خصم", "وفر ", "عند الدفع", "اشترِ", "اشتري"))
+            if discount <= 0 and has_card_promo:
+                egp_m = re.search(r'وفر\s+(\d+(?:\.\d+)?)\s*(?:جنيه|ج\.م)', clean(text_content))
+                if egp_m and info["price"] > float(egp_m.group(1)):
+                    saving_v = float(egp_m.group(1))
+                    info["list_price"] = info["price"]
+                    discount = (saving_v / info["price"]) * 100
+                else:
+                    discount = 15.0
             if discount <= 0:
                 continue
 
             prev_min, max_p, min_p = record_price(full_link, info["price"])
             freebie = is_almost_free(info["price"], info["list_price"], badge_disc)
-            has_card_promo = any(w in text_content for w in ("متاح عرض ترويجي", "مع الكوبون", "كوبون خصم", "وفر ", "اشترِ", "اشتري"))
+            famous = has_famous_brand(info["title"])
+            saving_egp = (info["list_price"] - info["price"]) if (info["list_price"] and info["list_price"] > info["price"]) else 0
+
+            # للبراندات المشهورة (مثل أنكر، آي لوك، تورنيدو، فريش، فيليبس، براون...) نقبل خصم من 14% (أو 10% لو معاه كوبون أو توفير >= 50 جنيه)
+            if famous:
+                qualifies = (discount >= 14) or (discount >= 10 and (has_card_promo or saving_egp >= 50)) or freebie
+            else:
+                qualifies = (discount >= 25) or (discount >= 18 and has_card_promo) or freebie
 
             ok_prelim, _ = should_send_deal(full_link, info["title"], info["price"])
-            if (discount >= MIN_DISCOUNT or freebie or (discount >= 22 and has_card_promo)) and ok_prelim:
-                candidates.append((1 if freebie else 0, discount, full_link, card, info, prev_min, max_p, min_p))
+            if qualifies and ok_prelim:
+                candidates.append((1 if freebie else 0, 1 if famous else 0, 1 if has_card_promo else 0, discount, full_link, card, info, prev_min, max_p, min_p))
         except Exception as e:
             print(f"خطأ في كارت أمازون: {e}")
             continue
 
-    # ترتيب العروض: عروض "ببلاش" أولاً ثم الأعلى خصماً
-    candidates.sort(key=lambda x: (x[0], x[1]), reverse=True)
+    # ترتيب العروض: عروض "ببلاش" أولاً، ثم البراندات المشهورة (أنكر، آي لوك، الأجهزة...)، ثم العروض الإضافية والأعلى خصماً
+    candidates.sort(key=lambda x: (x[0], x[1], x[2], x[3]), reverse=True)
     amazon_sent = 0
-    pdp_blocked = False
+    consecutive_blocks = 0
+    pdp_Lookups = 0
 
-    for _, discount, full_link, card, info, prev_min, max_p, min_p in candidates:
+    for _, famous, _, discount, full_link, card, info, prev_min, max_p, min_p in candidates:
         if amazon_sent >= MAX_PER_CYCLE:
             break
         try:
             seller, brand, pdp_rating, pdp_reviews, features, image, rev_snippets, page_promos, promo_links = None, None, None, None, [], None, [], [], []
-            if not pdp_blocked:
+            if consecutive_blocks < 3 and pdp_Lookups < 28:
+                pdp_Lookups += 1
                 seller, brand, pdp_rating, pdp_reviews, features, image, rev_snippets, page_promos, promo_links = await amazon_product_details(page.context, full_link)
                 if features is None:
-                    pdp_blocked = True
+                    consecutive_blocks += 1
                     features = []
+                else:
+                    consecutive_blocks = 0
 
             rating = info["rating"] or pdp_rating
             reviews = info["reviews"] or pdp_reviews
@@ -1057,34 +1115,34 @@ def parse_noon_card(text, price_text=None, badge_discount=None):
     return {"price": price, "list_price": list_price, "rating": rating, "reviews": reviews, "bought": rank_badge}
 
 NOON_CORE_URLS = [
+    "https://www.noon.com/egypt-ar/search/?q=%D8%B3%D9%85%D8%A7%D8%B9%D8%A9+%D8%A7%D9%86%D9%83%D8%B1",
+    "https://www.noon.com/egypt-ar/search/?q=%D9%85%D8%B4%D8%AA%D8%B1%D9%83+%D8%A7%D9%8A+%D9%84%D9%88%D9%83",
+    "https://www.noon.com/egypt-ar/electronics-and-mobiles/?sort[by]=popularity&sort[dir]=desc",
+    "https://www.noon.com/egypt-ar/electronics-and-mobiles/mobiles-and-accessories/?sort[by]=popularity&sort[dir]=desc",
+    "https://www.noon.com/egypt-ar/home-appliances-31235/?sort[by]=popularity&sort[dir]=desc",
+    "https://www.noon.com/egypt-ar/home-and-kitchen/?sort[by]=popularity&sort[dir]=desc",
     "https://www.noon.com/egypt-ar/electronics-and-mobiles/?sort[by]=discount_percent&sort[dir]=desc",
-    "https://www.noon.com/egypt-ar/electronics-and-mobiles/mobiles-and-accessories/?sort[by]=discount_percent&sort[dir]=desc",
-    "https://www.noon.com/egypt-ar/electronics-and-mobiles/computers-and-accessories/?sort[by]=discount_percent&sort[dir]=desc",
-    "https://www.noon.com/egypt-ar/electronics-and-mobiles/television-and-video/?sort[by]=discount_percent&sort[dir]=desc",
-    "https://www.noon.com/egypt-ar/home-and-kitchen/?sort[by]=discount_percent&sort[dir]=desc",
     "https://www.noon.com/egypt-ar/home-appliances-31235/?sort[by]=discount_percent&sort[dir]=desc",
-    "https://www.noon.com/egypt-ar/tools-and-home-improvement/?sort[by]=discount_percent&sort[dir]=desc",
+    "https://www.noon.com/egypt-ar/tools-and-home-improvement/?sort[by]=popularity&sort[dir]=desc",
     "https://www.noon.com/egypt-ar/grocery-store/?sort[by]=discount_percent&sort[dir]=desc",
-    "https://www.noon.com/egypt-ar/search/?q=deals",
-    "https://www.noon.com/egypt-ar/search/?q=خصم",
 ]
 
 NOON_EXTRA_URLS = [
-    "https://www.noon.com/egypt-ar/search/?q=%D9%83%D9%8A%D8%A8%D9%88%D8%B1%D8%AF+%D9%85%D9%8A%D9%83%D8%A7%D9%86%D9%8A%D9%83%D9%8A",
-    "https://www.noon.com/egypt-ar/search/?q=%D8%B4%D8%A7%D8%AD%D9%86+%D8%B3%D8%B1%D9%8A%D8%B9+gan",
+    "https://www.noon.com/egypt-ar/search/?q=%D9%82%D9%84%D8%A7%D9%8A%D8%A9+%D8%A8%D8%AF%D9%88%D9%86+%D8%B2%D9%8A%D8%AA",
+    "https://www.noon.com/egypt-ar/search/?q=%D8%AE%D9%84%D8%A7%D8%B7+%D9%83%D8%A8%D8%A9",
+    "https://www.noon.com/egypt-ar/search/?q=%D9%85%D9%83%D9%88%D8%A7%D8%A9+%D8%A8%D8%AE%D8%A7%D8%B1+%D9%85%D9%83%D9%86%D8%B3%D8%A9",
+    "https://www.noon.com/egypt-ar/search/?q=%D8%B4%D8%A7%D8%AD%D9%86+%D8%B3%D8%B1%D9%8A%D8%B9+%D8%A8%D8%A7%D9%88%D8%B1+%D8%A8%D8%A7%D9%86%D9%83",
     "https://www.noon.com/egypt-ar/search/?q=%D8%B3%D9%85%D8%A7%D8%B9%D8%A9+%D8%A8%D9%84%D9%88%D8%AA%D9%88%D8%AB",
+    "https://www.noon.com/egypt-ar/search/?q=%D9%83%D9%8A%D8%A8%D9%88%D8%B1%D8%AF+%D9%85%D9%8A%D9%83%D8%A7%D9%86%D9%8A%D9%83%D9%8A",
+    "https://www.noon.com/egypt-ar/search/?q=%D9%85%D8%A7%D9%83%D9%8A%D9%86%D8%A9+%D8%AD%D9%84%D8%A7%D9%82%D8%A9",
+    "https://www.noon.com/egypt-ar/electronics-and-mobiles/computers-and-accessories/?sort[by]=popularity&sort[dir]=desc",
+    "https://www.noon.com/egypt-ar/electronics-and-mobiles/television-and-video/?sort[by]=popularity&sort[dir]=desc",
     "https://www.noon.com/egypt-ar/fashion/men-31225/?sort[by]=discount_percent&sort[dir]=desc",
     "https://www.noon.com/egypt-ar/fashion/women-31229/?sort[by]=discount_percent&sort[dir]=desc",
-    "https://www.noon.com/egypt-ar/health/?sort[by]=discount_percent&sort[dir]=desc",
+    "https://www.noon.com/egypt-ar/health/?sort[by]=popularity&sort[dir]=desc",
     "https://www.noon.com/egypt-ar/baby-products/?sort[by]=discount_percent&sort[dir]=desc",
-    "https://www.noon.com/egypt-ar/toys-and-games/?sort[by]=discount_percent&sort[dir]=desc",
     "https://www.noon.com/egypt-ar/sports-and-outdoors/?sort[by]=discount_percent&sort[dir]=desc",
     "https://www.noon.com/egypt-ar/automotive/?sort[by]=discount_percent&sort[dir]=desc",
-    "https://www.noon.com/egypt-ar/office-supplies/?sort[by]=discount_percent&sort[dir]=desc",
-    "https://www.noon.com/egypt-ar/video-games-10181/?sort[by]=discount_percent&sort[dir]=desc",
-    "https://www.noon.com/egypt-ar/pet-supplies/?sort[by]=discount_percent&sort[dir]=desc",
-    "https://www.noon.com/egypt-ar/electronics-and-mobiles/?sort[by]=discount_percent&sort[dir]=desc&page=2",
-    "https://www.noon.com/egypt-ar/home-and-kitchen/?sort[by]=discount_percent&sort[dir]=desc&page=2",
 ]
 _noon_rot_idx = 0
 
@@ -1211,12 +1269,12 @@ async def scrape_noon_eg(page):
     ]
     _noon_rot_idx = (_noon_rot_idx + 4) % len(NOON_EXTRA_URLS)
 
-    # إضافة بحث مباشر عن البراندات الساخنة (مثل UGREEN و Redragon و Vitrac وأبو عوف و Fogg) في نون
+    # إضافة بحث مباشر عن البراندات الساخنة (مثل أنكر وآي لوك و UGREEN وتورنيدو وفريش وفيليبس وبراون) في نون
     brand_urls = []
-    for i in range(4):
+    for i in range(6):
         b_label, kw_list = HOT_BRANDS[(_brand_rot_idx + i) % len(HOT_BRANDS)]
         brand_urls.append((b_label, f"https://www.noon.com/egypt-ar/search/?q={quote_plus(kw_list[0])}"))
-    _brand_rot_idx = (_brand_rot_idx + 4) % len(HOT_BRANDS)
+    _brand_rot_idx = (_brand_rot_idx + 6) % len(HOT_BRANDS)
 
     urls_to_scan = [(None, u) for u in (NOON_CORE_URLS + extra_batch)] + brand_urls
 
@@ -1228,7 +1286,7 @@ async def scrape_noon_eg(page):
                 await page.wait_for_selector('a[href*="/p/"]', timeout=15000)
             except Exception:
                 pass
-            for _ in range(10):
+            for _ in range(8):
                 for c in await page.evaluate(NOON_CARDS_JS):
                     if c["href"]:
                         if b_hint and not c.get("brand"):
@@ -1243,7 +1301,7 @@ async def scrape_noon_eg(page):
                             if c.get("brand") and not products[link].get("brand"):
                                 products[link]["brand"] = c["brand"]
                 await page.mouse.wheel(0, 650)
-                await page.wait_for_timeout(450)
+                await page.wait_for_timeout(400)
         except Exception as e:
             print(f"تعذر فتح {url}: {e}")
             continue
@@ -1255,47 +1313,61 @@ async def scrape_noon_eg(page):
         try:
             card_text = card["text"]
             match = re.search(r'(?:خصم\s*(\d+)%|(\d+)%\s*(?:خصم|OFF))', clean(card_text), re.IGNORECASE)
-            if not match:
-                continue
-            badge_disc = int(match.group(1) or match.group(2))
+            badge_disc = int(match.group(1) or match.group(2)) if match else None
             info = parse_noon_card(card_text, card.get("price_text"), badge_disc)
             if not info["price"] or info["price"] < 5:
                 continue
-            # تجاهل أي منتج في نون معلهوش تقييمات كافية من المشترين
-            if not info["rating"] or (to_float(info["rating"]) or 0) < 3.9 or parse_reviews_count(info["reviews"]) < 3:
+
+            prelim_title = card.get("name") or noon_title(card_text)
+            c_brand = card.get("brand")
+            # فلترة الموثوقية مسبقاً من الكارت لمنع تضييع الوقت في فتح صفحات منتجات غير معروفة
+            if not is_trusted_product(prelim_title, brand=c_brand, rating=info["rating"], reviews=info["reviews"]):
                 continue
-            discount = float(badge_disc)
+
+            discount = float(badge_disc or 0)
             if info["list_price"] and info["list_price"] > info["price"]:
                 discount = (1 - info["price"] / info["list_price"]) * 100
+            if discount <= 0:
+                continue
 
             prev_min, max_p, min_p = record_price(full_link, info["price"])
             freebie = is_almost_free(info["price"], info["list_price"], badge_disc)
             has_card_promo = any(w in card_text for w in ("مع الكوبون", "كوبون", "كود", "وفر ", "اشترِ", "اشتري"))
+            famous = has_famous_brand(prelim_title, c_brand)
+            saving_egp = (info["list_price"] - info["price"]) if (info["list_price"] and info["list_price"] > info["price"]) else 0
 
-            prelim_title = card.get("name") or noon_title(card_text)
+            if famous:
+                qualifies = (discount >= 14) or (discount >= 10 and (has_card_promo or saving_egp >= 50)) or freebie
+            else:
+                qualifies = (discount >= 25) or (discount >= 18 and has_card_promo) or freebie
+
             ok_prelim, _ = should_send_deal(full_link, prelim_title, info["price"])
-            if (discount >= MIN_DISCOUNT or freebie or (discount >= 22 and has_card_promo)) and ok_prelim:
-                candidates.append((1 if freebie else 0, discount, full_link, card, info, prev_min, max_p, min_p))
+            if qualifies and ok_prelim:
+                candidates.append((1 if freebie else 0, 1 if famous else 0, 1 if has_card_promo else 0, discount, full_link, card, info, prev_min, max_p, min_p))
         except Exception:
             continue
 
-    # ترتيب العروض: عروض "ببلاش" أولاً ثم الأعلى خصماً
-    candidates.sort(key=lambda x: (x[0], x[1]), reverse=True)
-    print(f"تم العثور على {len(candidates)} عرض قوي جديد في نون مصر.")
+    # ترتيب العروض: عروض "ببلاش" أولاً، ثم البراندات المشهورة، ثم العروض الإضافية والأعلى خصماً
+    candidates.sort(key=lambda x: (x[0], x[1], x[2], x[3]), reverse=True)
+    print(f"تم العثور على {len(candidates)} عرض موثوق جديد في نون مصر.")
 
     noon_sent = 0
-    pdp_blocked = False
-    for _, discount, full_link, card, info, prev_min, max_p, min_p in candidates:
+    consecutive_blocks = 0
+    pdp_lookups = 0
+    for _, famous, _, discount, full_link, card, info, prev_min, max_p, min_p in candidates:
         if noon_sent >= MAX_PER_CYCLE:
             break
         try:
             card_title = card.get("name") or noon_title(card["text"])
             full_title, pdp_brand, seller, features, image, page_promos, rev_snippets = None, None, None, [], None, [], []
-            if not pdp_blocked:
+            if consecutive_blocks < 3 and pdp_lookups < 28:
+                pdp_lookups += 1
                 full_title, pdp_brand, seller, features, image, page_promos, rev_snippets = await noon_product_details(page.context, full_link)
                 if features is None:
-                    pdp_blocked = True
+                    consecutive_blocks += 1
                     features = []
+                else:
+                    consecutive_blocks = 0
 
             title = full_title or card_title
             if not title or is_blocked_title(title):
