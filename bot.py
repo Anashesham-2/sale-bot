@@ -649,25 +649,37 @@ def build_message(store, title, price, list_price, discount, link,
     if rating:
         lines.append(f"⭐ التقييم: {rating}" + (f" ({reviews} تقييم)" if reviews else ""))
 
-    # وصف المنتج (مختصر وواضح)
-    desc = build_description(title, features)
-    if desc:
-        lines += ["", f"📝 <b>وصف المنتج:</b>\n{html.escape(desc)}"]
-
-    # مراجعة بناءً على تعليقات المشترين (مختصرة)
-    rev_summary = build_review_summary(rating, reviews, review_snippets, bought_badge)
-    if rev_summary:
-        lines += ["", f"💬 <b>مراجعة المشترين:</b>\n{html.escape(rev_summary)}"]
-
-    # دمج الخصومات أو عروض اشترِ 1 والثانية هدية أو عروض الفئة
+    # 1) بعد السعر على طول: دمج الكوبونات والخصومات (لو موجودة)
     if stack_promos:
         lines += ["", "🎁 <b>عروض إضافية ودمج خصومات:</b>"]
         for sp in stack_promos[:2]:
             lines.append(f"• {html.escape(sp)}")
         if stack_howto:
             lines.append(f"💡 <b>طريقة التفعيل:</b> {html.escape(stack_howto[0])}")
-        for pl in (promo_links or [])[:1]:
-            lines.append(f"🏷️ <b>{store_ar} عاملة عرض إضافي على الفئة دي هنا:</b>\n{branded_url(pl)}")
+
+    # 2) رابط المنتج مباشرةً (بعد دمج الخصومات، أو بعد السعر على طول لو مفيش دمج خصومات)
+    short_branded_link = branded_url(link)
+    lines += [
+        "",
+        f"🔗 <b>رابط المنتج:</b>\n{short_branded_link}",
+    ]
+
+    # 3) وصف المنتج (مختصر وواضح)
+    desc = build_description(title, features)
+    if desc:
+        lines += ["", f"📝 <b>وصف المنتج:</b>\n{html.escape(desc)}"]
+
+    # 4) مراجعة المشترين (مختصرة)
+    rev_summary = build_review_summary(rating, reviews, review_snippets, bought_badge)
+    if rev_summary:
+        lines += ["", f"💬 <b>مراجعة المشترين:</b>\n{html.escape(rev_summary)}"]
+
+    # 5) لينك عروض الفئة دي (لو موجود)
+    for pl in (promo_links or [])[:1]:
+        lines += [
+            "",
+            f"🏷️ <b>{store_ar} عاملة عرض إضافي على الفئة دي هنا:</b>\n{branded_url(pl)}",
+        ]
 
     if max_price is not None and min_price is not None and max_price > min_price and min_price >= 10:
         lines += [
@@ -675,12 +687,9 @@ def build_message(store, title, price, list_price, discount, link,
             f"📊 أعلى سعر مسجّل: {fmt(max_price)} ج.م | أقل سعر: {fmt(min_price)} ج.م",
         ]
 
-    short_branded_link = branded_url(link)
     lines += [
         "",
         "⚠️ <i>ملحوظة: ده مجرد ترشيح للعرض، والتجربة وقرار الشراء عليك.</i>",
-        "",
-        f"🔗 رابط العرض:\n{short_branded_link}",
         "",
         HASHTAG,
     ]
