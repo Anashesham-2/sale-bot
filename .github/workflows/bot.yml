@@ -1,6 +1,12 @@
 name: Telegram Deals Bot
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'bot.py'
+      - '.github/workflows/**'
   schedule:
     # كل 30 دقيقة بيتأكد إن فيه تشغيلة شغالة؛ لو التشغيلة الحالية شغالة،
     # الجديدة بتستنى وتبدأ أول ما القديمة تخلص (فالبوت ما بيقفش)

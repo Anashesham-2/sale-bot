@@ -151,6 +151,17 @@ _COLOR_SIZE_RE = re.compile(
     re.IGNORECASE,
 )
 
+def _normalize_ar(text):
+    """توحيد الحروف العربية وإزالة التشكيل للمقارنة والبحث الدقيق."""
+    if not text:
+        return ""
+    t = str(text).lower()
+    t = re.sub(r'[أإآا]', 'ا', t)
+    t = re.sub(r'[ةه]', 'ه', t)
+    t = re.sub(r'[يى]', 'ي', t)
+    t = re.sub(r'[\u064B-\u065F\u0640]', '', t)
+    return t.strip()
+
 def normalize_title_key(title):
     """ينظف اسم المنتج (مع تجاهل اللون والمقاس) لمنع تكرار نفس المنتج بألوان مختلفة."""
     if not title:
@@ -2343,6 +2354,9 @@ async def scan_monitored_channels(context, target_channel=None, specific_post_id
                 learned_prefs["seen_posts"].append(post_id)
                 save_learned_prefs()
 
+            if not p_links:
+                continue
+
             # اختيار رابط المنتج الفعلي من روابط البوست
             target_url = p_links[0]
             if len(p_links) > 1:
@@ -2506,9 +2520,13 @@ async def poll_private_chat_once(context):
                 )
                 await asyncio.to_thread(send_telegram_msg, ack_ch_txt, None, [user_chat_id])
 
-                posted_cnt = await scan_monitored_channels(
-                    context, target_channel=ch_ref, specific_post_id=specific_post_id, max_to_post=3, notify_chat_id=user_chat_id
-                )
+                try:
+                    posted_cnt = await scan_monitored_channels(
+                        context, target_channel=ch_ref, specific_post_id=specific_post_id, max_to_post=3, notify_chat_id=user_chat_id
+                    )
+                except Exception as sc_err:
+                    print(f"Error scanning channel @{ch_ref}: {sc_err}")
+                    posted_cnt = 0
                 done_msg = (
                     f"✅ <b>تم الانتهاء من فحص قناة @{html.escape(ch_ref)} بنجاح!</b>\n\n"
                     f"📦 <b>العروض المطابقة للشروط والمنشورة الآن:</b> {posted_cnt} عرض.\n"
