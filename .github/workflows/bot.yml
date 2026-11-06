@@ -53,8 +53,8 @@ jobs:
             git pull -q --rebase || true
             xvfb-run --auto-servernum --server-args="-screen 0 1366x768x24" python -u bot.py --once || echo "Cycle failed"
 
-            # حفظ العروض المرسلة وسجل الأسعار بعد كل دورة
-            git add sent_deals.txt price_history.json
+            # حفظ العروض المرسلة وسجل الأسعار وذاكرة التعلم بعد كل دورة
+            git add sent_deals.txt price_history.json learned_preferences.json
             if ! git diff --staged --quiet; then
               git commit -q -m "chore: update deals data [skip ci]"
               git pull -q --rebase && git push -q || echo "Push failed"
@@ -63,7 +63,7 @@ jobs:
             echo "Waiting ${CHECK_INTERVAL}s (while listening for private chat links)..."
             xvfb-run --auto-servernum --server-args="-screen 0 1366x768x24" python -u bot.py --listen-only "$CHECK_INTERVAL" || sleep "$CHECK_INTERVAL"
 
-            git add sent_deals.txt price_history.json
+            git add sent_deals.txt price_history.json learned_preferences.json
             if ! git diff --staged --quiet; then
               git commit -q -m "chore: update deals data [skip ci]"
               git pull -q --rebase && git push -q || echo "Push failed"

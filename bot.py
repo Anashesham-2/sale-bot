@@ -44,6 +44,7 @@ MESSAGE_DELAY = int(os.getenv("MESSAGE_DELAY", "20"))
 
 SENT_DEALS_FILE = os.path.join(BASE_DIR, "sent_deals.txt")
 HISTORY_FILE = os.path.join(BASE_DIR, "price_history.json")
+LEARNED_FILE = os.path.join(BASE_DIR, "learned_preferences.json")
 
 # أشهر البراندات والأقسام اللي عليها عروض قوية في مصر (بيتم فحصها واكتشاف عروضها المجمعة)
 HOT_BRANDS = [
@@ -186,6 +187,78 @@ if os.path.exists(HISTORY_FILE):
 def save_history():
     with open(HISTORY_FILE, "w", encoding="utf-8") as f:
         json.dump(price_history, f, ensure_ascii=False)
+
+# ---------------------------------------------------------------------------
+# ذاكرة التعلم الذاتي (تتعلم من الروابط المرسلة ومن القنوات المراقبة)
+# ---------------------------------------------------------------------------
+learned_prefs = {
+    "brands": [],
+    "queries": [],
+    "channels": [],
+    "seen_posts": [],
+}
+if os.path.exists(LEARNED_FILE):
+    try:
+        with open(LEARNED_FILE, "r", encoding="utf-8") as _lf:
+            _loaded = json.load(_lf)
+            for _k in learned_prefs:
+                if isinstance(_loaded.get(_k), list):
+                    learned_prefs[_k] = _loaded[_k]
+    except Exception:
+        pass
+
+_learned_rot_idx = 0
+
+def save_learned_prefs():
+    try:
+        with open(LEARNED_FILE, "w", encoding="utf-8") as f:
+            json.dump(learned_prefs, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"تعذر حفظ ملف التعلم الذاتي: {e}")
+
+_STOP_WORDS_LEARN = {
+    "من", "في", "على", "مع", "إلى", "الى", "عن", "أو", "او", "حتى", "لكل", "كل",
+    "جديد", "أصلي", "اصلي", "عرض", "خصم", "سعر", "مميز", "منتج", "أمازون", "نون",
+    "مصر", "قطعة", "قطع", "عدد", "مقاس", "لون", "موديل", "رقم", "نوع", "حجم",
+    "for", "with", "and", "the", "in", "to", "of", "by", "new", "pro", "max",
+}
+
+def learn_from_product(title, brand=None):
+    """يتعلم الماركة ونوع المنتج من أي عرض يبعته صاحب البوت أو من القنوات المراقبة ليبحث عن عروض مشابهة تلقائياً."""
+    changed = False
+    if brand:
+        b_clean = brand.strip()
+        b_low = b_clean.lower()
+        if (
+            len(b_clean) >= 2
+            and len(b_clean) <= 30
+            and b_low not in _GENERIC_BRAND_NAMES
+            and b_low not in [x.lower() for x in learned_prefs["brands"]]
+        ):
+            learned_prefs["brands"].append(b_clean)
+            changed = True
+
+    if title and not is_blocked_title(title):
+        t_clean = _COLOR_SIZE_RE.sub(" ", str(title))
+        t_clean = re.sub(r'[^\w\u0600-\u06FF\s]+', ' ', t_clean)
+        words = [
+            w for w in t_clean.split()
+            if len(w) >= 3 and not w.isdigit() and w.lower() not in _STOP_WORDS_LEARN
+        ]
+        if len(words) >= 2:
+            query = " ".join(words[:3]).strip()
+            if brand and brand.lower() not in query.lower() and len(brand) <= 15:
+                query = f"{query} {brand.strip()}"
+            q_low = query.lower()
+            if len(query) >= 6 and q_low not in [x.lower() for x in learned_prefs["queries"]]:
+                learned_prefs["queries"].append(query)
+                if len(learned_prefs["queries"]) > 80:
+                    learned_prefs["queries"] = learned_prefs["queries"][-80:]
+                changed = True
+
+    if changed:
+        save_learned_prefs()
+        print(f"🧠 تعلم البوت اهتمام جديد: الماركة={brand or '-'} | بحث={learned_prefs['queries'][-1] if learned_prefs['queries'] else '-'}")
 
 def should_send_deal(link, title, current_price, promo_sig=""):
     """
@@ -368,9 +441,11 @@ TRUSTED_BRAND_KEYWORDS = (
 )
 
 def has_famous_brand(title, brand=None):
-    """يتحقق مما إذا كان المنتج ينتمي لبراند معروف ومشهور (مثل أنكر، آي لوك، تورنيدو، فريش، يوغرين، إلخ)."""
+    """يتحقق مما إذا كان المنتج ينتمي لبراند معروف ومشهور (أو براند اتعلمه البوت من اختياراتك)."""
     combined = f"{(brand or '').strip().lower()} {(title or '').lower()}"
-    return any(kw in combined for kw in TRUSTED_BRAND_KEYWORDS)
+    if any(kw in combined for kw in TRUSTED_BRAND_KEYWORDS):
+        return True
+    return any(lb.lower() in combined for lb in learned_prefs.get("brands", []) if len(lb) >= 2)
 
 def is_trusted_product(title, brand=None, rating=None, reviews=None):
     """
@@ -427,8 +502,41 @@ def build_description(title, features=None, extra_desc=None):
     clean_t = re.sub(r'\s+', ' ', title).strip()
     return f"{clean_t[:120]} — عرض خاص لفترة محدودة."
 
-def build_review_summary(rating, reviews, review_snippets=None, bought_badge=None):
-    """يبني مراجعة مختصرة ومفيدة للمنتج بناءً على تعليقات وتقييمات المشترين."""
+def rewrite_channel_insight(raw_text):
+    """
+    يحلل كلام القنوات التانية لو قالوا إن العرض كويس أو تجربته كويسة،
+    ويعيد صياغته بالكامل بأسلوب وطريقة قناة (لقطة) الخاصة بدون نقل حرفي.
+    """
+    if not raw_text:
+        return None
+    t = clean(raw_text)
+    t = re.sub(r'https?://\S+', ' ', t)
+    t = re.sub(r'@[A-Za-z0-9_]+', ' ', t)
+    t = re.sub(r'#[\w\u0600-\u06FF]+', ' ', t)
+
+    traits = []
+    tl = t.lower()
+    if any(w in tl for w in ("تجربة", "تجربته", "مجرب", "عن تجربه", "جربته")):
+        traits.append("تجارب استخدامه الفعلية ممتازة وواخد إشادة كبيرة")
+    if any(w in tl for w in ("خامة", "خامته", "خامات", "تقفيل", "متين")):
+        traits.append("خامات تصنيعه قوية وتقفيله محترم يعيش معاك")
+    if any(w in tl for w in ("صوت", "بيز", "bass", "مايك", "مكالمات", "عزل")):
+        traits.append("أداء صوتي نقي وواضح في الاستخدام والمكالمات")
+    if any(w in tl for w in ("بطارية", "بطاريته", "بتقعد", "شحن سريع")):
+        traits.append("أداء بطارية وشحن يعتمد عليه طوال اليوم")
+    if any(w in tl for w in ("أمان", "امان", "آمن", "حماية", "الأجهزة التقيلة")):
+        traits.append("مزود بحماية وأمان عالي لتشغيل الأجهزة باطمئنان")
+    if any(w in tl for w in ("عملي", "عملية", "مريح", "سريع", "منجز")):
+        traits.append("عملي جداً ومريح في الاستخدام اليومي")
+    if any(w in tl for w in ("لقطة", "أقل سعر", "اقل سعر", "سعر تاريخي", "سعره حلو", "عرض كويس", "عرض ممتاز", "فرصة", "يستاهل")):
+        traits.append("نازل حالياً بقيمة ممتازة جداً مقابل السعر")
+
+    if not traits:
+        return None
+    return "💡 خلاصة التجربة والترشيح: " + "، و".join(traits[:3]) + "."
+
+def build_review_summary(rating, reviews, review_snippets=None, bought_badge=None, custom_insight=None):
+    """يبني مراجعة مختصرة ومفيدة للمنتج بناءً على تعليقات وتقييمات المشترين وخلاصة التجربة."""
     parts = []
     r_val = to_float(rating) if rating else None
     r_cnt = parse_reviews_count(reviews)
@@ -448,7 +556,9 @@ def build_review_summary(rating, reviews, review_snippets=None, bought_badge=Non
     if bought_badge:
         parts.append(f"{bought_badge}.")
 
-    if review_snippets:
+    if custom_insight:
+        parts.append(custom_insight)
+    elif review_snippets:
         snippet = re.sub(r'\s+', ' ', review_snippets[0]).strip()[:100]
         if len(snippet) > 12:
             parts.append(f"من التعليقات: «{snippet}»")
@@ -594,7 +704,7 @@ def build_message(store, title, price, list_price, discount, link,
                   review_snippets=None, bought_badge=None,
                   stack_promos=None, stack_howto=None, section_note=None,
                   extra_pct=0.0, extra_egp=0.0, extra_label=None, promo_links=None,
-                  brand=None):
+                  brand=None, custom_insight=None):
     store_ar = "أمازون" if store.lower() == "amazon" else ("نون" if store.lower() == "noon" else store)
     icon = "🔥" if store.lower() == "amazon" else "🟡"
 
@@ -670,7 +780,7 @@ def build_message(store, title, price, list_price, discount, link,
         lines += ["", f"📝 <b>وصف المنتج:</b>\n{html.escape(desc)}"]
 
     # 4) مراجعة المشترين (مختصرة)
-    rev_summary = build_review_summary(rating, reviews, review_snippets, bought_badge)
+    rev_summary = build_review_summary(rating, reviews, review_snippets, bought_badge, custom_insight=custom_insight)
     if rev_summary:
         lines += ["", f"💬 <b>مراجعة المشترين:</b>\n{html.escape(rev_summary)}"]
 
@@ -936,7 +1046,7 @@ async def scrape_amazon_eg(page):
         await page.mouse.wheel(0, 900)
         await page.wait_for_timeout(900)
 
-    # فحص أقسام وبراندات مختارة (مثل أنكر وآي لوك و UGREEN وتورنيدو وفريش وفيليبس وبراون) + أقسام الأجهزة والهاردوير
+    # فحص أقسام وبراندات مختارة + الاهتمامات اللي البوت اتعلمها من اختياراتك
     brands_to_check = [
         (b_lbl, f"https://www.amazon.eg/s?k={quote_plus(kw_list[0])}")
         for b_lbl, kw_list in (HOT_BRANDS[(_brand_rot_idx + i) % len(HOT_BRANDS)] for i in range(6))
@@ -947,7 +1057,15 @@ async def scrape_amazon_eg(page):
     ]
     _amz_cat_rot_idx = (_amz_cat_rot_idx + 5) % len(AMAZON_CATEGORY_SEARCHES)
 
-    for section_label, search_url in (brands_to_check + cats_to_check):
+    learned_to_check = []
+    l_queries = learned_prefs.get("queries", [])
+    if l_queries:
+        global _learned_rot_idx
+        for i in range(min(3, len(l_queries))):
+            lq = l_queries[(_learned_rot_idx + i) % len(l_queries)]
+            learned_to_check.append((f"اهتمام متعلّم ({lq})", f"https://www.amazon.eg/s?k={quote_plus(lq)}"))
+
+    for section_label, search_url in (brands_to_check + cats_to_check + learned_to_check):
         try:
             await page.goto(search_url, wait_until="domcontentloaded", timeout=45000)
             await page.wait_for_timeout(1800)
@@ -1294,12 +1412,20 @@ async def scrape_noon_eg(page):
     ]
     _noon_rot_idx = (_noon_rot_idx + 4) % len(NOON_EXTRA_URLS)
 
-    # إضافة بحث مباشر عن البراندات الساخنة (مثل أنكر وآي لوك و UGREEN وتورنيدو وفريش وفيليبس وبراون) في نون
+    # إضافة بحث مباشر عن البراندات الساخنة + الاهتمامات اللي البوت اتعلمها في نون
     brand_urls = []
     for i in range(6):
         b_label, kw_list = HOT_BRANDS[(_brand_rot_idx + i) % len(HOT_BRANDS)]
         brand_urls.append((b_label, f"https://www.noon.com/egypt-ar/search/?q={quote_plus(kw_list[0])}"))
     _brand_rot_idx = (_brand_rot_idx + 6) % len(HOT_BRANDS)
+
+    l_queries = learned_prefs.get("queries", [])
+    if l_queries:
+        global _learned_rot_idx
+        for i in range(min(3, len(l_queries))):
+            lq = l_queries[(_learned_rot_idx + i) % len(l_queries)]
+            brand_urls.append((None, f"https://www.noon.com/egypt-ar/search/?q={quote_plus(lq)}"))
+        _learned_rot_idx = (_learned_rot_idx + 3) % len(l_queries)
 
     urls_to_scan = [(None, u) for u in (NOON_CORE_URLS + extra_batch)] + brand_urls
 
@@ -1754,6 +1880,9 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
         elif eff_price and extra_egp > 0 and eff_price > extra_egp:
             eff_price = round(eff_price - extra_egp, 2)
 
+        learn_from_product(title, brand)
+        custom_insight = rewrite_channel_insight(fallback_text)
+
         msg = build_message(
             "Amazon", title, price, list_price, discount, canonical_url,
             seller=seller, rating=rating, reviews=reviews, features=features,
@@ -1761,7 +1890,7 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
             review_snippets=rev_snippets, bought_badge=bought_badge,
             stack_promos=stack_promos, stack_howto=stack_howto,
             extra_pct=extra_pct, extra_egp=extra_egp, extra_label=extra_label, promo_links=promo_links,
-            brand=brand,
+            brand=brand, custom_insight=custom_insight,
         )
         return msg, image, canonical_url, branded_url(canonical_url), title, eff_price, "|".join(stack_promos)
 
@@ -1871,6 +2000,9 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
         elif eff_price and extra_egp > 0 and eff_price > extra_egp:
             eff_price = round(eff_price - extra_egp, 2)
 
+        learn_from_product(title, brand)
+        custom_insight = rewrite_channel_insight(fallback_text)
+
         msg = build_message(
             "Noon", title, price, list_price, discount, canonical_url,
             seller=seller, rating=rating, reviews=reviews, features=features,
@@ -1878,18 +2010,162 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
             review_snippets=rev_snippets,
             stack_promos=stack_promos, stack_howto=stack_howto,
             extra_pct=extra_pct, extra_egp=extra_egp, extra_label=extra_label, promo_links=promo_links,
-            brand=brand,
+            brand=brand, custom_insight=custom_insight,
         )
         return msg, image, canonical_url, branded_url(canonical_url), title, eff_price, "|".join(stack_promos)
 
     return None, None, canonical_url, branded_url(canonical_url), None, None, ""
+
+def extract_telegram_channel_info(text):
+    """يستخرج اسم قناة تليجرام (ورقم البوست إن وجد) من أي رابط t.me أو معرّف @channel."""
+    if not text:
+        return None, None
+    reserved = {"joinchat", "addstickers", "share", "proxy", "iv", "s", "loqta78", "sosanasbot"}
+    m = re.search(r'(?:https?://)?(?:t\.me|telegram\.me)/(?:s/)?([A-Za-z0-9_]{4,})(?:/(\d+))?', text, re.I)
+    if m:
+        ch = m.group(1).lower()
+        post_num = m.group(2)
+        if ch not in reserved and not ch.startswith("+"):
+            return ch, post_num
+    m2 = re.search(r'(?:^|\s)@([A-Za-z0-9_]{4,})\b', text)
+    if m2:
+        ch = m2.group(1).lower()
+        if ch not in reserved:
+            return ch, None
+    return None, None
+
+async def scan_monitored_channels(context, target_channel=None, specific_post_id=None, max_to_post=3, notify_chat_id=None):
+    """يتابع القنوات المضافة للتعلم منها، يستخرج العروض المرشحة وتجاربهم الإيجابية، يعيد صياغتها بأسلوبنا، ويحول روابطها للأفلييت الخاص بنا."""
+    channels = [target_channel.lower()] if target_channel else list(learned_prefs.get("channels", []))
+    if not channels:
+        return 0
+
+    total_posted = 0
+    for ch in channels:
+        if total_posted >= max_to_post:
+            break
+        preview_url = f"https://t.me/s/{ch}"
+        if specific_post_id:
+            preview_url = f"https://t.me/s/{ch}/{specific_post_id}"
+        print(f"📡 فحص قناة تليجرام المتابعة للتعلم منها: @{ch} ...")
+        page = await context.new_page()
+        posts = []
+        try:
+            await page.goto(preview_url, wait_until="domcontentloaded", timeout=35000)
+            await page.wait_for_timeout(1500)
+            posts = await page.evaluate("""() => {
+                const out = [];
+                for (const msgEl of document.querySelectorAll('.tgme_widget_message')) {
+                    const postId = msgEl.getAttribute('data-post') || '';
+                    const textEl = msgEl.querySelector('.tgme_widget_message_text');
+                    const text = textEl ? textEl.innerText.trim() : '';
+                    const links = [];
+                    if (textEl) {
+                        for (const a of textEl.querySelectorAll('a[href]')) {
+                            const h = (a.getAttribute('href') || '').trim();
+                            if (h.startsWith('http') && !h.includes('t.me/') && !h.includes('telegram.me/')) {
+                                links.push(h);
+                            }
+                        }
+                    }
+                    const rawUrls = text.match(/https?:\\/\\/[^\\s<>"')\\]،]+/g) || [];
+                    for (const ru of rawUrls) {
+                        if (!ru.includes('t.me/') && !ru.includes('telegram.me/') && !links.includes(ru)) {
+                            links.push(ru);
+                        }
+                    }
+                    let photo = null;
+                    const photoEl = msgEl.querySelector('.tgme_widget_message_photo_wrap');
+                    if (photoEl) {
+                        const style = photoEl.getAttribute('style') || '';
+                        const m = style.match(/background-image\\s*:\\s*url\\(['"]?(https?:\\/\\/[^'"]+)['"]?\\)/i);
+                        if (m) photo = m[1];
+                    }
+                    if (links.length > 0) {
+                        out.push({ postId, text, links, photo });
+                    }
+                }
+                return out;
+            }""")
+        except Exception as e:
+            print(f"تعذر قراءة القناة @{ch}: {e}")
+        finally:
+            await page.close()
+
+        if not posts:
+            continue
+
+        # لو المستخدم باعت رابط بوست معين بالرقم، نركز عليه هو بس، غير كده نفحص أحدث 10 بوستات
+        if specific_post_id:
+            target_suffix = f"/{specific_post_id}"
+            filtered = [p for p in posts if p.get("postId", "").endswith(target_suffix)]
+            candidate_posts = filtered if filtered else [posts[-1]]
+        else:
+            candidate_posts = list(reversed(posts[-10:]))
+
+        for post in candidate_posts:
+            if total_posted >= max_to_post:
+                break
+            post_id = post.get("postId") or ""
+            if not specific_post_id and post_id in learned_prefs.get("seen_posts", []):
+                continue
+
+            p_text = post.get("text") or ""
+            p_links = post.get("links") or []
+            p_photo = post.get("photo")
+
+            # التأكد أن البوست يرشح عرضاً أو يتحدث عن تجربة منتج
+            rec_kws = (
+                "عرض", "خصم", "سعر", "فرصة", "لقطة", "ممتاز", "تحفة", "جربت", "تجربت",
+                "ترشيح", "ارشح", "انصح", "قوي", "خامة", "اصلي", "جنيه", "كوبون", "كود",
+                "سماعة", "شاحن", "مشترك", "خلاط", "قلاية", "مكواة", "ماكينة", "باور",
+            )
+            norm_pt = _normalize_ar(p_text)
+            if not specific_post_id and p_text and not any(_normalize_ar(k) in norm_pt for k in rec_kws) and len(p_links) == 0:
+                continue
+
+            # تسجيل البوست كـ مقروء حتى لا نعيد فحصه في الدورات القادمة
+            if post_id and post_id not in learned_prefs["seen_posts"]:
+                learned_prefs["seen_posts"].append(post_id)
+                save_learned_prefs()
+
+            # اختيار رابط المنتج الفعلي من روابط البوست
+            target_url = p_links[0]
+            if len(p_links) > 1:
+                for cand_u in p_links:
+                    resolved_cand = await resolve_original_url(context, cand_u)
+                    if "/dp/" in resolved_cand or "/p/" in resolved_cand:
+                        target_url = resolved_cand
+                        break
+
+            try:
+                deal_msg, deal_img, orig_url, our_short_url, title, eff_p, promo_sig = await scrape_single_product(
+                    context, target_url, fallback_text=p_text, fallback_image=p_photo
+                )
+                if not deal_msg or not title:
+                    continue
+                if not specific_post_id and is_deal_already_sent(orig_url, title, eff_p, promo_sig):
+                    continue
+
+                mark_deal_sent(orig_url, title, eff_p, promo_sig)
+                channel_only_ids = [cid for cid in CHAT_IDS if str(cid) != str(notify_chat_id)]
+                if channel_only_ids:
+                    await pace_and_send(deal_msg, deal_img) if not notify_chat_id else await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, channel_only_ids)
+                if notify_chat_id:
+                    await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, [notify_chat_id])
+                total_posted += 1
+                print(f"✅ تم التعلم من @{ch} وتحويل ونشر عرض: {title[:55]}")
+            except Exception as e:
+                print(f"خطأ في تحويل بوست {post_id} من @{ch}: {e}")
+
+    return total_posted
 
 _last_tg_offset = None
 _processed_tg_msgs = set()
 _recent_private_urls = {}
 
 async def poll_private_chat_once(context):
-    """يتحقق من رسائل الشات الخاص مع البوت لتحويل أي رابط مرسل إلى رابط أفلييت القناة ونشره مرة واحدة فقط."""
+    """يتحقق من رسائل الشات الخاص مع البوت لتحويل أي رابط مرسل أو قناة مرسلة للتعلم منها ونشر العروض بطريقتنا."""
     global _last_tg_offset
     params = {"timeout": 0, "allowed_updates": json.dumps(["message"])}
     if _last_tg_offset is not None:
@@ -1939,12 +2215,11 @@ async def poll_private_chat_once(context):
 
         if text.startswith("/start"):
             welcome_reply = (
-                "👋 <b>أهلاً بيك في بوت قناة «لقطة» (@loqta78)!</b>\n\n"
-                "🔗 ابعتلي أي <b>لينك منتج</b> من أمازون مصر أو نون مصر (أو اعمل <b>Forward</b> لأي بوست عرض من أي قناة تانية حتى لو الرابط مختصر)، "
-                "وهقوم فوراً بـ:\n"
-                "1️⃣ فك الاختصار واستخراج <b>الرابط الأصلي الصافي</b> للمنتج (وحذف أي كود أفلييت قديم).\n"
-                "2️⃣ إضافة <b>كود الأفلييت الخاص بينا</b> واختصاره باسم القناة (<code>is.gd/loqta_...</code>).\n"
-                "3️⃣ سحب تفاصيل وصورة المنتج وإرسال بوست العرض جاهز في الشات ونشره في القناة! 🚀💰"
+                "👋 <b>أهلاً بيك في بوت قناة «لقطة» (@loqta78) الذكي!</b>\n\n"
+                "🔗 <b>1. تحويل الروابط والتعلم منها:</b>\n"
+                "ابعتلي أي <b>لينك منتج</b> من أمازون أو نون (أو اعمل <b>Forward</b> لبوست عرض)، وهفك الاختصار، أحط كود الأفلييت بتاعنا (<code>is.gd/loqta_...</code>)، أنشر العرض بالصورة، وأتعلم الماركة ونوع المنتج عشان أدور على عروض شبهه تلقائياً!\n\n"
+                "📡 <b>2. التعلم من قنوات تليجرام تانية:</b>\n"
+                "ابعتلي <b>لينك أي قناة تليجرام</b> (مثل <code>https://t.me/channel</code> أو <code>@channel</code>) وهتابعها تلقائياً؛ أول ما ينزلوا عرض كويس أو تجربة منتج ممتازة، هعيد صياغة التجربة بأسلوبنا الخاص وأحول اللينك للأفلييت بتاعنا وأنزله في القناة! 🚀💰"
             )
             await asyncio.to_thread(send_telegram_msg, welcome_reply, None, [user_chat_id])
             continue
@@ -1952,11 +2227,47 @@ async def poll_private_chat_once(context):
         if user_chat_id != OWNER_CHAT_ID:
             continue
 
-        urls = extract_urls_from_message(msg)
+        # لو الرسالة معمولة Forward من قناة عامة، نتعلم اسم القناة تلقائياً لمتابعتها
+        fwd_chat = msg.get("forward_from_chat") or {}
+        fwd_username = (fwd_chat.get("username") or "").strip().lower()
+        if fwd_username and fwd_username not in ("loqta78", "sosanasbot") and fwd_username not in learned_prefs["channels"]:
+            learned_prefs["channels"].append(fwd_username)
+            save_learned_prefs()
+            print(f"📡 تم تعلم قناة جديدة تلقائياً من الرسالة المحولة: @{fwd_username}")
+
+        all_urls = extract_urls_from_message(msg)
+        product_urls = [u for u in all_urls if not re.search(r'(?:t\.me|telegram\.me)/', u, re.I)]
+        ch_name, specific_post_id = extract_telegram_channel_info(text)
+
+        # لو المستخدم باعت لينك قناة تليجرام (أو بوست في قناة) عشان البوت يتعلم منها ويتابعها
+        if ch_name and not product_urls:
+            is_new_ch = ch_name not in learned_prefs["channels"]
+            if is_new_ch:
+                learned_prefs["channels"].append(ch_name)
+                save_learned_prefs()
+            await asyncio.to_thread(
+                send_telegram_msg,
+                f"📡 <b>تم {'إضافة' if is_new_ch else 'تحديث'} قناة @{html.escape(ch_name)} في ذاكرة التعلم التلقائي للبوت!</b>\n"
+                "⏳ <i>جاري الآن الدخول على القناة، قراءة أحدث العروض والتجارب المرشحة فيها، إعادة صياغة الكلام بأسلوب «لقطة»، وتحويل الروابط لكود الأفلييت الخاص بينا...</i>",
+                None,
+                [user_chat_id],
+            )
+            posted_cnt = await scan_monitored_channels(
+                context, target_channel=ch_name, specific_post_id=specific_post_id, max_to_post=2, notify_chat_id=user_chat_id
+            )
+            done_msg = (
+                f"✅ <b>تم فحص قناة @{html.escape(ch_name)} بنجاح!</b>\n"
+                f"📦 تم استيراد وإعادة صياغة ونشر <b>{posted_cnt}</b> عرض بلينك الأفلييت الخاص بينا.\n"
+                f"🧠 البوت هيفضل متابع <b>@{html.escape(ch_name)}</b> تلقائياً في كل دورة فحص، وأي عرض أو تجربة كويسة هتنزل هناك هيحولها لطريقتنا ولينكنا وينشرها فوراً!"
+            )
+            await asyncio.to_thread(send_telegram_msg, done_msg, None, [user_chat_id])
+            continue
+
+        urls = product_urls
         if not urls:
             await asyncio.to_thread(
                 send_telegram_msg,
-                "⚠️ مبعتليش رابط في الرسالة! ابعت أي رابط منتج من أمازون أو نون (أو اعمل Forward لبوست فيه رابط) وهحوله للينك الأفلييت بتاعنا فوراً.",
+                "⚠️ مبعتليش رابط منتج أو رابط قناة تليجرام! ابعت أي رابط منتج من أمازون/نون أو رابط قناة تليجرام (<code>https://t.me/...</code>) وهتعامل معاه فوراً.",
                 None,
                 [user_chat_id],
             )
@@ -2001,7 +2312,8 @@ async def poll_private_chat_once(context):
                 # 2) إرسال نسخة لصاحب البوت في الشات الخاص
                 await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, [user_chat_id])
                 summary_txt = (
-                    "✅ <b>تم تحويل الرابط ونشر العرض بالصورة في القناة بنجاح!</b>\n\n"
+                    "✅ <b>تم تحويل الرابط ونشر العرض بالصورة في القناة بنجاح!</b>\n"
+                    "🧠 <i>وتم حفظ الماركة وفئة المنتج في ذاكرة البوت للبحث التلقائي عن عروض مشابهة!</i>\n\n"
                     f"🔗 <b>الرابط الأصلي الصافي:</b>\n{html.escape(orig_url)}\n\n"
                     f"💰 <b>رابط الأفلييت الخاص بينا:</b>\n{html.escape(our_short_url)}"
                 )
@@ -2054,6 +2366,10 @@ async def run_cycle(p, listen_only_seconds=0):
         if listen_only_seconds > 0:
             await asyncio.sleep(listen_only_seconds)
         else:
+            try:
+                await scan_monitored_channels(context, max_to_post=3)
+            except Exception as ce:
+                print(f"Channel monitoring error: {ce}")
             page = await context.new_page()
             for scraper in (scrape_amazon_eg, scrape_noon_eg):
                 try:
