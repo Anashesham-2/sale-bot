@@ -50,6 +50,7 @@ MESSAGE_DELAY = int(os.getenv("MESSAGE_DELAY", "20"))
 SENT_DEALS_FILE = os.path.join(BASE_DIR, "sent_deals.txt")
 HISTORY_FILE = os.path.join(BASE_DIR, "price_history.json")
 LEARNED_FILE = os.path.join(BASE_DIR, "learned_preferences.json")
+PENDING_DEALS_FILE = os.path.join(BASE_DIR, "pending_deals.json")
 
 # أشهر البراندات والأقسام اللي عليها عروض قوية في مصر (بيتم فحصها واكتشاف عروضها المجمعة)
 HOT_BRANDS = [
@@ -232,6 +233,28 @@ def save_learned_prefs():
     except Exception as e:
         print(f"تعذر حفظ ملف التعلم الذاتي: {e}")
 
+# ---------------------------------------------------------------------------
+# العروض المعلقة المعروضة كأزرار تفاعلية للموافقة على النشر (Inline Buttons)
+# ---------------------------------------------------------------------------
+pending_deals = {}
+if os.path.exists(PENDING_DEALS_FILE):
+    try:
+        with open(PENDING_DEALS_FILE, "r", encoding="utf-8") as _pf:
+            pending_deals = json.load(_pf)
+    except Exception:
+        pending_deals = {}
+
+def save_pending_deals():
+    try:
+        now_ts = time.time()
+        expired = [k for k, v in pending_deals.items() if (now_ts - v.get("timestamp", 0)) > 86400]
+        for k in expired:
+            pending_deals.pop(k, None)
+        with open(PENDING_DEALS_FILE, "w", encoding="utf-8") as _pf:
+            json.dump(pending_deals, _pf, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"تعذر حفظ ملف العروض المعلقة: {e}")
+
 _STOP_WORDS_LEARN = {
     "من", "في", "على", "مع", "إلى", "الى", "عن", "أو", "او", "حتى", "لكل", "كل",
     "جديد", "أصلي", "اصلي", "عرض", "خصم", "سعر", "مميز", "منتج", "أمازون", "نون",
@@ -278,10 +301,12 @@ def learn_from_product(title, brand=None):
 
 def should_send_deal(link, title, current_price, promo_sig=""):
     """
-    يمنع تكرار إرسال العرض إلا في حالتين فقط:
-    1) لو العرض خلص (سعره رجع ارتفع) وبعدين رجع تاني لعرض خصم.
-    2) لو حصل تعديل حقيقي على العرض من نون أو أمازون (السعر نزل أكتر أو اتضاف كوبون/خصم جديد).
-    وكمان يمنع تكرار نفس المنتج بألوان/بائعين مختلفين بنفس السعر.
+    يمنع تكرار إرسال العرض إلا في الحالات التالية:
+    1) لو المنتج كان خلص/نفد من المخزون (Out of stock) في أمازون أو نون وتوفر من جديد (Back in Stock!).
+    2) لو العرض خلص (سعره ارتفع) ثم رجع لخصم من جديد.
+    3) لو السعر نزل أكثر بشكل ملحوظ (خصم إضافي 8%+ وبفرق 15 جنيه+).
+    4) لو أضيف كود خصم جديد أو كود دمج برومو.
+    5) لو مر أكثر من يومين على آخر نشر والعرض ما زال سارياً ومميزاً.
     """
     if current_price is None:
         return False, None
@@ -289,20 +314,39 @@ def should_send_deal(link, title, current_price, promo_sig=""):
     last_p = entry.get("last_sent_price")
     last_at = entry.get("last_sent_at") or 0
     last_promo = entry.get("last_sent_promo") or ""
+    now = time.time()
 
     if link in sent_deals:
         if last_p is None:
             return False, None
-        # 1) السعر نزل أكتر بشكل ملحوظ (على الأقل 8% وبفرق 15 جنيه أو أكتر)
+
+        # 1) لو العرض كان خلص/نفد من المتجر ورجع توفر من جديد (Back in Stock!)
+        if entry.get("was_out_of_stock"):
+            entry["was_out_of_stock"] = False
+            save_history()
+            return True, "🔄 رجع توفر من جديد في المتجر بعد نفاد الكمية! (Back in Stock)"
+
+        # 2) لو سجل الأسعار يوضح أن المنتج كان غير متوفر أو مسجل كنفاد بعد تاريخ آخر إرسال
+        prices_after = [p for p in entry.get("prices", []) if p[0] > last_at]
+        if any(p[1] is None or p[1] <= 0 for p in prices_after):
+            return True, "🔄 رجع توفر من جديد في المتجر بعد نفاد الكمية! (Back in Stock)"
+
+        # 3) السعر نزل أكتر بشكل ملحوظ (على الأقل 8% وبفرق 15 جنيه أو أكتر)
         if current_price <= last_p * 0.92 and (last_p - current_price) >= 15:
             return True, "🔥 تحديث عرض (السعر نزل أكتر!)"
-        # 2) العرض كان خلص (السعر طلع فوق سعر العرض بـ 15%+) وبعدين رجع تاني لعرض خصم
-        prices_after = [p[1] for p in entry.get("prices", []) if p[0] > last_at]
-        if any(p >= last_p * 1.15 for p in prices_after) and current_price <= last_p * 1.02:
+
+        # 4) العرض كان خلص (السعر طلع فوق سعر العرض بـ 15%+) وبعدين رجع تاني لعرض خصم
+        if any(p[1] is not None and p[1] >= last_p * 1.15 for p in prices_after) and current_price <= last_p * 1.02:
             return True, "🔄 العرض رجع تاني بعد ما خلص!"
-        # 3) اتضاف كود خصم أو خصم Checkout جديد مكنش موجود وقت الإرسال الأول
+
+        # 5) اتضاف كود خصم أو خصم Checkout جديد مكنش موجود وقت الإرسال الأول
         if promo_sig and promo_sig != last_promo:
             return True, "🔥 تحديث عرض (تم إضافة خصم/كوبون جديد!)"
+
+        # 6) لو مر أكثر من يومين على آخر نشر والعرض ما زال سارياً ومميزاً
+        if (now - last_at) > (86400 * 2):
+            return True, "🔄 تجديد عرض مميز ومستمر في المتجر"
+
         return False, None
 
     # لو الرابط جديد بس نفس المنتج بالظبط (لون تاني أو بائع تاني) اتبعت قبل كده بنفس السعر
@@ -1184,8 +1228,8 @@ def _fit_caption_for_photo(text):
     t = re.sub(r'\n\n📝 <b>وصف المنتج:</b>\n[^\n]+', '', t)
     return t
 
-def send_telegram_msg(text, image=None, target_chat_ids=None):
-    """يبعت العرض بصورة المنتج دائماً (سواء برابط مباشر أو بتحميل الصورة ورفعها لتليجرام أو file_id)."""
+def send_telegram_msg(text, image=None, target_chat_ids=None, reply_markup=None):
+    """يبعت العرض بصورة المنتج دائماً (سواء برابط مباشر أو بتحميل الصورة ورفعها لتليجرام أو file_id)، ويدعم أزرار تليجرام التفاعلية."""
     img_url = clean_image_url(image)
     is_tg_file_id = bool(image and isinstance(image, str) and not image.startswith("http") and len(image) > 20)
     destinations = target_chat_ids if target_chat_ids is not None else CHAT_IDS
@@ -1196,9 +1240,17 @@ def send_telegram_msg(text, image=None, target_chat_ids=None):
             if img_url or is_tg_file_id:
                 photo_val = img_url if img_url else image
                 # 1. محاولة إرسال الصورة بالرابط المباشر أو file_id
+                post_data = {
+                    "chat_id": chat_id,
+                    "photo": photo_val,
+                    "caption": photo_caption,
+                    "parse_mode": "HTML",
+                }
+                if reply_markup:
+                    post_data["reply_markup"] = reply_markup
                 resp = requests.post(
                     f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
-                    json={"chat_id": chat_id, "photo": photo_val, "caption": photo_caption, "parse_mode": "HTML"},
+                    json=post_data,
                     timeout=20,
                 )
                 # 2. لو تليجرام رفض تحميل الرابط مباشرة (مثلاً بسبب حماية CDN)، نحمّل الصورة ونرفعها كملف
@@ -1210,27 +1262,48 @@ def send_telegram_msg(text, image=None, target_chat_ids=None):
                             timeout=15,
                         )
                         if img_r.ok and len(img_r.content) > 500:
+                            f_data = {
+                                "chat_id": chat_id,
+                                "caption": photo_caption,
+                                "parse_mode": "HTML",
+                            }
+                            if reply_markup:
+                                f_data["reply_markup"] = json.dumps(reply_markup)
                             resp = requests.post(
                                 f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
-                                data={"chat_id": chat_id, "caption": photo_caption, "parse_mode": "HTML"},
+                                data=f_data,
                                 files={"photo": ("product.jpg", img_r.content, "image/jpeg")},
                                 timeout=25,
                             )
                     except Exception as img_e:
                         print(f"تعذر رفع صورة المنتج كملف: {img_e}")
             if resp is None or not resp.ok:
+                msg_payload = {
+                    "chat_id": chat_id,
+                    "text": text,
+                    "parse_mode": "HTML",
+                    "disable_web_page_preview": True,
+                }
+                if reply_markup:
+                    msg_payload["reply_markup"] = reply_markup
                 resp = requests.post(
                     f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-                    json={"chat_id": chat_id, "text": text, "parse_mode": "HTML",
-                          "disable_web_page_preview": True},
+                    json=msg_payload,
                     timeout=10,
                 )
             if resp is None or not resp.ok:
                 # لو فشل بسبب كابشن أو وسم HTML معطوب، نبعته كنص صافي بدون HTML لتجنب ضياع البوست
                 plain_text = re.sub(r'<[^>]+>', '', text)
+                msg_payload = {
+                    "chat_id": chat_id,
+                    "text": plain_text,
+                    "disable_web_page_preview": True,
+                }
+                if reply_markup:
+                    msg_payload["reply_markup"] = reply_markup
                 resp = requests.post(
                     f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-                    json={"chat_id": chat_id, "text": plain_text, "disable_web_page_preview": True},
+                    json=msg_payload,
                     timeout=10,
                 )
             if resp.ok:
@@ -1239,6 +1312,60 @@ def send_telegram_msg(text, image=None, target_chat_ids=None):
                 print(f"Telegram API error ({chat_id}, {resp.status_code}): {resp.text}")
         except Exception as e:
             print(f"Error sending message to {chat_id}: {e}")
+
+def answer_callback_query(callback_query_id, text=None, show_alert=False):
+    """الرد على ضغطات أزرار تليجرام التفاعلية لمنع دوران أيقونة التحميل في تليجرام."""
+    if not callback_query_id or not BOT_TOKEN:
+        return
+    try:
+        payload = {"callback_query_id": str(callback_query_id)}
+        if text:
+            payload["text"] = text
+        if show_alert:
+            payload["show_alert"] = bool(show_alert)
+        requests.post(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/answerCallbackQuery",
+            json=payload,
+            timeout=10,
+        )
+    except Exception as e:
+        print(f"Error answering callback {callback_query_id}: {e}")
+
+def edit_telegram_msg(chat_id, message_id, text, reply_markup=None):
+    """تعديل نص الرسالة أو كابشن الصورة في تليجرام وإلغاء أو تعديل الأزرار."""
+    if not BOT_TOKEN:
+        return
+    try:
+        payload = {
+            "chat_id": chat_id,
+            "message_id": message_id,
+            "text": text,
+            "parse_mode": "HTML",
+            "disable_web_page_preview": True,
+        }
+        if reply_markup is not None:
+            payload["reply_markup"] = reply_markup
+        r = requests.post(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/editMessageText",
+            json=payload,
+            timeout=10,
+        )
+        if not r.ok and any(k in r.text.lower() for k in ("no text in the message", "message to edit not found")):
+            cap_payload = {
+                "chat_id": chat_id,
+                "message_id": message_id,
+                "caption": text,
+                "parse_mode": "HTML",
+            }
+            if reply_markup is not None:
+                cap_payload["reply_markup"] = reply_markup
+            requests.post(
+                f"https://api.telegram.org/bot{BOT_TOKEN}/editMessageCaption",
+                json=cap_payload,
+                timeout=10,
+            )
+    except Exception as e:
+        print(f"Error editing message {message_id}: {e}")
 
 _last_send_ts = 0.0
 
@@ -2144,6 +2271,12 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                 if (!priceTxt) {
                     priceTxt = document.querySelector('meta[property="og:price:amount"]')?.content || document.querySelector('meta[name="twitter:data1"]')?.content;
                 }
+                if (!priceTxt) {
+                    const centerTxt = document.querySelector('#centerCol, #dp, #ppd')?.innerText || '';
+                    const mPrice = centerTxt.match(/(?:EGP|جنيه)\\s*([\\d,]+(?:\\.\\d+)?)/i)
+                        || centerTxt.match(/([\\d,]+(?:\\.\\d+)?)\\s*(?:EGP|جنيه)/i);
+                    if (mPrice) priceTxt = mPrice[1];
+                }
                 const listSelectors = [
                     '#corePriceDisplay_desktop_feature_div .basisPrice .a-offscreen',
                     '#corePriceDisplay_desktop_feature_div span[data-a-strike="true"] .a-offscreen',
@@ -2154,7 +2287,13 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                     '#price .a-text-price .a-offscreen',
                     'span[data-a-strike="true"] .a-offscreen',
                 ];
-                const listTxt = listSelectors.map(q).find(x => x && /\\d/.test(x)) || null;
+                let listTxt = listSelectors.map(q).find(x => x && /\\d/.test(x)) || null;
+                if (!listTxt) {
+                    const centerTxt = document.querySelector('#centerCol, #dp, #ppd')?.innerText || '';
+                    const mWas = centerTxt.match(/(?:Was:|السعر السابق:|سعر القائمة:)\\s*(?:EGP|جنيه)?\\s*([\\d,]+(?:\\.\\d+)?)/i)
+                        || centerTxt.match(/(?:Was:|السعر السابق:|سعر القائمة:)\\s*([\\d,]+(?:\\.\\d+)?)\\s*(?:EGP|جنيه)?/i);
+                    if (mWas) listTxt = mWas[1];
+                }
                 const savingsTxt = q('#corePriceDisplay_desktop_feature_div .savingsPercentage') || q('.savingsPercentage');
                 const bought = q('#social-proofing-faceout-title-tk_bought');
                 const seller = q('#sellerProfileTriggerId')
@@ -2338,6 +2477,10 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
         elif not live_price_found and not fb.get("price"):
             is_available = False
 
+        if not is_available and canonical_url in price_history:
+            price_history[canonical_url]["was_out_of_stock"] = True
+            save_history()
+
         is_active, active_reason = is_deal_currently_active(
             price, list_price, discount, is_available=is_available,
             stack_promos=stack_promos, extra_pct=extra_pct, extra_egp=extra_egp,
@@ -2489,6 +2632,10 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
             is_available = True
         elif not live_price_found and not fb.get("price"):
             is_available = False
+
+        if not is_available and canonical_url in price_history:
+            price_history[canonical_url]["was_out_of_stock"] = True
+            save_history()
 
         is_active, active_reason = is_deal_currently_active(
             price, list_price, discount, is_available=is_available,
@@ -2826,7 +2973,7 @@ _recent_private_urls = {}
 async def poll_private_chat_once(context):
     """يتحقق من رسائل الشات الخاص مع البوت لتحويل أي رابط مرسل أو قناة مرسلة للتعلم منها ونشر العروض بطريقتنا."""
     global _last_tg_offset
-    params = {"timeout": 0, "allowed_updates": json.dumps(["message"])}
+    params = {"timeout": 0, "allowed_updates": json.dumps(["message", "callback_query"])}
     if _last_tg_offset is not None:
         params["offset"] = _last_tg_offset
     try:
@@ -2858,6 +3005,66 @@ async def poll_private_chat_once(context):
         pass
 
     for upd in updates:
+        # 1. معالجة ضغطات الأزرار التفاعلية (Inline Keyboard Callbacks)
+        cb = upd.get("callback_query")
+        if cb:
+            cb_id = cb.get("id")
+            cb_from = cb.get("from") or {}
+            cb_user_id = cb_from.get("id")
+            cb_data = cb.get("data") or ""
+            cb_msg = cb.get("message") or {}
+            cb_chat = cb_msg.get("chat") or {}
+            cb_chat_id = cb_chat.get("id")
+            cb_msg_id = cb_msg.get("message_id")
+
+            if cb_user_id != OWNER_CHAT_ID and cb_chat_id != OWNER_CHAT_ID:
+                answer_callback_query(cb_id, "غير مصرح لك بتنفيذ هذا الإجراء.")
+                continue
+
+            if cb_data.startswith("post_anyway:"):
+                deal_token = cb_data.split(":", 1)[1]
+                deal_info = pending_deals.get(deal_token)
+                if not deal_info:
+                    answer_callback_query(cb_id, "⚠️ هذا العرض لم يعد متاحاً أو انتهت صلاحية الطلب.")
+                    edit_telegram_msg(cb_chat_id, cb_msg_id, "⚠️ <i>انتهت صلاحية هذا الطلب أو تم اتخاذ إجراء عليه مسبقاً.</i>", reply_markup={"inline_keyboard": []})
+                    continue
+
+                answer_callback_query(cb_id, "🚀 جاري النشر في القناة الآن...")
+                orig_url = deal_info["orig_url"]
+                title = deal_info["title"]
+                eff_p = deal_info["eff_p"]
+                promo_sig = deal_info.get("promo_sig", "")
+                deal_msg = deal_info["deal_msg"]
+                deal_img = deal_info.get("deal_img")
+                our_short_url = deal_info.get("our_short_url") or orig_url
+
+                mark_deal_sent(orig_url, title, eff_p, promo_sig)
+                channel_destinations = [MAIN_CHANNEL_ID]
+                await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, channel_destinations)
+
+                success_txt = (
+                    "✅ <b>تم نشر العرض في قناة «لقطة» (@loqta78) بنجاح بناءً على اختيارك! 📢</b>\n\n"
+                    f"📦 <b>المنتج:</b> {html.escape(title[:70])}...\n"
+                    f"💰 <b>السعر:</b> {eff_p} ج.م\n"
+                    f"🔗 <b>الرابط المنشور:</b> {html.escape(our_short_url)}"
+                )
+                edit_telegram_msg(cb_chat_id, cb_msg_id, success_txt, reply_markup={"inline_keyboard": []})
+
+                pending_deals.pop(deal_token, None)
+                save_pending_deals()
+                continue
+
+            if cb_data.startswith("cancel_deal:"):
+                deal_token = cb_data.split(":", 1)[1]
+                answer_callback_query(cb_id, "تم إلغاء النشر.")
+                pending_deals.pop(deal_token, None)
+                save_pending_deals()
+                cancel_txt = "❌ <b>تم إلغاء نشر العرض بناءً على اختيارك (لن يتم إرساله للقناة).</b>"
+                edit_telegram_msg(cb_chat_id, cb_msg_id, cancel_txt, reply_markup={"inline_keyboard": []})
+                continue
+
+            continue
+
         msg = upd.get("message")
         if not msg:
             continue
@@ -3020,20 +3227,42 @@ async def poll_private_chat_once(context):
                     await asyncio.to_thread(send_telegram_msg, warn_txt, None, [user_chat_id])
                     continue
 
-                # 2) فحص هل العرض نزل قبل كده في القناة بدون أي تغيير جديد (منع التكرار)
+                # 2) فحص هل العرض نزل قبل كده في القناة بدون أي تغيير جديد (منع التكرار مع إتاحة زر النشر اليدوي)
                 should_send, change_reason = should_send_deal(orig_url, title, eff_p, promo_sig)
-                entry = price_history.get(orig_url, {})
-                last_at = entry.get("last_sent_at") or 0
-                is_recent_duplicate = (now_ts - last_at) < 600
-                if not should_send and is_recent_duplicate:
+                if not should_send:
+                    deal_token = hashlib.md5(f"{orig_url}_{time.time()}".encode("utf-8")).hexdigest()[:16]
+                    pending_deals[deal_token] = {
+                        "deal_msg": deal_msg,
+                        "deal_img": deal_img,
+                        "orig_url": orig_url,
+                        "our_short_url": our_short_url,
+                        "title": title,
+                        "eff_p": eff_p,
+                        "promo_sig": promo_sig,
+                        "brand": brand,
+                        "timestamp": time.time(),
+                    }
+                    save_pending_deals()
+
+                    markup = {
+                        "inline_keyboard": [
+                            [
+                                {"text": "📢 انشر في القناة على أي حال", "callback_data": f"post_anyway:{deal_token}"},
+                                {"text": "❌ لا تنشر (تجاهل)", "callback_data": f"cancel_deal:{deal_token}"}
+                            ]
+                        ]
+                    }
+
                     already_txt = (
-                        "ℹ️ <b>العرض ده منشور بالفعل في القناة مؤخراً بنفس السعر والمواصفات!</b>\n"
-                        "<i>(تم منع تكرار النشر المتطابق في القناة لمنع إزعاج المتابعين):</i>\n\n"
-                        f"🧠 <b>الماركة المتعلمة:</b> {html.escape(brand or 'معروفة')}\n"
-                        f"🔗 <b>الرابط الأصلي الصافي:</b>\n{html.escape(orig_url)}\n\n"
-                        f"💰 <b>رابط الأفلييت الخاص بينا:</b>\n{html.escape(our_short_url)}"
+                        "ℹ️ <b>العرض ده منشور بالفعل في القناة قبل كده بنفس السعر والمواصفات!</b>\n\n"
+                        f"📦 <b>المنتج:</b> {html.escape(title[:70])}...\n"
+                        f"💰 <b>السعر:</b> {eff_p} ج.م\n"
+                        f"🧠 <b>الماركة المتعلمة:</b> {html.escape(brand or 'معروفة')}\n\n"
+                        f"🔗 <b>الرابط الصافي:</b>\n{html.escape(orig_url)}\n\n"
+                        f"💰 <b>رابط الأفلييت الخاص بينا:</b>\n{html.escape(our_short_url)}\n\n"
+                        "👇 <b>هل تحب تنشره في القناة دلوقتي على أي حال؟</b>"
                     )
-                    await asyncio.to_thread(send_telegram_msg, already_txt, None, [user_chat_id])
+                    await asyncio.to_thread(send_telegram_msg, already_txt, deal_img, [user_chat_id], markup)
                     continue
 
                 # 3) العرض ساري وجديد أو نزل سعره أكتر: نشره في القناة وفي الشات
