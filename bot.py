@@ -1944,7 +1944,7 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
             extra_pct=extra_pct, extra_egp=extra_egp, extra_label=extra_label, promo_links=promo_links,
             brand=brand, custom_insight=custom_insight,
         )
-        return msg, image, canonical_url, branded_url(canonical_url), title, eff_price, "|".join(stack_promos), is_active, active_reason
+        return msg, image, canonical_url, branded_url(canonical_url), title, eff_price, "|".join(stack_promos), is_active, active_reason, brand
 
     if "noon.com" in ul:
         page = await context.new_page()
@@ -2077,9 +2077,9 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
             extra_pct=extra_pct, extra_egp=extra_egp, extra_label=extra_label, promo_links=promo_links,
             brand=brand, custom_insight=custom_insight,
         )
-        return msg, image, canonical_url, branded_url(canonical_url), title, eff_price, "|".join(stack_promos), is_active, active_reason
+        return msg, image, canonical_url, branded_url(canonical_url), title, eff_price, "|".join(stack_promos), is_active, active_reason, brand
 
-    return None, None, canonical_url, branded_url(canonical_url), None, None, "", False, "رابط غير مدعوم"
+    return None, None, canonical_url, branded_url(canonical_url), None, None, "", False, "رابط غير مدعوم", None
 
 def extract_telegram_channel_info(text, msg=None):
     """يستخرج اسم قناة تليجرام (ورقم البوست ونوع الرابط) من أي رابط t.me أو معرّف @channel أو رسالة محولة (Forward)."""
@@ -2353,7 +2353,7 @@ async def scan_monitored_channels(context, target_channel=None, specific_post_id
                         break
 
             try:
-                deal_msg, deal_img, orig_url, our_short_url, title, eff_p, promo_sig, is_active, active_reason = await scrape_single_product(
+                deal_msg, deal_img, orig_url, our_short_url, title, eff_p, promo_sig, is_active, active_reason, brand = await scrape_single_product(
                     context, target_url, fallback_text=p_text, fallback_image=p_photo
                 )
                 if not deal_msg or not title:
@@ -2494,20 +2494,25 @@ async def poll_private_chat_once(context):
 
             # لو المستخدم باعت فقط رابط القناة بدون روابط منتجات مباشرة في نفس الرسالة
             if not product_urls:
-                await asyncio.to_thread(
-                    send_telegram_msg,
-                    f"📡 <b>تم {'إضافة' if is_new_ch else 'تحديث'} قناة @{html.escape(ch_ref)} في ذاكرة التعلم التلقائي للبوت!</b>\n"
-                    "⏳ <i>جاري الآن الدخول على القناة، فحص أحدث العروض والتجارب المرشحة فيها، إعادة صياغة الكلام بأسلوب «لقطة»، وتحويل الروابط لكود الأفلييت الخاص بينا...</i>",
-                    None,
-                    [user_chat_id],
+                ack_ch_txt = (
+                    f"📡 <b>فهمت إن ديه قناة تليجرام (@{html.escape(ch_ref)})!</b>\n\n"
+                    "✅ <b>تم حفظ القناة في قائمة المتابعة الدائمة للبوت.</b>\n"
+                    "🔄 <b>البوت هيفضل متابعها دايماً في كل دورات الفحص القادمة (مش بس دلوقتي):</b>\n"
+                    "• هيتعلم من ترشيحاتهم وتجاربهم تلقائياً.\n"
+                    "• هيتأكد أن أي عرض لسه ساري ومتاح على المتجر بالشروط اللي حددناها.\n"
+                    "• هيصيغ العرض بأسلوب «لقطة» ويضيف كود الأفلييت بتاعنا وينزله على قناتنا (@loqta78).\n"
+                    "• لو العرض نزل قبل كده ومحصلش فيه تغيير جديد، مش هيكرره أبداً.\n\n"
+                    "⏳ <i>جاري الآن الدخول على القناة وفحص أحدث العروض الموجودة فيها فوراً...</i>"
                 )
+                await asyncio.to_thread(send_telegram_msg, ack_ch_txt, None, [user_chat_id])
+
                 posted_cnt = await scan_monitored_channels(
-                    context, target_channel=ch_ref, specific_post_id=specific_post_id, max_to_post=2, notify_chat_id=user_chat_id
+                    context, target_channel=ch_ref, specific_post_id=specific_post_id, max_to_post=3, notify_chat_id=user_chat_id
                 )
                 done_msg = (
-                    f"✅ <b>تم فحص قناة @{html.escape(ch_ref)} بنجاح!</b>\n"
-                    f"📦 تم استيراد وإعادة صياغة ونشر <b>{posted_cnt}</b> عرض بلينك الأفلييت الخاص بينا.\n"
-                    f"🧠 البوت هيفضل متابع <b>@{html.escape(ch_ref)}</b> تلقائياً في كل دورة فحص، وأي عرض أو تجربة كويسة هتنزل هناك هيحولها لطريقتنا ولينكنا وينشرها فوراً! 🚀"
+                    f"✅ <b>تم الانتهاء من فحص قناة @{html.escape(ch_ref)} بنجاح!</b>\n\n"
+                    f"📦 <b>العروض المطابقة للشروط والمنشورة الآن:</b> {posted_cnt} عرض.\n"
+                    f"🧠 <b>المتابعة الدائمة نشطة:</b> القناة اتسجلت بشكل دائم في الذاكرة، وهيفضل يفحصها في كل دورة فحص دورية وينشر أي عرض جديد ومميز منها تلقائياً! 🚀"
                 )
                 await asyncio.to_thread(send_telegram_msg, done_msg, None, [user_chat_id])
                 continue
@@ -2526,12 +2531,12 @@ async def poll_private_chat_once(context):
         photos = msg.get("photo") or []
         fallback_img_id = photos[-1].get("file_id") if photos else None
 
-        await asyncio.to_thread(
-            send_telegram_msg,
-            "⏳ <i>جاري فتح الرابط واستخراج اللينك الأصلي وتحويله للأفلييت الخاص بينا وتجهيز العرض بالصورة...</i>",
-            None,
-            [user_chat_id],
+        ack_prod_txt = (
+            "📦 <b>فهمت إن ده عرض ومنتج!</b>\n"
+            "🧠 <b>جاري تحليله والتعلّم منه فوراً</b> (حفظ الماركة وفئة المنتج للبحث التلقائي عنها مستقبلاً).\n"
+            "⏳ <b>وجاري الآن:</b> التأكد من التوفر وسريان الخصم على المتجر، صياغة البوست بأسلوب «لقطة»، إضافة كود الأفلييت الخاص بينا (<code>is.gd/loqta_...</code>)، وتجهيز الصورة لنشره في قناتنا... 🚀"
         )
+        await asyncio.to_thread(send_telegram_msg, ack_prod_txt, None, [user_chat_id])
 
         try:
             # لو البوست المحوّل فيه أكتر من رابط مختصر (مثلاً رابط عرض الفئة + رابط المنتج)، نختار رابط المنتج الفعلي
@@ -2543,7 +2548,7 @@ async def poll_private_chat_once(context):
                         target_url = resolved_cand
                         break
 
-            deal_msg, deal_img, orig_url, our_short_url, title, eff_p, promo_sig, is_active, active_reason = await scrape_single_product(
+            deal_msg, deal_img, orig_url, our_short_url, title, eff_p, promo_sig, is_active, active_reason, brand = await scrape_single_product(
                 context, target_url, fallback_text=text, fallback_image=fallback_img_id
             )
             # منع نشر نفس الرابط مرتين لو اتبعت في خلال دقيقتين
@@ -2565,11 +2570,11 @@ async def poll_private_chat_once(context):
             # 1) فحص هل العرض لسه متاح وساري حالياً في المتجر (مش مخلص أو انتهى)
             if not is_active:
                 warn_txt = (
-                    "⚠️ <b>تنبيه: العرض ده حالياً غير متاح أو انتهى على المتجر!</b>\n"
-                    f"<i>السبب: {html.escape(active_reason)}</i>\n\n"
-                    "🧠 <b>لكن تم حفظ الماركة ونوع المنتج</b> في ذاكرة البوت عشان يبحث عن عروض جديدة عليها تلقائياً ويجيبها فوراً!\n\n"
+                    "⚠️ <b>نتيجة فحص العرض:</b>\n"
+                    f"❌ <i>العرض حالياً غير متاح أو انتهى على المتجر ({html.escape(active_reason)})، لذلك تم منع نشره في القناة حتى لا يكون مضللاً للمتابعين.</i>\n\n"
+                    f"🧠 <b>لكن تم التعلّم منه بنجاح:</b> تم حفظ ماركة <b>{html.escape(brand or 'المنتج')}</b> وفئة المنتج في ذاكرة البوت عشان يبحث عن عروض جديدة عليها تلقائياً ويجيبها فوراً!\n\n"
                     f"🔗 <b>الرابط الأصلي الصافي:</b>\n{html.escape(orig_url)}\n\n"
-                    f"💰 <b>رابط الأفلييت الخاص بينا:</b>\n{html.escape(our_short_url)}"
+                    f"💰 <b>رابط الأفلييت الخاص بيك:</b>\n{html.escape(our_short_url)}"
                 )
                 await asyncio.to_thread(send_telegram_msg, warn_txt, None, [user_chat_id])
                 continue
@@ -2579,7 +2584,8 @@ async def poll_private_chat_once(context):
             if not should_send:
                 already_txt = (
                     "ℹ️ <b>العرض ده منشور بالفعل في القناة بنفس السعر والمواصفات ومحصلش عليه أي تغيير جديد!</b>\n"
-                    "<i>(تم منع تكرار النشر في القناة لمنع إزعاج المتابعين، وده رابط الأفلييت الخاص بيك):</i>\n\n"
+                    "<i>(تم منع تكرار النشر في القناة لمنع إزعاج المتابعين، وتم تأكيد تعلّم الماركة):</i>\n\n"
+                    f"🧠 <b>الماركة المتعلمة:</b> {html.escape(brand or 'معروفة')}\n"
                     f"🔗 <b>الرابط الأصلي الصافي:</b>\n{html.escape(orig_url)}\n\n"
                     f"💰 <b>رابط الأفلييت الخاص بينا:</b>\n{html.escape(our_short_url)}"
                 )
@@ -2596,11 +2602,14 @@ async def poll_private_chat_once(context):
             await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, [user_chat_id])
             channel_note = f"\n📡 <i>وتم حفظ قناة @{html.escape(ch_ref)} في ذاكرة المتابعة التلقائية للبوت!</i>" if ch_kind == "public" else ""
             summary_txt = (
-                "✅ <b>تم تحويل الرابط ونشر العرض بالصورة في القناة بنجاح!</b>\n"
-                "🧠 <i>وتم حفظ الماركة وفئة المنتج في ذاكرة البوت للبحث التلقائي عن عروض مشابهة!</i>"
+                "✅ <b>تم استلام العرض، والتعلّم منه، ونشره بنجاح في القناة!</b>\n\n"
+                f"🧠 <b>ما تعلمه البوت:</b> تم حفظ ماركة <b>{html.escape(brand or 'المنتج')}</b> وفئة المنتج في ذاكرة البحث التلقائي المستمر.\n"
+                f"📦 <b>المنتج:</b> {html.escape(title[:60])}...\n"
+                f"💰 <b>السعر النهائي:</b> {eff_p} ج.م\n"
+                f"🚀 <b>النشر:</b> نزل بالصورة وأسلوب «لقطة» وكود الأفلييت على قناتنا (@loqta78)."
                 f"{channel_note}\n\n"
                 f"🔗 <b>الرابط الأصلي الصافي:</b>\n{html.escape(orig_url)}\n\n"
-                f"💰 <b>رابط الأفلييت الخاص بينا:</b>\n{html.escape(our_short_url)}"
+                f"💰 <b>رابط الأفلييت المختصر الخاص بينا:</b>\n{html.escape(our_short_url)}"
             )
             await asyncio.to_thread(send_telegram_msg, summary_txt, None, [user_chat_id])
         except Exception as e:
