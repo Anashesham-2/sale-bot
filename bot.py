@@ -714,11 +714,27 @@ def build_section_alert(store, brand_label, section_url, items):
     ]
     return "\n".join(lines)
 
+def _fit_caption_for_photo(text):
+    """يضمن أن طول الرسالة لا يتخطى حد تليجرام للصور (1024 حرف) مع الحفاظ على سلامة وسوم HTML."""
+    if not text or len(text) <= 990:
+        return text
+    # 1. حذف سطر سجل الأسعار لو الرسالة طويلة
+    t = re.sub(r'\n📊 أعلى سعر مسجّل:[^\n]+', '', text)
+    if len(t) <= 990:
+        return t
+    # 2. اختصار قسم المراجعة أو الوصف لو لسه طويلة بسبب وجود عروض إضافية كثيرة
+    t = re.sub(r'\n\n💬 <b>مراجعة المشترين:</b>\n[^\n]+', '', t)
+    if len(t) <= 990:
+        return t
+    t = re.sub(r'\n\n📝 <b>وصف المنتج:</b>\n[^\n]+', '', t)
+    return t
+
 def send_telegram_msg(text, image=None, target_chat_ids=None):
     """يبعت العرض بصورة المنتج دائماً (سواء برابط مباشر أو بتحميل الصورة ورفعها لتليجرام أو file_id)."""
     img_url = clean_image_url(image)
     is_tg_file_id = bool(image and isinstance(image, str) and not image.startswith("http") and len(image) > 20)
     destinations = target_chat_ids if target_chat_ids is not None else CHAT_IDS
+    photo_caption = _fit_caption_for_photo(text)
     for chat_id in destinations:
         try:
             resp = None
@@ -727,7 +743,7 @@ def send_telegram_msg(text, image=None, target_chat_ids=None):
                 # 1. محاولة إرسال الصورة بالرابط المباشر أو file_id
                 resp = requests.post(
                     f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
-                    json={"chat_id": chat_id, "photo": photo_val, "caption": text, "parse_mode": "HTML"},
+                    json={"chat_id": chat_id, "photo": photo_val, "caption": photo_caption, "parse_mode": "HTML"},
                     timeout=20,
                 )
                 # 2. لو تليجرام رفض تحميل الرابط مباشرة (مثلاً بسبب حماية CDN)، نحمّل الصورة ونرفعها كملف
@@ -741,7 +757,7 @@ def send_telegram_msg(text, image=None, target_chat_ids=None):
                         if img_r.ok and len(img_r.content) > 500:
                             resp = requests.post(
                                 f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
-                                data={"chat_id": chat_id, "caption": text, "parse_mode": "HTML"},
+                                data={"chat_id": chat_id, "caption": photo_caption, "parse_mode": "HTML"},
                                 files={"photo": ("product.jpg", img_r.content, "image/jpeg")},
                                 timeout=25,
                             )
@@ -1638,18 +1654,10 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
             await page.close()
 
         raw_t = data.get("title") or ""
-        title = (raw_t if raw_t and not is_blocked_title(raw_t) else fb["title"]) or "منتج مميز على أمازون مصر"
         p_m = re.search(r'([\d,]+(?:\.\d+)?)', clean(data.get("priceTxt") or ""))
         l_m = re.search(r'([\d,]+(?:\.\d+)?)', clean(data.get("listTxt") or ""))
-        price = to_float(p_m.group(1)) if p_m else fb["price"]
-        list_price = to_float(l_m.group(1)) if l_m else fb["list_price"]
-        s_m = re.search(r'(\d+)\s*%', clean(data.get("savingsTxt") or ""))
-        discount = float(s_m.group(1)) if s_m else (fb["discount"] or 0.0)
-        if price and list_price and list_price > price:
-            discount = (1 - price / list_price) * 100
-        elif price and discount > 0 and not list_price:
-            list_price = round(price / (1 - discount / 100.0), 2)
-
+        price = to_float(p_m.group(1)) if p_m else None
+        list_price = to_float(l_m.group(1)) if l_m else None
         r_m = re.search(r'(\d\.\d)', clean(data.get("ratingTxt") or ""))
         rating = r_m.group(1) if r_m else None
         rv_m = re.search(r'([\d,]+)', clean(data.get("reviewsTxt") or ""))
@@ -1657,15 +1665,79 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
         brand = data.get("brand")
         seller = data.get("seller")
         features = data.get("feats") or []
-        image = clean_image_url(data.get("image")) or fallback_image
+        image = clean_image_url(data.get("image"))
         promos_list = data.get("promos") or []
         promo_links = data.get("promo_links") or []
         rev_snippets = data.get("revs") or []
         bought_badge = data.get("bought")
 
+        # لو صفحة المنتج في أمازون محجوبة على السحابة أو الصورة/السعر مظهروش، نجيبهم فوراً من بحث أمازون بالـ ASIN (مبيتحجبش أبداً)
+        asin_m = re.search(r'/dp/([A-Z0-9]{10})', canonical_url, re.IGNORECASE)
+        if asin_m and (not image or not price or not raw_t or is_blocked_title(raw_t)):
+            asin_code = asin_m.group(1).upper()
+            spage = await context.new_page()
+            try:
+                await spage.goto(f"https://www.amazon.eg/s?k={asin_code}", wait_until="domcontentloaded", timeout=35000)
+                await spage.wait_for_timeout(1500)
+                sdata = await spage.evaluate("""(asin) => {
+                    const c = document.querySelector(`div[data-asin="${asin}"]`)
+                        || document.querySelector('div[data-component-type="s-search-result"]');
+                    if (!c) return null;
+                    return {
+                        title: c.querySelector('h2')?.innerText?.trim(),
+                        price: c.querySelector('.a-price:not(.a-text-price) .a-offscreen')?.innerText
+                            || c.querySelector('.a-price .a-offscreen')?.innerText,
+                        list_price: c.querySelector('.a-price.a-text-price .a-offscreen')?.innerText
+                            || c.querySelector('span[data-a-strike="true"] .a-offscreen')?.innerText,
+                        rating: c.querySelector('i[class*="a-icon-star"] span.a-icon-alt, span[aria-label*="من 5"]')?.innerText,
+                        reviews: c.querySelector('a[href*="#customerReviews"] span, span.s-underline-text')?.innerText,
+                        img: c.querySelector('img.s-image')?.src
+                    };
+                }""", asin_code)
+                if sdata:
+                    if (not raw_t or is_blocked_title(raw_t)) and sdata.get("title"):
+                        raw_t = sdata["title"]
+                    if not price and sdata.get("price"):
+                        spm = re.search(r'([\d,]+(?:\.\d+)?)', clean(sdata["price"]))
+                        if spm:
+                            price = to_float(spm.group(1))
+                    if not list_price and sdata.get("list_price"):
+                        slm = re.search(r'([\d,]+(?:\.\d+)?)', clean(sdata["list_price"]))
+                        if slm:
+                            list_price = to_float(slm.group(1))
+                    if not rating and sdata.get("rating"):
+                        srm = re.search(r'(\d[.,]\d)', clean(sdata["rating"]))
+                        if srm:
+                            rating = srm.group(1).replace(",", ".")
+                    if not reviews and sdata.get("reviews"):
+                        srvm = re.search(r'([\d,]+)', clean(sdata["reviews"]))
+                        if srvm:
+                            reviews = srvm.group(1)
+                    if not image and sdata.get("img"):
+                        image = clean_image_url(sdata["img"])
+            except Exception as se:
+                print(f"تعذر جلب بيانات ASIN الاحتياطية من البحث: {se}")
+            finally:
+                await spage.close()
+
+        title = (raw_t if raw_t and not is_blocked_title(raw_t) else fb["title"]) or "منتج مميز على أمازون مصر"
+        price = price or fb["price"]
+        list_price = list_price or fb["list_price"]
+        image = image or fallback_image
+        s_m = re.search(r'(\d+)\s*%', clean(data.get("savingsTxt") or ""))
+        discount = float(s_m.group(1)) if s_m else (fb["discount"] or 0.0)
+        if price and list_price and list_price > price:
+            discount = (1 - price / list_price) * 100
+        elif price and discount > 0 and not list_price:
+            list_price = round(price / (1 - discount / 100.0), 2)
+
         prev_min, max_p, min_p = record_price(canonical_url, price) if price else (None, None, None)
+        clean_fb_text = "\n".join(
+            l for l in (fallback_text or "").splitlines()
+            if "http" not in l.lower() and "هنا:" not in l
+        )
         stack_promos, stack_howto, extra_pct, extra_egp, extra_label, promo_links = detect_stacking_promos(
-            fallback_text, promos_list, promo_links
+            "" if promos_list else clean_fb_text, promos_list, promo_links
         )
         eff_price = price
         if eff_price and extra_pct > 0:
@@ -1804,9 +1876,11 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
     return None, None, canonical_url, branded_url(canonical_url), None, None, ""
 
 _last_tg_offset = None
+_processed_tg_msgs = set()
+_recent_private_urls = {}
 
 async def poll_private_chat_once(context):
-    """يتحقق من رسائل الشات الخاص مع البوت لتحويل أي رابط مرسل إلى رابط أفلييت القناة ونشره."""
+    """يتحقق من رسائل الشات الخاص مع البوت لتحويل أي رابط مرسل إلى رابط أفلييت القناة ونشره مرة واحدة فقط."""
     global _last_tg_offset
     params = {"timeout": 0, "allowed_updates": json.dumps(["message"])}
     if _last_tg_offset is not None:
@@ -1824,9 +1898,22 @@ async def poll_private_chat_once(context):
     except Exception:
         return
 
+    if not updates:
+        return
+
+    # تأكيد استلام التحديثات لتليجرام فوراً قبل بدء الفحص لمنع قراءتها مرتين أبداً
+    _last_tg_offset = max(u.get("update_id", 0) for u in updates) + 1
+    try:
+        await asyncio.to_thread(
+            requests.get,
+            f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates",
+            params={"offset": _last_tg_offset, "timeout": 0},
+            timeout=5,
+        )
+    except Exception:
+        pass
+
     for upd in updates:
-        upd_id = upd.get("update_id", 0)
-        _last_tg_offset = upd_id + 1
         msg = upd.get("message")
         if not msg:
             continue
@@ -1834,6 +1921,11 @@ async def poll_private_chat_once(context):
         if chat.get("type") != "private":
             continue
         user_chat_id = chat.get("id")
+        msg_id = msg.get("message_id")
+        if (user_chat_id, msg_id) in _processed_tg_msgs:
+            continue
+        _processed_tg_msgs.add((user_chat_id, msg_id))
+
         text = (msg.get("text") or msg.get("caption") or "").strip()
 
         if text.startswith("/start"):
@@ -1843,7 +1935,7 @@ async def poll_private_chat_once(context):
                 "وهقوم فوراً بـ:\n"
                 "1️⃣ فك الاختصار واستخراج <b>الرابط الأصلي الصافي</b> للمنتج (وحذف أي كود أفلييت قديم).\n"
                 "2️⃣ إضافة <b>كود الأفلييت الخاص بينا</b> واختصاره باسم القناة (<code>is.gd/loqta_...</code>).\n"
-                "3️⃣ سحب تفاصيل المنتج كاملة وإرسال بوست العرض جاهز في الشات ونشره في القناة! 🚀💰"
+                "3️⃣ سحب تفاصيل وصورة المنتج وإرسال بوست العرض جاهز في الشات ونشره في القناة! 🚀💰"
             )
             await asyncio.to_thread(send_telegram_msg, welcome_reply, None, [user_chat_id])
             continue
@@ -1861,31 +1953,46 @@ async def poll_private_chat_once(context):
             )
             continue
 
-        target_url = urls[0]
         photos = msg.get("photo") or []
         fallback_img_id = photos[-1].get("file_id") if photos else None
 
         await asyncio.to_thread(
             send_telegram_msg,
-            "⏳ <i>جاري فتح الرابط واستخراج اللينك الأصلي وتحويله للأفلييت الخاص بينا وتجهيز العرض...</i>",
+            "⏳ <i>جاري فتح الرابط واستخراج اللينك الأصلي وتحويله للأفلييت الخاص بينا وتجهيز العرض بالصورة...</i>",
             None,
             [user_chat_id],
         )
 
         try:
+            # لو البوست المحوّل فيه أكتر من رابط مختصر (مثلاً رابط عرض الفئة + رابط المنتج)، نختار رابط المنتج الفعلي
+            target_url = urls[0]
+            if len(urls) > 1:
+                for cand_u in urls:
+                    resolved_cand = await resolve_original_url(context, cand_u)
+                    if "/dp/" in resolved_cand or "/p/" in resolved_cand:
+                        target_url = resolved_cand
+                        break
+
             deal_msg, deal_img, orig_url, our_short_url, title, eff_p, promo_sig = await scrape_single_product(
                 context, target_url, fallback_text=text, fallback_image=fallback_img_id
             )
+            # منع نشر نفس الرابط مرتين لو اتبعت في خلال دقيقتين
+            now_ts = time.time()
+            if orig_url in _recent_private_urls and (now_ts - _recent_private_urls[orig_url]) < 120:
+                continue
+            _recent_private_urls[orig_url] = now_ts
+
             if deal_msg:
                 if title:
                     mark_deal_sent(orig_url, title, eff_p, promo_sig)
-                # 1) نشر الرسالة الكاملة في القناة
-                await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, CHAT_IDS)
-                # 2) إرسال نسخة لصاحب البوت في الشات الخاص (لو الشات الخاص مش مضاف أصلاً في CHAT_IDS)
-                if str(user_chat_id) not in CHAT_IDS:
-                    await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, [user_chat_id])
+                # 1) نشر الرسالة الكاملة بالصورة في القناة مرة واحدة فقط
+                channel_only_ids = [cid for cid in CHAT_IDS if str(cid) != str(user_chat_id)]
+                if channel_only_ids:
+                    await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, channel_only_ids)
+                # 2) إرسال نسخة لصاحب البوت في الشات الخاص
+                await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, [user_chat_id])
                 summary_txt = (
-                    "✅ <b>تم تحويل الرابط ونشر العرض في القناة بنجاح!</b>\n\n"
+                    "✅ <b>تم تحويل الرابط ونشر العرض بالصورة في القناة بنجاح!</b>\n\n"
                     f"🔗 <b>الرابط الأصلي الصافي:</b>\n{html.escape(orig_url)}\n\n"
                     f"💰 <b>رابط الأفلييت الخاص بينا:</b>\n{html.escape(our_short_url)}"
                 )
