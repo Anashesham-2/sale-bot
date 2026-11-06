@@ -411,6 +411,7 @@ def parse_reviews_count(reviews_str):
 _GENERIC_BRAND_NAMES = {
     "generic", "عام", "أخرى", "اخرى", "other", "others", "no brand", "unbranded",
     "بدون ماركة", "بدون علامة تجارية", "غير محدد", "n/a", "oem", "none", "unknown",
+    "جينيريك", "جينريك",
 }
 
 TRUSTED_BRAND_KEYWORDS = (
@@ -475,6 +476,20 @@ def is_deal_currently_active(
     2) أن السعر الحالي موجود ومسحوب مباشرة من المتجر أو من تفاصيل العرض.
     3) أن هناك خصم حقيقي ساري أو أن المستخدم اختار العرض بنفسه.
     """
+    # 1) لو الرابط مرسل يدوياً من المستخدم في الشات الخاص:
+    # نقبله فوراً وننشره طالما له سعر متاح (> 0)، لأن المستخدم اختاره بنفسه من مصر
+    # ولا نسمح لقيود شحن السيرفرات السحابية برفضه!
+    if is_user_submission:
+        if price and price > 0:
+            if stack_promos or (extra_pct and extra_pct > 0) or (extra_egp and extra_egp > 0):
+                return True, "العرض ساري مع كود خصم/كوبون إضافي"
+            if discount and discount > 0:
+                return True, f"العرض ساري بخصم {discount:.0f}%"
+            if list_price and price and (list_price - price) > 0:
+                return True, f"العرض ساري بتوفير {list_price - price:.0f} ج.م"
+            return True, "العرض متاح للشراء بسعر مميز بناءً على اختيارك"
+        return False, "السعر غير متاح على صفحة المتجر أو تم إيقاف البيع"
+
     if not is_available:
         return False, "المنتج غير متوفر في المخزون (Out of Stock / نفد من المتجر)"
     if price is None or price <= 0:
@@ -482,17 +497,6 @@ def is_deal_currently_active(
 
     has_promos = bool(stack_promos) or (extra_pct and extra_pct > 0) or (extra_egp and extra_egp > 0)
     is_famous = has_famous_brand(title, brand)
-
-    # 1) لو الرابط مرسل يدوياً من المستخدم في الشات الخاص:
-    # نقبله فوراً وننشره طالما متاح في المتجر وله سعر، لأن المستخدم اختاره بنفسه!
-    if is_user_submission:
-        if has_promos:
-            return True, "العرض ساري مع كود خصم/كوبون إضافي"
-        if discount and discount > 0:
-            return True, f"العرض ساري بخصم {discount:.0f}%"
-        if list_price and price and (list_price - price) > 0:
-            return True, f"العرض ساري بتوفير {list_price - price:.0f} ج.م"
-        return True, "العرض متاح للشراء بسعر مميز بناءً على اختيارك"
 
     # 2) لو عليه كوبون أو كود خصم أو برومو نشط
     if has_promos:
@@ -629,9 +633,13 @@ BILINGUAL_BRANDS = {
     "فيتراك": ("فيتراك", "Vitrac"), "vitrac": ("فيتراك", "Vitrac"),
     "ابو عوف": ("أبو عوف", "Abu Auf"), "أبو عوف": ("أبو عوف", "Abu Auf"), "abu auf": ("أبو عوف", "Abu Auf"),
     "نسكافيه": ("نسكافيه", "Nescafe"), "nescafe": ("نسكافيه", "Nescafe"),
+    "تيكزون": ("تيكزون", "Techzone"), "techzone": ("تيكزون", "Techzone"),
+    "نيمبوت": ("نيمبوت", "Niimbot"), "niimbot": ("نيمبوت", "Niimbot"),
+    "jepeerbz": ("جيبيربز", "JEPEErbz"), "جيبيربز": ("جيبيربز", "JEPEErbz"),
 }
 
 BILINGUAL_CATEGORIES = [
+    (r'طابعة\s*(?:صغيرة|حرارية|ملصقات|محمولة|جيب)?|mini\s*printer|thermal\s*printer|label\s*(?:maker|printer)|printer', 'طابعة حرارية صغيرة محمولة', 'Mini Thermal Portable Printer'),
     (r'مشترك\s*كهربائ?ي?|مشترك|power\s*strip', 'مشترك كهربائي', 'Power Strip'),
     (r'باور\s*بانك|بطارية\s*متنقلة|power\s*bank', 'باور بانك', 'Power Bank'),
     (r'شاحن\s*سيارة|car\s*charger', 'شاحن سيارة سريع', 'Fast Car Charger'),
@@ -646,6 +654,15 @@ BILINGUAL_CATEGORIES = [
     (r'قلاية\s*(?:هوائية|بدون\s*زيت)|اير\s*فراير|air\s*fryer', 'قلاية هوائية', 'Air Fryer'),
     (r'خلاط\s*(?:كهربائي|يدوي)?|هاند\s*بلندر|blender', 'خلاط كهربائي', 'Blender'),
     (r'مكواة\s*بخار|steam\s*iron', 'مكواة بخار', 'Steam Iron'),
+    (r'ماوس|فأرة|mouse', 'ماوس لاسلكي', 'Wireless Mouse'),
+    (r'كيبورد|لوحة\s*مفاتيح|keyboard', 'لوحة مفاتيح', 'Keyboard'),
+    (r'ستاند|حامل\s*(?:موبايل|هاتف|لابتوب|شاشة)|stand|holder', 'حامل ستاند مريح', 'Adjustable Stand Holder'),
+    (r'مروحة|fan', 'مروحة تبريد', 'Cooling Fan'),
+    (r'سخان|غلاية|kettle', 'غلاية مياه كهربائية', 'Electric Water Kettle'),
+    (r'مفرمة|كبة|chopper|food\s*processor', 'كبة ومفرمة كهربائية', 'Electric Food Chopper'),
+    (r'شاشة|تلفزيون|تلفاز|tv|monitor', 'شاشة ذكية', 'Smart TV & Monitor'),
+    (r'لابتوب|كمبيوتر\s*محمول|laptop', 'لابتوب', 'Laptop'),
+    (r'تابلت|لوحي|tablet|ipad', 'تابلت ذكي', 'Smart Tablet'),
     (r'كرسي\s*(?:بوسادة|طبي|مريح)?|مسند\s*(?:ظهر|طبي)|وسادة\s*(?:ظهر|جلوس)|cushion', 'كرسي ومسند ظهر مريح', 'Back Support Cushion Chair'),
     (r'حذاء\s*رياضي|كوتشي|running\s*shoes|sneakers', 'حذاء رياضي', 'Running Shoes'),
     (r'طقم\s*مفكات|screwdriver\s*set', 'طقم مفكات براغي', 'Screwdriver Set'),
@@ -765,20 +782,26 @@ def build_description(title, features=None, extra_desc=None, brand=None):
     ar_feats = [f for f in clean_feats if re.search(r'[\u0600-\u06FF]', f)]
     if ar_feats:
         desc_text = '؛ '.join(ar_feats[:2])
+        if len(desc_text) > 220:
+            desc_text = desc_text[:220].rsplit(' ', 1)[0]
         if not desc_text.endswith('.'):
             desc_text += '.'
-        return desc_text[:220]
+        return desc_text
 
     if extra_desc and len(extra_desc.strip()) > 15:
         clean_extra = re.sub(r'\s+', ' ', extra_desc.strip())
         if re.search(r'[\u0600-\u06FF]', clean_extra):
-            return clean_extra[:200]
+            if len(clean_extra) > 200:
+                clean_extra = clean_extra[:200].rsplit(' ', 1)[0] + '.'
+            return clean_extra
 
     tl = title.lower()
     b_txt = (brand or '').strip()
     b_suffix = f' من {b_txt}' if b_txt else ''
 
-    if any(w in tl for w in ('مشترك', 'power strip')):
+    if any(w in tl for w in ('طابعة', 'printer')):
+        return f'طابعة حرارية صغيرة محمولة{b_suffix}، تعمل بدون حبر بتقنية البلوتوث وتتصل بالموبايل مباشرة لطباعة الملصقات والصور واليوميات والمهام بسرعة وسهولة في أي مكان.'
+    elif any(w in tl for w in ('مشترك', 'power strip')):
         return f'مشترك كهربائي متين وموثوق{b_suffix}، مزود بمنافذ كهربائية متعددة ومخارج شحن ذكية وسريعة للأجهزة، ومصنوع من خامات مقاومة للحرارة مع حماية متكاملة ضد التذبذب والماس الكهربائي لضمان أمان أجهزتك.'
     elif any(w in tl for w in ('باور بانك', 'power bank')):
         return f'باور بانك عالي الكفاءة والاعتمادية{b_suffix}، يتميز بسعة شحن حقيقية وتقنية شحن سريع آمنة للحفاظ على بطارية أجهزتك أثناء التنقل والسفر مع حماية متكاملة من زيادة التيار.'
@@ -2079,6 +2102,13 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                     '#tp_price_block_total_price_ww .a-offscreen',
                     '#ppd .a-price:not(.a-text-price) .a-offscreen',
                     'span[data-a-color="price"] span.a-offscreen',
+                    '#olpLinkWidget_feature_div .a-price .a-offscreen',
+                    '#olp_feature_div .a-price .a-offscreen',
+                    '#buybox-see-all-buying-choices .a-color-price',
+                    '#all-offers-display-scroller .a-price .a-offscreen',
+                    '#aod-pinned-offer .a-price .a-offscreen',
+                    '#aod-price-1 .a-price .a-offscreen',
+                    'span.a-color-price',
                 ];
                 let priceTxt = priceSelectors.map(q).find(x => x && /\\d/.test(x)) || null;
                 if (!priceTxt) {
@@ -2120,7 +2150,7 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                 let brand = q('tr.po-brand td.a-span9') || q('#bylineInfo');
                 if (brand) {
                     brand = brand
-                        .replace(/^(زيارة متجر|العلامة التجارية:|الماركة:|Visit the|Brand:)\\s*/i, '')
+                        .replace(/^(قم بزيارة متجر|زيارة متجر|العلامة التجارية:|الماركة:|Visit the|Brand:)\\s*/i, '')
                         .replace(/\\s*Store$/i, '')
                         .trim();
                 }
@@ -2161,12 +2191,16 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                 
                 // فحص دقيق للتوفر الفعلي في المخزون وعدم الخلط بين قيود شحن السيرفر والنفاد الحقيقي
                 const hasAddToCart = Boolean(
-                    document.querySelector('#add-to-cart-button, #buy-now-button, input[name="submit.add-to-cart"], #buybox-see-all-buying-choices, #addToCart, form[action*="/cart/add"]')
+                    document.querySelector(
+                        '#add-to-cart-button, #buy-now-button, input[name="submit.add-to-cart"], ' +
+                        '#buybox-see-all-buying-choices, #addToCart, form[action*="/cart/add"], ' +
+                        'a[href*="/offer-listing/"], #all-offers-display, #olpLinkWidget_feature_div'
+                    )
                 );
                 const outOfStockBox = Boolean(document.querySelector('#outOfStock, .out-of-stock'));
                 const availTxt = (document.querySelector('#availability, #availability_feature_div')?.innerText || '').trim();
                 const isExplicitlyUnavailable = /غير متوفر حالياً|غير متوفر مؤقتاً|currently unavailable/i.test(availTxt);
-                const isShippingRestrictionOnly = /غير متوفر للشحن|غير متاح للشحن|لا يمكن شحن|cannot be shipped|delivery location/i.test(availTxt);
+                const isShippingRestrictionOnly = /غير متوفر للشحن|غير متاح للشحن|لا يمكن شحن|cannot be shipped|delivery location|التوصيل إلى موقعك|موقع التوصيل المحدد/i.test(availTxt);
 
                 let isOutOfStock = false;
                 if (hasAddToCart) {
@@ -2197,10 +2231,10 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
         rev_snippets = data.get("revs") or []
         bought_badge = data.get("bought")
 
-        # لو صفحة المنتج في أمازون محجوبة على السحابة أو الصورة/السعر مظهروش، نجيبهم فوراً من بحث أمازون بالـ ASIN (مبيتحجبش أبداً)
+        # لو صفحة المنتج في أمازون محجوبة على السحابة أو الصورة/السعر مظهروش أو ظهرت رسالة نفاد وهمية بسبب السيرفر الخارجي، نجيبهم فوراً من بحث أمازون بالـ ASIN (مبيتحجبش أبداً)
         live_price_found = bool(price)
         asin_m = re.search(r'/dp/([A-Z0-9]{10})', canonical_url, re.IGNORECASE)
-        if asin_m and (not image or not price or not raw_t or is_blocked_title(raw_t)):
+        if asin_m and (not image or not price or not raw_t or is_blocked_title(raw_t) or data.get("isOutOfStock")):
             asin_code = asin_m.group(1).upper()
             spage = await context.new_page()
             try:
@@ -2213,7 +2247,8 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                     return {
                         title: c.querySelector('h2')?.innerText?.trim(),
                         price: c.querySelector('.a-price:not(.a-text-price) .a-offscreen')?.innerText
-                            || c.querySelector('.a-price .a-offscreen')?.innerText,
+                            || c.querySelector('.a-price .a-offscreen')?.innerText
+                            || c.querySelector('.a-color-price')?.innerText,
                         list_price: c.querySelector('.a-price.a-text-price .a-offscreen')?.innerText
                             || c.querySelector('span[data-a-strike="true"] .a-offscreen')?.innerText,
                         rating: c.querySelector('i[class*="a-icon-star"] span.a-icon-alt, span[aria-label*="من 5"]')?.innerText,
@@ -2243,6 +2278,8 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                             reviews = srvm.group(1)
                     if not image and sdata.get("img"):
                         image = clean_image_url(sdata["img"])
+                    if sdata.get("price"):
+                        data["isOutOfStock"] = False
             except Exception as se:
                 print(f"تعذر جلب بيانات ASIN الاحتياطية من البحث: {se}")
             finally:
@@ -2281,9 +2318,10 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
         has_add_to_cart = data.get("hasAddToCart")
         is_out_of_stock = data.get("isOutOfStock") and not has_add_to_cart
         is_available = not is_out_of_stock
+        if live_price_found:
+            is_available = True
         if is_user_submission and price and price > 0:
-            if not is_out_of_stock:
-                is_available = True
+            is_available = True
         elif not live_price_found and not fb.get("price"):
             is_available = False
 
@@ -2432,9 +2470,10 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
         has_add_to_cart = data.get("hasAddToCart")
         is_out_of_stock = data.get("isOutOfStock") and not has_add_to_cart
         is_available = not is_out_of_stock
+        if live_price_found:
+            is_available = True
         if is_user_submission and price and price > 0:
-            if not is_out_of_stock:
-                is_available = True
+            is_available = True
         elif not live_price_found and not fb.get("price"):
             is_available = False
 
@@ -3042,6 +3081,13 @@ async def run_cycle(p, listen_only_seconds=0):
             viewport={"width": 1366, "height": 768}
         )
         await context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        try:
+            await context.add_cookies([
+                {"name": "i18n-prefs", "value": "EGP", "domain": ".amazon.eg", "path": "/"},
+                {"name": "lc-acbeg", "value": "ar_AE", "domain": ".amazon.eg", "path": "/"},
+            ])
+        except Exception:
+            pass
         listener_task = asyncio.create_task(private_chat_listener_loop(context, stop_event))
         if listen_only_seconds > 0:
             await asyncio.sleep(listen_only_seconds)
