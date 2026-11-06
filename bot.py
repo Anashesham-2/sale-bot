@@ -1736,7 +1736,7 @@ _last_tg_offset = None
 async def poll_private_chat_once(context):
     """يتحقق من رسائل الشات الخاص مع البوت لتحويل أي رابط مرسل إلى رابط أفلييت القناة ونشره."""
     global _last_tg_offset
-    params = {"timeout": 1, "allowed_updates": json.dumps(["message"])}
+    params = {"timeout": 0, "allowed_updates": json.dumps(["message"])}
     if _last_tg_offset is not None:
         params["offset"] = _last_tg_offset
     try:
