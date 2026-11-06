@@ -55,9 +55,12 @@ PENDING_DEALS_FILE = os.path.join(BASE_DIR, "pending_deals.json")
 
 # أشهر البراندات والأقسام اللي عليها عروض قوية في مصر (بيتم فحصها واكتشاف عروضها المجمعة)
 HOT_BRANDS = [
-    ("أنكر / ساوند كور (Anker)", ["سماعة انكر", "anker", "انكر", "أنكر", "soundcore", "ساوند كور"]),
+    ("أنكر (Anker)", ["شاحن انكر", "anker", "انكر", "أنكر", "باور بانك انكر"]),
+    ("ساوند كور (Soundcore)", ["سماعة انكر ساوند كور", "soundcore", "ساوند كور", "سماعة ساوند كور"]),
     ("آي لوك (iLock)", ["مشترك اي لوك", "ilock", "i-lock", "اي لوك", "آي لوك", "اى لوك"]),
     ("UGREEN (يوغرين)", ["ugreen", "يوغرين", "يوجرين"]),
+    ("أسوس (ASUS)", ["asus", "اسوس", "أسوس", "vivobook"]),
+    ("لينوفو (Lenovo)", ["lenovo", "لينوفو", "ideapad", "thinkpad"]),
     ("تورنيدو (Tornado)", ["tornado", "تورنيدو"]),
     ("فريش (Fresh)", ["fresh", "فريش"]),
     ("فيليبس / براون", ["philips", "فيليبس", "braun", "براون"]),
@@ -689,36 +692,65 @@ BILINGUAL_BRANDS = {
 }
 
 BILINGUAL_CATEGORIES = [
-    (r'طابعة\s*(?:صغيرة|حرارية|ملصقات|محمولة|جيب)?|mini\s*printer|thermal\s*printer|label\s*(?:maker|printer)|printer', 'طابعة حرارية صغيرة محمولة', 'Mini Thermal Portable Printer'),
-    (r'مشترك\s*كهربائ?ي?|مشترك|power\s*strip', 'مشترك كهربائي', 'Power Strip'),
-    (r'باور\s*بانك|بطارية\s*متنقلة|power\s*bank', 'باور بانك', 'Power Bank'),
+    # 1. كروت التسجيل والكابتشر كارد
+    (r'كابتشر\s*كارد|كرت\s*تسجيل|video\s*capture|capture\s*card', 'كابتشر كارد', 'Video Capture Card'),
+
+    # 2. الطابعات الحرارية والمحمولة
+    (r'طابعة\s*(?:حرارية|صغيرة|ملصقات|محمولة|جيب)?|mini\s*printer|thermal\s*printer|label\s*(?:maker|printer)|printer\b', 'طابعة حرارية محمولة', 'Mini Thermal Portable Printer'),
+
+    # 3. إكسسوارات وملحقات الأجهزة (يجب فحصها قبل الأجهزة نفسها حتى لا يُصنف الشاحن أو الجراب كجهاز تابلت أو موبايل)
+    (r'لاصقة\s*حماية|سكرين\s*بروتكتور|شاشة\s*حماية|حامي\s*شاشة|screen\s*protector|tempered\s*glass', 'لاصقة حماية شاشة', 'Screen Protector Glass'),
+    (r'جراب|كفر|غطاء\s*حماية|حافظة|phone\s*case|tablet\s*case|protective\s*case|case\s*cover', 'جراب حماية', 'Protective Case'),
     (r'شاحن\s*سيارة|car\s*charger', 'شاحن سيارة سريع', 'Fast Car Charger'),
-    (r'شاحن\s*(?:حائط|جداري|سريع|منزلي|راس|رأس)|wall\s*charger', 'شاحن سريع', 'Fast Wall Charger'),
-    (r'كابل\s*شحن|سلك\s*شحن|وصلة\s*شحن|charging\s*cable', 'كابل شحن سريع', 'Fast Charging Cable'),
-    (r'سماعة\s*(?:اذن|أذن|بلوتوث|لاسلكية|ايربودز?)|earbuds|airpods', 'سماعة أذن لاسلكية', 'True Wireless Earbuds'),
-    (r'سماعة\s*(?:راس|رأس|العاب|ألعاب)|gaming\s*headset|headphones', 'سماعة رأس', 'Gaming Headset'),
-    (r'ساعة\s*(?:ذكية|سمارت)|smart\s*watch', 'ساعة ذكية', 'Smartwatch'),
-    (r'موبايل|هاتف\s*(?:ذكي|محمول)?|smartphone', 'موبايل', 'Smartphone'),
+    (r'شاحن\s*لاسلكي|wireless\s*charger', 'شاحن لاسلكي', 'Wireless Charger'),
+    (r'شاحن\s*(?:حائط|جداري|سريع|منزلي|مكتبي|راس|رأس)?|راس\s*شاحن|رأس\s*شاحن|مهايئ\s*شحن|wall\s*charger|fast\s*charger|charger\b|adapter\b', 'شاحن سريع', 'Fast Charger'),
+    (r'كابل\s*شحن|سلك\s*شحن|وصلة\s*شحن|charging\s*cable|usb\s*cable|cable\b', 'كابل شحن سريع', 'Fast Charging Cable'),
+    (r'باور\s*بانك|بطارية\s*متنقلة|شاحن\s*متنقل|power\s*bank', 'باور بانك', 'Power Bank'),
+    (r'مشترك\s*كهربائ?ي?|مشترك|power\s*strip', 'مشترك كهربائي', 'Power Strip'),
+    (r'ستاند|حامل\s*(?:موبايل|هاتف|لابتوب|شاشة|تابلت)|stand\b|holder\b', 'حامل ستاند مريح', 'Adjustable Stand Holder'),
+
+    # 4. أجهزة اللابتوب والكمبيوتر المحمول (تُفحص قبل الشاشات لأن عناوين اللابتوب تذكر مقاس الشاشة!)
+    (r'لابتوب|حاسوب\s*محمول|كمبيوتر\s*محمول|laptop\b|notebook\b|vivobook\b|zenbook\b|ideapad\b|thinkpad\b|legion\b|macbook\b', 'لابتوب', 'Laptop'),
+
+    # 5. أجهزة التابلت واللوحي (بعد فحص الشواحن والإكسسوارات لضمان عدم الخلط)
+    (r'\b(?:تابلت|جهاز\s*لوحي|ipad|tablet)\b', 'تابلت ذكي', 'Smart Tablet'),
+
+    # 6. الشاشات والتلفزيونات (الآن لن تخلط مع شاشات اللابتوب)
+    (r'(?:^|[^\w])(?:شاشة\s*(?:كمبيوتر|ألعاب|تلفزيون|عرض|سمارت|ذكية)|تلفزيون|تلفاز|smart\s*tv|tv\b|monitor\b)', 'شاشة ذكية', 'Smart TV & Monitor'),
+
+    # 7. الهواتف الذكية والموبايل
+    (r'موبايل|هاتف\s*(?:ذكي|محمول)?|smartphone\b|iphone\b', 'موبايل', 'Smartphone'),
+
+    # 8. السماعات والصوتيات
+    (r'سماعة\s*(?:اذن|أذن|بلوتوث|لاسلكية|ايربودز?|داخل\s*الأذن)?|earbuds|airpods|true\s*wireless|tws\b', 'سماعة أذن لاسلكية', 'True Wireless Earbuds'),
+    (r'سماعة\s*(?:راس|رأس|العاب|ألعاب|محيطية)|gaming\s*headset|headphones|headset\b', 'سماعة رأس', 'Gaming Headset'),
+    (r'مكبر\s*صوت|ساوند\s*بار|سبيكر|speaker\b|soundbar\b', 'مكبر صوت ساوند بار', 'Bluetooth Speaker'),
+
+    # 9. الساعات الذكية
+    (r'ساعة\s*(?:ذكية|سمارت)|smart\s*watch|smartwatch', 'ساعة ذكية', 'Smartwatch'),
+
+    # 10. ملحقات الكمبيوتر
+    (r'ماوس|فأرة|mouse\b', 'ماوس لاسلكي', 'Wireless Mouse'),
+    (r'كيبورد|لوحة\s*مفاتيح|keyboard\b', 'لوحة مفاتيح', 'Keyboard'),
+    (r'مروحة\s*(?:تبريد|مكتب|عمود)?|cooling\s*fan|fan\b', 'مروحة تبريد', 'Cooling Fan'),
+
+    # 11. الأجهزة المنزلية وأجهزة المطبخ
     (r'ماكينة\s*(?:تحضير\s*)?ال?قهوة|صانعة\s*ال?قهوة|coffee\s*maker', 'ماكينة تحضير قهوة', 'Coffee Maker'),
-    (r'ماكينة\s*حلاقة|shaver|clipper|trimmer', 'ماكينة حلاقة', 'Hair Clipper & Shaver'),
+    (r'ماكينة\s*حلاقة|shaver\b|clipper\b|trimmer\b', 'ماكينة حلاقة', 'Hair Clipper & Shaver'),
     (r'قلاية\s*(?:هوائية|بدون\s*زيت)|اير\s*فراير|air\s*fryer', 'قلاية هوائية', 'Air Fryer'),
-    (r'خلاط\s*(?:كهربائي|يدوي)?|هاند\s*بلندر|blender', 'خلاط كهربائي', 'Blender'),
+    (r'خلاط\s*(?:كهربائي|يدوي)?|هاند\s*بلندر|blender\b', 'خلاط كهربائي', 'Blender'),
     (r'مكواة\s*بخار|steam\s*iron', 'مكواة بخار', 'Steam Iron'),
-    (r'ماوس|فأرة|mouse', 'ماوس لاسلكي', 'Wireless Mouse'),
-    (r'كيبورد|لوحة\s*مفاتيح|keyboard', 'لوحة مفاتيح', 'Keyboard'),
-    (r'ستاند|حامل\s*(?:موبايل|هاتف|لابتوب|شاشة)|stand|holder', 'حامل ستاند مريح', 'Adjustable Stand Holder'),
-    (r'مروحة|fan', 'مروحة تبريد', 'Cooling Fan'),
-    (r'سخان|غلاية|kettle', 'غلاية مياه كهربائية', 'Electric Water Kettle'),
-    (r'مفرمة|كبة|chopper|food\s*processor', 'كبة ومفرمة كهربائية', 'Electric Food Chopper'),
-    (r'شاشة|تلفزيون|تلفاز|tv|monitor', 'شاشة ذكية', 'Smart TV & Monitor'),
-    (r'لابتوب|كمبيوتر\s*محمول|laptop', 'لابتوب', 'Laptop'),
-    (r'تابلت|لوحي|tablet|ipad', 'تابلت ذكي', 'Smart Tablet'),
-    (r'كرسي\s*(?:بوسادة|طبي|مريح)?|مسند\s*(?:ظهر|طبي)|وسادة\s*(?:ظهر|جلوس)|cushion', 'كرسي ومسند ظهر مريح', 'Back Support Cushion Chair'),
-    (r'حذاء\s*رياضي|كوتشي|running\s*shoes|sneakers', 'حذاء رياضي', 'Running Shoes'),
+    (r'سخان|غلاية|kettle\b', 'غلاية مياه كهربائية', 'Electric Water Kettle'),
+    (r'مفرمة|كبة|chopper\b|food\s*processor', 'كبة ومفرمة كهربائية', 'Electric Food Chopper'),
+    (r'مكنسة\s*(?:كهربائية|روبوت|لاسلكية)?|vacuum\s*cleaner', 'مكنسة كهربائية', 'Vacuum Cleaner'),
+
+    # 12. الأدوات والأزياء والعناية الشخصية
+    (r'كرسي\s*(?:بوسادة|طبي|مريح)?|مسند\s*(?:ظهر|طبي)|وسادة\s*(?:ظهر|جلوس)|cushion\b', 'كرسي ومسند ظهر مريح', 'Back Support Cushion Chair'),
+    (r'حذاء\s*رياضي|كوتشي|running\s*shoes|sneakers\b', 'حذاء رياضي', 'Running Shoes'),
     (r'طقم\s*مفكات|screwdriver\s*set', 'طقم مفكات براغي', 'Screwdriver Set'),
     (r'جل\s*استحمام|شاور\s*جل|shower\s*gel', 'جل استحمام', 'Shower Gel'),
-    (r'غسول\s*(?:للوجه|وجه)|cleanser|face\s*wash', 'غسول للوجه', 'Face Cleanser'),
-    (r'كريم\s*(?:مرطب|للوجه)|سيروم|moisturizer|serum', 'كريم مرطب للعناية بالبشرة', 'Moisturizing Cream'),
+    (r'غسول\s*(?:للوجه|وجه)|cleanser\b|face\s*wash', 'غسول للوجه', 'Face Cleanser'),
+    (r'كريم\s*(?:مرطب|للوجه)|سيروم|moisturizer|serum\b', 'كريم مرطب للعناية بالبشرة', 'Moisturizing Cream'),
     (r'شامبو|بلسم|shampoo|conditioner', 'شامبو للعناية بالشعر', 'Hair Care Shampoo'),
 ]
 
@@ -731,7 +763,12 @@ def extract_bilingual_product_names(title, brand=None, features=None):
     """
     clean_t = clean(title or "").strip()
     b_ar, b_en = "", ""
-    clean_b = (brand or "").strip().lower()
+
+    # تنظيف الماركة لو كانت مركبة مثل "أنكر / ساوند كور (Anker)"
+    clean_b_raw = (brand or "").strip()
+    if "/" in clean_b_raw:
+        clean_b_raw = clean_b_raw.split("/")[0].split("(")[0].strip()
+    clean_b = clean_b_raw.lower()
 
     # 1. تحديد الماركة بالعربي والإنجليزي
     if clean_b and clean_b in BILINGUAL_BRANDS:
@@ -742,8 +779,8 @@ def extract_bilingual_product_names(title, brand=None, features=None):
                 b_ar, b_en = ar_v, en_v
                 break
         if not b_ar and brand:
-            b_ar = brand.strip()
-            b_en = brand.strip()
+            b_ar = clean_b_raw or brand.strip()
+            b_en = clean_b_raw or brand.strip()
 
     # 2. تحديد نوع وفئة المنتج بالعربي والإنجليزي
     cat_ar, cat_en = "", ""
@@ -752,40 +789,65 @@ def extract_bilingual_product_names(title, brand=None, features=None):
             cat_ar, cat_en = c_ar, c_en
             break
 
-    # 3. استخراج الموديل أو المواصفات الجوهرية
+    # 3. استخراج الموديل أو المواصفات الجوهرية بذكاء حسب نوع المنتج
     spec_ar_list, spec_en_list = [], []
 
-    model_m = re.search(r'\b(R50i|R100|P20i|737|A1289|14T\s*Pro|13C|14\s*Ultra|TCME-100|IL-102|IL-103|H510|Zeus|Lite\s*Racer|Galaxy\s*S\d+|Air\s*3)\b', clean_t, re.I)
-    if model_m:
-        m_val = model_m.group(1).strip()
-        spec_ar_list.append(m_val)
-        spec_en_list.append(m_val)
+    # مواصفات اللابتوب المخصصة
+    if cat_en == 'Laptop':
+        v_model = re.search(r'\b(Vivobook\s*\d*|Zenbook\s*\d*|IdeaPad\s*\d*|ThinkPad\s*\w*|Inspiron\s*\d*|Pavilion\s*\d*|Legion\s*\d*|TUF\s*Gaming|ROG\s*\w*|MacBook\s*(?:Air|Pro))\b', clean_t, re.I)
+        if v_model:
+            m_v = v_model.group(1).strip()
+            spec_ar_list.append(m_v)
+            spec_en_list.append(m_v)
 
-    outlets_m = re.search(r'(\d+)\s*(?:منافذ|مخارج|عيون|outlets?|ports?)', clean_t, re.I)
-    if outlets_m:
-        cnt = outlets_m.group(1)
-        spec_ar_list.append(f"{cnt} منافذ")
-        spec_en_list.append(f"{cnt}-Outlet")
+        proc_m = re.search(r'\b(Core\s*i[3579]|Ryzen\s*[3579])\b', clean_t, re.I)
+        if proc_m:
+            spec_ar_list.append(proc_m.group(1))
+            spec_en_list.append(proc_m.group(1))
 
-    if re.search(r'type-?c|نوع\s*سي|usb-?c', clean_t, re.I):
-        spec_ar_list.append("و USB-C")
-        spec_en_list.append("with USB-C")
+        ram_m = re.search(r'\b(\d+)\s*(?:GB\s*RAM|جيجا\s*رام|جيجا\s*ذاكرة|GB)\b', clean_t, re.I)
+        if ram_m:
+            spec_ar_list.append(f"{ram_m.group(1)} جيجا رام")
+            spec_en_list.append(f"{ram_m.group(1)}GB RAM")
 
-    watt_m = re.search(r'(\d+)\s*(?:وات|واط|W\b)', clean_t, re.I)
-    if watt_m:
-        w = watt_m.group(1)
-        spec_ar_list.append(f"{w}W")
-        spec_en_list.append(f"{w}W")
-
-    mah_m = re.search(r'(\d[\d,.]*)\s*(?:مللي\s*أمبير|مللي\s*امبير|mah)', clean_t, re.I)
-    if mah_m:
-        spec_ar_list.append(f"{mah_m.group(1)} مللي أمبير")
-        spec_en_list.append(f"{mah_m.group(1)}mAh")
+        screen_m = re.search(r'\b(14|15\.6|16|17\.3)\s*(?:بوصة|inch|\")\b', clean_t, re.I)
+        if screen_m:
+            spec_ar_list.append(f"{screen_m.group(1)} بوصة")
+            spec_en_list.append(f"{screen_m.group(1)}-inch")
     else:
-        rom_m = re.search(r'(\d+)\s*(?:جيجا(?:بايت)?|GB)\b', clean_t, re.I)
-        if rom_m:
-            spec_ar_list.append(f"{rom_m.group(1)} جيجا")
-            spec_en_list.append(f"{rom_m.group(1)}GB")
+        model_m = re.search(r'\b(R50i|R100|P20i|737|A1289|14T\s*Pro|13C|14\s*Ultra|TCME-100|IL-102|IL-103|H510|Zeus|Lite\s*Racer|Galaxy\s*S\d+|Air\s*3|VC321)\b', clean_t, re.I)
+        if model_m:
+            m_val = model_m.group(1).strip()
+            spec_ar_list.append(m_val)
+            spec_en_list.append(m_val)
+
+        outlets_m = re.search(r'(\d+)\s*(?:منافذ|مخارج|عيون|outlets?|ports?)', clean_t, re.I)
+        if outlets_m:
+            cnt = outlets_m.group(1)
+            spec_ar_list.append(f"{cnt} منافذ")
+            spec_en_list.append(f"{cnt}-Outlet")
+
+        if re.search(r'type-?c|نوع\s*سي|usb-?c', clean_t, re.I):
+            spec_ar_list.append("و USB-C")
+            spec_en_list.append("with USB-C")
+
+        # فحص الواط للشواحن والأجهزة الكهربائية فقط، مع اشتراط حد كلمة حتى لا يلتصق بأحرف الموديل مثل EJ857W!
+        if cat_en in ('Fast Charger', 'Fast Wall Charger', 'Car Charger', 'Wireless Charger', 'Power Strip', 'Blender', 'Air Fryer', 'Steam Iron', 'Electric Water Kettle', 'Hair Clipper & Shaver'):
+            watt_m = re.search(r'(?<![A-Za-z0-9])(\d{1,4})\s*(?:وات|واط|W\b)', clean_t, re.I)
+            if watt_m:
+                w = watt_m.group(1)
+                spec_ar_list.append(f"{w}W")
+                spec_en_list.append(f"{w}W")
+
+        mah_m = re.search(r'(\d[\d,.]*)\s*(?:مللي\s*أمبير|مللي\s*امبير|mah)', clean_t, re.I)
+        if mah_m:
+            spec_ar_list.append(f"{mah_m.group(1)} مللي أمبير")
+            spec_en_list.append(f"{mah_m.group(1)}mAh")
+        elif cat_en in ('Smart Tablet', 'Smartphone'):
+            rom_m = re.search(r'\b(\d+)\s*(?:جيجا(?:بايت)?|GB)\b', clean_t, re.I)
+            if rom_m:
+                spec_ar_list.append(f"{rom_m.group(1)} جيجا")
+                spec_en_list.append(f"{rom_m.group(1)}GB")
 
     spec_ar = " ".join(spec_ar_list).strip()
     spec_en = " ".join(spec_en_list).strip()
