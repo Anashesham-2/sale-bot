@@ -6,7 +6,8 @@ import os
 import re
 import sys
 import time
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, unquote
+import urllib.parse
 import requests
 from playwright.async_api import async_playwright
 
@@ -1214,18 +1215,55 @@ def build_section_alert(store, brand_label, section_url, items):
     return "\n".join(lines)
 
 def _fit_caption_for_photo(text):
-    """يضمن أن طول الرسالة لا يتخطى حد تليجرام للصور (1024 حرف) مع الحفاظ على سلامة وسوم HTML."""
-    if not text or len(text) <= 990:
+    """
+    يضمن أن طول الكابشن لا يتخطى حد تليجرام الصارم للصور (1024 حرف)،
+    ويختصر الأقسام تدريجياً مع إغلاق أي وسوم HTML مفتوحة لتجنب رفض الصورة نهائياً.
+    """
+    if not text or len(text) <= 950:
         return text
-    # 1. حذف سطر سجل الأسعار لو الرسالة طويلة
-    t = re.sub(r'\n📊 أعلى سعر مسجّل:[^\n]+', '', text)
-    if len(t) <= 990:
+
+    t = text
+    # 1. إزالة سطر التنويه وإخلاء المسؤولية
+    t = re.sub(r'\n*⚠️\s*<i>ملحوظة:[^\n]+</i>', '', t)
+    if len(t) <= 950:
         return t
-    # 2. اختصار قسم المراجعة أو الوصف لو لسه طويلة بسبب وجود عروض إضافية كثيرة
-    t = re.sub(r'\n\n💬 <b>مراجعة المشترين:</b>\n[^\n]+', '', t)
-    if len(t) <= 990:
+
+    # 2. إزالة سطر سجل الأسعار التاريخي
+    t = re.sub(r'\n*📊\s*أعلى سعر مسجّل:[^\n]+', '', t)
+    if len(t) <= 950:
         return t
-    t = re.sub(r'\n\n📝 <b>وصف المنتج:</b>\n[^\n]+', '', t)
+
+    # 3. إزالة الهاشتاجات الإضافية
+    t = re.sub(r'\n*#\w+(?:\s+#\w+)*\s*$', '', t)
+    if len(t) <= 950:
+        return t
+
+    # 4. إزالة مراجعات المشترين بالكامل (حتى لو متعددة الأسطر)
+    t = re.sub(r'\n\n💬\s*<b>مراجعة المشترين:</b>\n[\s\S]*?(?=\n\n|\Z)', '', t)
+    if len(t) <= 950:
+        return t
+
+    # 5. إزالة وصف المنتج لو لسه طويل (حتى لو متعدد الأسطر)
+    t = re.sub(r'\n\n📝\s*<b>وصف المنتج:</b>\n[\s\S]*?(?=\n\n|\Z)', '', t)
+    if len(t) <= 950:
+        return t
+
+    # 6. اختصار المميزات للإبقاء على أول نقطتين فقط
+    m_feat = re.search(r'(\n\n⭐\s*<b>أهم المميزات:</b>\n(?:[•\-][^\n]+\n?){1,2})', t)
+    if m_feat:
+        t = re.sub(r'\n\n⭐\s*<b>أهم المميزات:</b>\n(?:[•\-][^\n]+\n?)+', m_feat.group(1), t)
+    if len(t) <= 950:
+        return t
+
+    # 7. لو لسه أطول من 950، اقتطاع آمن عند أقرب مسافة وإغلاق أي وسوم HTML
+    if len(t) > 950:
+        t = t[:930].rsplit(' ', 1)[0] + "..."
+        for tag in ("b", "i", "s", "u", "code", "a"):
+            open_count = len(re.findall(rf'<{tag}\b[^>]*>', t))
+            close_count = len(re.findall(rf'</{tag}>', t))
+            if open_count > close_count:
+                t += f"</{tag}>" * (open_count - close_count)
+
     return t
 
 def send_telegram_msg(text, image=None, target_chat_ids=None, reply_markup=None):
@@ -1277,6 +1315,52 @@ def send_telegram_msg(text, image=None, target_chat_ids=None, reply_markup=None)
                             )
                     except Exception as img_e:
                         print(f"تعذر رفع صورة المنتج كملف: {img_e}")
+
+                # 3. لو sendPhoto فشل بسبب وسم HTML أو طول كابشن، نجرب كابشن نصي صافي (بدون HTML)
+                if not resp.ok and (img_url or is_tg_file_id):
+                    try:
+                        plain_cap = re.sub(r'<[^>]+>', '', photo_caption)[:950]
+                        p_data = {
+                            "chat_id": chat_id,
+                            "photo": photo_val,
+                            "caption": plain_cap,
+                        }
+                        if reply_markup:
+                            p_data["reply_markup"] = reply_markup
+                        resp = requests.post(
+                            f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
+                            json=p_data,
+                            timeout=15,
+                        )
+                    except Exception as p_err:
+                        print(f"تعذر إرسال الصورة بكابشن نصي: {p_err}")
+
+                # 4. لو الكابشن ما زال يسبب رفض الصورة، نرسل الصورة منفردة أولاً ثم الرسالة كنص حتى لا تضيع صورة المنتج أبداً!
+                if not resp.ok and (img_url or is_tg_file_id):
+                    try:
+                        p_solo = {"chat_id": chat_id, "photo": photo_val}
+                        resp_solo = requests.post(
+                            f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
+                            json=p_solo,
+                            timeout=15,
+                        )
+                        if resp_solo.ok:
+                            msg_payload = {
+                                "chat_id": chat_id,
+                                "text": text,
+                                "parse_mode": "HTML",
+                                "disable_web_page_preview": True,
+                            }
+                            if reply_markup:
+                                msg_payload["reply_markup"] = reply_markup
+                            resp = requests.post(
+                                f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+                                json=msg_payload,
+                                timeout=10,
+                            )
+                    except Exception as s_err:
+                        print(f"تعذر إرسال الصورة منفردة: {s_err}")
+
             if resp is None or not resp.ok:
                 msg_payload = {
                     "chat_id": chat_id,
@@ -2111,10 +2195,38 @@ def split_message_into_deals(text, urls):
         out.append((u, chunks_by_url.get(u, text)))
     return out
 
+def _extract_nested_store_url(url_str):
+    """يستخرج أي رابط أمازون أو نون مدفون داخل روابط التحويل أو شبكات الأفلييت مثل Viglink أو Skimlinks."""
+    if not url_str:
+        return None
+    try:
+        parsed = urllib.parse.urlparse(url_str)
+        qs = urllib.parse.parse_qs(parsed.query)
+        for param in ("u", "url", "target", "dest", "redirect", "link", "r", "to", "out"):
+            if param in qs and qs[param]:
+                val = urllib.parse.unquote(qs[param][0])
+                if "noon.com" in val.lower() or "amazon." in val.lower() or "amzn." in val.lower():
+                    return val
+    except Exception:
+        pass
+    m = re.search(r'(https?%3A%2F%2F(?:www\.)?(?:amazon\.eg|noon\.com)[^\s&"\'<>]+)', url_str, re.IGNORECASE)
+    if m:
+        try:
+            return urllib.parse.unquote(m.group(1))
+        except Exception:
+            pass
+    m2 = re.search(r'(https?://(?:www\.)?(?:amazon\.eg|noon\.com)[^\s&"\'<>]+)', url_str, re.IGNORECASE)
+    if m2:
+        return m2.group(1)
+    return None
+
 def _strip_foreign_affiliate_params(url):
     """يحذف أي كود أفلييت أو باراميتر تتبع خاص بقنوات أخرى من الرابط."""
     if not url:
         return url
+    nested = _extract_nested_store_url(url)
+    if nested:
+        url = nested
     s = short_link(url)
     if s != url:
         return s
@@ -2123,10 +2235,16 @@ def _strip_foreign_affiliate_params(url):
     return url
 
 async def resolve_original_url(context, raw_url):
-    """يفك أي رابط مختصر (مثل amzn.eu أو sal7.ly أو is.gd أو bit.ly) ويجيب الرابط الأصلي الصافي للمنتج."""
+    """يفك أي رابط مختصر (مثل tinyurl أو amzn.eu أو sal7.ly أو is.gd أو bit.ly أو viglink) ويجيب الرابط الأصلي الصافي للمنتج."""
     u = (raw_url or "").strip()
     if not u:
         return u
+
+    # 1. فحص فوري لو الرابط نفسه يحتوي على رابط متجر مدفون
+    nested = _extract_nested_store_url(u)
+    if nested:
+        u = nested
+
     direct = short_link(u)
     if direct != u and ("/dp/" in direct or "/p/" in direct):
         return direct
@@ -2135,16 +2253,42 @@ async def resolve_original_url(context, raw_url):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         "Accept-Language": "ar-EG,ar;q=0.9,en;q=0.8",
     }
+
+    # 2. فحص سريع لهيدر التحويل HEAD قبل الدخول في متصفح أو شبكات تتبع
+    try:
+        head_r = await asyncio.to_thread(
+            requests.head, u, headers=headers, allow_redirects=False, timeout=8
+        )
+        loc = head_r.headers.get("Location") or ""
+        nested_loc = _extract_nested_store_url(loc)
+        if nested_loc:
+            s = short_link(nested_loc)
+            if "/dp/" in s or "/p/" in s:
+                return s
+            return _strip_foreign_affiliate_params(nested_loc)
+        if loc and ("/dp/" in loc or "/p/" in loc):
+            return short_link(loc)
+    except Exception:
+        pass
+
+    # 3. فحص بالـ GET مع استخراج الرابط من الـ body
     try:
         r = await asyncio.to_thread(
-            requests.get, u, headers=headers, allow_redirects=True, timeout=15
+            requests.get, u, headers=headers, allow_redirects=True, timeout=12
         )
         final_u = r.url or u
+        nested_final = _extract_nested_store_url(final_u)
+        if nested_final:
+            final_u = nested_final
         s = short_link(final_u)
         if "/dp/" in s or "/p/" in s:
             return s
-        # فحص محتوى الصفحة لو فيه تحويل بالـ HTML أو JavaScript
         body = r.text or ""
+        nested_body = _extract_nested_store_url(body)
+        if nested_body:
+            s_body = short_link(nested_body)
+            if "/dp/" in s_body or "/p/" in s_body:
+                return s_body
         m_amz = re.search(r'https?://(?:www\.)?amazon\.eg[^\s"\'<>]+/(?:dp|gp/product)/([A-Z0-9]{10})', body, re.IGNORECASE)
         if m_amz:
             return f"https://www.amazon.eg/dp/{m_amz.group(1).upper()}"
@@ -2156,20 +2300,23 @@ async def resolve_original_url(context, raw_url):
     except Exception:
         pass
 
-    # لو الرابط المختصر بيستخدم تحويل JavaScript أو Cloudflare، نفتحه بالمتصفح
+    # 4. لو الرابط المختصر بيستخدم تحويل JavaScript أو Cloudflare، نفتحه بالمتصفح
     if context is not None:
         page = await context.new_page()
         try:
-            await page.goto(u, wait_until="domcontentloaded", timeout=35000)
+            await page.goto(u, wait_until="domcontentloaded", timeout=25000)
             for _ in range(8):
                 cur = page.url
+                nested_cur = _extract_nested_store_url(cur)
+                if nested_cur:
+                    cur = nested_cur
                 s = short_link(cur)
                 if "/dp/" in s or "/p/" in s:
                     return s
                 if ("amazon." in cur.lower() or "noon.com" in cur.lower()) and cur != u:
-                    await page.wait_for_timeout(1000)
+                    await page.wait_for_timeout(800)
                     return _strip_foreign_affiliate_params(page.url)
-                await page.wait_for_timeout(700)
+                await page.wait_for_timeout(600)
             return _strip_foreign_affiliate_params(page.url)
         except Exception as e:
             print(f"تعذر فك الرابط بالمتصفح ({u}): {e}")
@@ -2180,24 +2327,33 @@ async def resolve_original_url(context, raw_url):
 def _parse_fallback_message_info(text):
     """يستخرج الاسم والسعر القديم والجديد احتياطياً لو المستخدم محوّل بوست جاهز وصفحة المنتج محجوبة."""
     t = clean(text or "")
-    old_m = re.search(r'(?:السعر القديم|بدلاً من|بدل من|سعر القائمه|كان)\s*:?\s*([\d,]+(?:\.\d+)?)', t)
-    new_m = re.search(r'(?:السعر الجديد|السعر النهائي|سعر العرض|بسعر|السعر)\s*:?\s*([\d,]+(?:\.\d+)?)', t)
-    if not new_m:
-        new_m = re.search(r'([\d,]+(?:\.\d+)?)\s*(?:ج\.م|جنيه)', t)
+    old_m = re.search(r'(?:السعر القديم|بدلاً من|بدل من|سعر القائمه|سعر القائمة|كان|السابق|كنت جايبه ب|جايبه ب)\s*:?\s*([\d,]+(?:\.\d+)?)', t)
+
+    # تفضيل السعر المرتبط بكلمات صريحة (سعره / السعر النهائي / السعر الجديد / سعر العرض / بسعر)
+    deal_matches = re.findall(r'(?:السعر الحالي|السعر النهائي|سعر العرض|السعر الجديد|سعره|بسعر|السعر)\s*:?\s*([\d,]+(?:\.\d+)?)', t)
+    new_price = to_float(deal_matches[-1]) if deal_matches else None
+
+    if not new_price:
+        gen_m = re.findall(r'([\d,]+(?:\.\d+)?)\s*(?:ج\.م|جنيه|جنية|ج|EGP|LE)', t, re.IGNORECASE)
+        if gen_m:
+            prices = [to_float(x) for x in gen_m if to_float(x)]
+            if prices:
+                new_price = min(prices)
+
     disc_m = re.search(r'(\d+)\s*%', t)
     title_cand = None
     for line in [l.strip() for l in t.split('\n') if l.strip()]:
         clean_l = re.sub(r'^[📦🔥🟡🚨🏷️✨•\-]+\s*', '', line).strip()
         if (
-            len(clean_l) >= 12
+            len(clean_l) >= 10
             and not clean_l.startswith("http")
-            and not any(w in clean_l for w in ("السعر", "إجمالي الخصم", "الخصم:", "البائع:", "التقييم:", "على أمازون", "على نون", "رابط العرض", "ملحوظة:"))
+            and not any(w in clean_l for w in ("السعر", "سعره", "إجمالي الخصم", "الخصم:", "البائع:", "التقييم:", "على أمازون", "على نون", "رابط العرض", "ملحوظة:", "لينك الشراء"))
         ):
             title_cand = clean_l[:140]
             break
     return {
         "title": title_cand,
-        "price": to_float(new_m.group(1)) if new_m else None,
+        "price": new_price,
         "list_price": to_float(old_m.group(1)) if old_m else None,
         "discount": float(disc_m.group(1)) if disc_m else 0.0,
     }
@@ -2533,13 +2689,54 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                         if (j?.aggregateRating?.reviewCount) ldReviews = String(j.aggregateRating.reviewCount);
                     } catch (e) {}
                 }
+
+                let nextPrice = null, nextWas = null, nextTitle = null, nextBrand = null, nextImage = null;
+                try {
+                    const nextEl = document.querySelector('#__NEXT_DATA__');
+                    if (nextEl) {
+                        const nj = JSON.parse(nextEl.textContent);
+                        const prod = nj?.props?.pageProps?.catalog?.product
+                            || nj?.props?.pageProps?.product
+                            || nj?.props?.pageProps?.initialData?.product;
+                        if (prod) {
+                            if (prod.price) nextPrice = String(prod.price);
+                            if (prod.sale_price) nextPrice = String(prod.sale_price);
+                            if (prod.was_price) nextWas = String(prod.was_price);
+                            if (prod.name) nextTitle = prod.name;
+                            if (prod.brand) nextBrand = prod.brand;
+                            if (prod.image_keys && prod.image_keys[0]) {
+                                nextImage = 'https://f.nooncdn.com/p/' + prod.image_keys[0] + '.jpg';
+                            }
+                        }
+                    }
+                } catch (e) {}
+
+                if (!brand && nextBrand) brand = nextBrand;
+                if (!full_title && nextTitle) full_title = nextTitle;
                 if (brand) brand = brand.replace(/[>›]/g, '').split('\\n')[0].trim();
-                const priceNow = document.querySelector('[data-qa="div-price-now"], [class*="priceNow" i]')?.innerText || ldPrice;
-                const priceWas = document.querySelector('[data-qa="div-price-was"], [class*="priceWas" i], [class*="oldPrice" i]')?.innerText || null;
+
+                let priceNow = document.querySelector('[data-qa="div-price-now"], [class*="priceNow" i], [data-qa*="price-now" i], .priceNow')?.innerText
+                    || nextPrice || ldPrice;
+                let priceWas = document.querySelector('[data-qa="div-price-was"], [class*="priceWas" i], [class*="oldPrice" i], .priceWas')?.innerText
+                    || nextWas || null;
+
+                if (!priceNow) {
+                    const containerTxt = document.querySelector('[data-qa="pdp-container"], #__next, body')?.innerText || '';
+                    const mPrice = containerTxt.match(/(?:EGP|جنيه)\\s*([\\d,]+(?:\\.\\d+)?)/i)
+                        || containerTxt.match(/([\\d,]+(?:\\.\\d+)?)\\s*(?:EGP|جنيه)/i);
+                    if (mPrice) priceNow = mPrice[1];
+                }
+                if (!priceWas) {
+                    const containerTxt = document.querySelector('[data-qa="pdp-container"], #__next, body')?.innerText || '';
+                    const mWas = containerTxt.match(/(?:Was:|السعر السابق:|سعر القائمة:)\\s*(?:EGP|جنيه)?\\s*([\\d,]+(?:\\.\\d+)?)/i)
+                        || containerTxt.match(/(?:Was:|السعر السابق:|سعر القائمة:)\\s*([\\d,]+(?:\\.\\d+)?)\\s*(?:EGP|جنيه)?/i);
+                    if (mWas) priceWas = mWas[1];
+                }
+
                 const savingTxt = document.querySelector('[data-qa="div-price-saving"], [class*="priceSaving" i], [class*="profit" i]')?.innerText || null;
                 const ratingTxt = ldRating || document.querySelector('[data-qa*="rating" i], [class*="ratingValue" i]')?.innerText || null;
                 const reviewsTxt = ldReviews || document.querySelector('[data-qa*="review-count" i], [class*="count" i]')?.innerText || null;
-                let image = document.querySelector('meta[property="og:image"]')?.content;
+                let image = document.querySelector('meta[property="og:image"]')?.content || nextImage;
                 if (!image || !image.startsWith('http')) {
                     image = [...document.querySelectorAll('img')]
                         .map(i => i.currentSrc || i.src || i.getAttribute('data-src'))
@@ -2609,8 +2806,9 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
         rev_snippets = data.get("revs") or []
 
         prev_min, max_p, min_p = record_price(canonical_url, price) if price else (None, None, None)
+        # بالنسبة لنون: لا نعتمد أكواد الخصم الخارجية أو الخاصة بقنوات تانية، وننشر العرض بخصمه المباشر من المتجر
         stack_promos, stack_howto, extra_pct, extra_egp, extra_label, promo_links = detect_stacking_promos(
-            fallback_text, promos_list
+            "", promos_list
         )
         eff_price = price
         if eff_price and extra_pct > 0:
