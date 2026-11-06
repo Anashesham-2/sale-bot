@@ -37,7 +37,7 @@ if MAIN_CHANNEL_ID not in CHAT_IDS and MAIN_CHANNEL_USERNAME not in CHAT_IDS:
 OWNER_CHAT_ID = int(os.getenv("OWNER_CHAT_ID", "6725805788"))
 MIN_DISCOUNT = 30
 MAX_PER_CYCLE = 20  # أقصى عدد عروض تتبعت لكل متجر في الدورة الواحدة
-HASHTAG = "#عروض_يستاهل"
+HASHTAG = "#عروض_لقطة"
 # كود أفلييت أمازون مصر الخاص بالقناة (Tracking ID)
 AMAZON_TAG = os.getenv("AMAZON_TAG", "anashesham-21")
 # كود الخصم الخاص بالقناة على نون (يُفعّل بعد تحديد الأقسام المشمولة)
@@ -748,13 +748,13 @@ BILINGUAL_CATEGORIES = [
     (r'لابتوب|حاسوب\s*محمول|كمبيوتر\s*محمول|laptop\b|notebook\b|vivobook\b|zenbook\b|ideapad\b|thinkpad\b|legion\b|macbook\b', 'لابتوب', 'Laptop'),
 
     # 6. أجهزة التابلت واللوحي
-    (r'\b(?:تابلت|جهاز\s*لوحي|ipad|tablet)\b', 'تابلت ذكي', 'Smart Tablet'),
+    (r'\b(?:تابلت|جهاز\s*لوحي|ipad|tablet|galaxy\s*tab)\b', 'تابلت ذكي', 'Smart Tablet'),
 
     # 7. الشاشات والتلفزيونات
     (r'(?:^|[^\w])(?:شاشة\s*(?:كمبيوتر|ألعاب|تلفزيون|عرض|سمارت|ذكية)|تلفزيون|تلفاز|smart\s*tv|tv\b|monitor\b)', 'شاشة ذكية', 'Smart TV & Monitor'),
 
     # 8. الهواتف الذكية والموبايل
-    (r'موبايل|هاتف\s*(?:ذكي|محمول)?|smartphone\b|iphone\b', 'موبايل', 'Smartphone'),
+    (r'موبايل|هاتف\s*(?:ذكي|محمول)?|smartphone\b|iphone\b|آيفون|ايفون|جالكسي|جالاكسي|galaxy\b|ريدمي|redmi\b|poco\b|بوكو\b|realme\b|ريلمي\b|infinix\b|إنفينيكس\b|انفينكس\b', 'موبايل', 'Smartphone'),
 
     # 9. السماعات والصوتيات
     (r'سماعة\s*(?:اذن|أذن|بلوتوث|لاسلكية|ايربودز?|داخل\s*الأذن)?|earbuds|airpods|true\s*wireless|tws\b', 'سماعة أذن لاسلكية', 'True Wireless Earbuds'),
@@ -866,8 +866,82 @@ def extract_bilingual_product_names(title, brand=None, features=None):
         if screen_m:
             spec_ar_list.append(f"{screen_m.group(1)} بوصة")
             spec_en_list.append(f"{screen_m.group(1)}-inch")
+    elif cat_en in ('Smart Tablet', 'Smartphone'):
+        # 1. استخراج موديل الهاتف الذكي أو التابلت بدقة
+        phone_model = None
+        # أجهزة أبل آيفون وآيباد
+        m_apple = re.search(r'\b(?:iPhone|iPad|آيفون|ايفون|آيباد|ايباد)\s*(1[1-6]|X[SR]?|SE|Pro|Air|mini|\d+)\s*(Pro\s*Max|Pro|Plus|mini|برو\s*ماكس|برو|بلس|ميني)?\b', clean_t, re.I)
+        if m_apple:
+            prefix = "iPad" if any(w in m_apple.group(0).lower() for w in ("ipad", "آيباد", "ايباد")) else "iPhone"
+            num = m_apple.group(1).capitalize()
+            tail = m_apple.group(2) or ""
+            en_tail = "Pro Max" if any(w in tail.lower() for w in ("pro max", "برو ماكس")) else ("Pro" if any(w in tail.lower() for w in ("pro", "برو")) else ("Plus" if any(w in tail.lower() for w in ("plus", "بلس")) else ("mini" if any(w in tail.lower() for w in ("mini", "ميني")) else "")))
+            phone_model = f"{prefix} {num} {en_tail}".strip()
+
+        # أجهزة سامسونج جالكسي
+        if not phone_model:
+            m_sam = re.search(r'(?:Galaxy\s*|جالكسي\s*|جالاكسي\s*)?(S\d{1,2}|Z\s*(?:Fold|Flip)\s*\d*|A\d{2}[a-z]?|M\d{2}[a-z]?|Tab\s*[SA]\d+)\s*(Ultra|Plus|\+|FE|الترا|بلس)?', clean_t, re.I)
+            if m_sam:
+                mod = m_sam.group(1).upper().replace(" ", "")
+                tail = m_sam.group(2) or ""
+                en_tail = "Ultra" if any(w in tail.lower() for w in ("ultra", "الترا")) else ("Plus" if any(w in tail.lower() for w in ("plus", "بلس", "+")) else ("FE" if "fe" in tail.lower() else ""))
+                phone_model = f"Galaxy {mod} {en_tail}".strip()
+
+        # أجهزة شاومي وريدمي
+        if not phone_model:
+            m_redmi = re.search(r'(?:Redmi\s*Note|ريدمي\s*نوت)\s*(\d+[a-z]?)\s*(Pro\s*\+|Pro|Plus|برو\s*\+|برو|بلس)?', clean_t, re.I)
+            if m_redmi:
+                num = m_redmi.group(1)
+                tail = m_redmi.group(2) or ""
+                en_tail = "Pro+" if any(w in tail.lower() for w in ("pro+", "pro +", "برو+", "برو +")) else ("Pro" if any(w in tail.lower() for w in ("pro", "برو")) else ("Plus" if any(w in tail.lower() for w in ("plus", "بلس")) else ""))
+                phone_model = f"Redmi Note {num} {en_tail}".strip()
+            else:
+                m_redmi_c = re.search(r'(?:Redmi|ريدمي)\s*(\d+[a-z]?(?:\s*[CA])?)', clean_t, re.I)
+                if m_redmi_c:
+                    phone_model = f"Redmi {m_redmi_c.group(1).strip().upper()}"
+
+        # أجهزة بوكو
+        if not phone_model:
+            m_poco = re.search(r'(?:POCO|بوكو)\s*([XFM]\d+\s*(?:Pro|GT)?)', clean_t, re.I)
+            if m_poco:
+                phone_model = f"POCO {m_poco.group(1).strip().upper()}"
+
+        # أجهزة ريلمي
+        if not phone_model:
+            m_realme = re.search(r'(?:Realme|ريلمي)\s*(\d+|C\d{2}[a-z]?|Note\s*\d+)\s*(Pro\s*\+|Pro|Plus|برو\s*\+|برو|بلس)?', clean_t, re.I)
+            if m_realme:
+                mod = m_realme.group(1).strip()
+                tail = m_realme.group(2) or ""
+                en_tail = "Pro+" if any(w in tail.lower() for w in ("pro+", "pro +", "برو+", "برو +")) else ("Pro" if any(w in tail.lower() for w in ("pro", "برو")) else ("Plus" if any(w in tail.lower() for w in ("plus", "بلس")) else ""))
+                phone_model = f"Realme {mod} {en_tail}".strip()
+
+        # أجهزة أخرى (Hot, Note, Smart, Magic, Nova)
+        if not phone_model:
+            m_other = re.search(r'\b(Hot\s*\d+[a-z]?|Note\s*\d+\s*(?:Pro)?|Smart\s*\d+|Magic\s*\d+|Nova\s*\d+)\b', clean_t, re.I)
+            if m_other:
+                phone_model = m_other.group(1).strip()
+
+        if phone_model:
+            spec_ar_list.append(phone_model)
+            spec_en_list.append(phone_model)
+
+        # 2. استخراج مساحة التخزين (ROM) ورامات الموبايل (RAM)
+        m_tb = re.search(r'\b(1|2)\s*(?:تيرابايت|تيرابايت|TB)\b', clean_t, re.I)
+        if m_tb:
+            spec_ar_list.append(f"سعة {m_tb.group(1)}TB")
+            spec_en_list.append(f"{m_tb.group(1)}TB")
+        else:
+            m_rom = re.search(r'\b(64|128|256|512)\s*(?:جيجا(?:بايت)?|GB)\b', clean_t, re.I)
+            if m_rom:
+                spec_ar_list.append(f"سعة {m_rom.group(1)} جيجا")
+                spec_en_list.append(f"{m_rom.group(1)}GB")
+
+        m_ram = re.search(r'\b(4|6|8|12|16|24)\s*(?:جيجا\s*رام|GB\s*RAM|جيجابايت\s*رام)\b', clean_t, re.I)
+        if m_ram:
+            spec_ar_list.append(f"({m_ram.group(1)} جيجا رام)")
+            spec_en_list.append(f"({m_ram.group(1)}GB RAM)")
     else:
-        model_m = re.search(r'\b(R50i|R100|P20i|737|A1289|14T\s*Pro|13C|14\s*Ultra|TCME-100|IL-102|IL-103|H510|Zeus|Lite\s*Racer|Galaxy\s*S\d+|Air\s*3|VC321|M\d{3,4}|K\d{3,4})\b', clean_t, re.I)
+        model_m = re.search(r'\b(R50i|R100|P20i|737|A1289|14T\s*Pro|13C|14\s*Ultra|TCME-100|IL-102|IL-103|H510|Zeus|Lite\s*Racer|Air\s*3|VC321|M\d{3,4}|K\d{3,4})\b', clean_t, re.I)
         if model_m:
             m_val = model_m.group(1).strip()
             spec_ar_list.append(m_val)
@@ -892,12 +966,6 @@ def extract_bilingual_product_names(title, brand=None, features=None):
             spec_ar_list.append(f"{cnt} منافذ")
             spec_en_list.append(f"{cnt}-Outlet")
 
-        if cat_en in ('Smart Tablet', 'Smartphone'):
-            rom_m = re.search(r'\b(\d+)\s*(?:جيجا(?:بايت)?|GB)\b', clean_t, re.I)
-            if rom_m:
-                spec_ar_list.append(f"{rom_m.group(1)} جيجا")
-                spec_en_list.append(f"{rom_m.group(1)}GB")
-
         if re.search(r'type-?c|نوع\s*سي|usb-?c', clean_t, re.I):
             spec_ar_list.append("و USB-C")
             extra_en_tail = "with USB-C"
@@ -906,7 +974,10 @@ def extract_bilingual_product_names(title, brand=None, features=None):
     spec_en = " ".join(spec_en_list).strip()
 
     if cat_ar:
-        name_ar = f"{cat_ar} {b_ar} {spec_ar}".strip() if b_ar else f"{cat_ar} {spec_ar}".strip()
+        if b_ar and b_ar.lower() in spec_ar.lower():
+            name_ar = f"{cat_ar} {spec_ar}".strip()
+        else:
+            name_ar = f"{cat_ar} {b_ar} {spec_ar}".strip() if b_ar else f"{cat_ar} {spec_ar}".strip()
     else:
         clean_words = [
             w for w in re.sub(r'[\(\[\{].*?[\)\]\}]', ' ', clean_t).split()
@@ -917,7 +988,10 @@ def extract_bilingual_product_names(title, brand=None, features=None):
             name_ar = f"{b_ar} — {name_ar}"
 
     if cat_en:
-        core_en = f"{b_en} {spec_en} {cat_en}".strip() if b_en else f"{spec_en} {cat_en}".strip()
+        if b_en and b_en.lower() in spec_en.lower():
+            core_en = f"{spec_en} {cat_en}".strip()
+        else:
+            core_en = f"{b_en} {spec_en} {cat_en}".strip() if b_en else f"{spec_en} {cat_en}".strip()
         name_en = f"{core_en} {extra_en_tail}".strip() if extra_en_tail else core_en
     else:
         en_part = re.findall(r'[A-Za-z0-9][A-Za-z0-9\s\-_]{3,50}', clean_t)
