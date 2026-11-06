@@ -463,37 +463,58 @@ def has_famous_brand(title, brand=None):
         return True
     return any(lb.lower() in combined for lb in learned_prefs.get("brands", []) if len(lb) >= 2)
 
-def is_deal_currently_active(price, list_price, discount, is_available=True, stack_promos=None, extra_pct=0, extra_egp=0, brand=None, title="", prev_min=None):
+def is_deal_currently_active(
+    price, list_price, discount, is_available=True,
+    stack_promos=None, extra_pct=0, extra_egp=0,
+    brand=None, title="", prev_min=None,
+    is_user_submission=False
+):
     """
     يتحقق بدقة أن العرض ما زال سارياً ومتاحاً للشراء في المتجر وليس منتهياً أو نافداً:
     1) أن المنتج متوفر في المخزون (غير نافد أو غير متاح).
-    2) أن السعر الحالي موجود ومسحوب مباشرة من المتجر وليس مجرد نص قديم.
-    3) أن هناك خصم حقيقي ساري (نسبة خصم، أو كوبونات ودمج خصومات، أو فرق سعر ملحوظ، أو وصول لأقل سعر تاريخي).
+    2) أن السعر الحالي موجود ومسحوب مباشرة من المتجر أو من تفاصيل العرض.
+    3) أن هناك خصم حقيقي ساري أو أن المستخدم اختار العرض بنفسه.
     """
     if not is_available:
-        return False, "المنتج غير متوفر في المخزون (Out of Stock / غير متاح حالياً)"
+        return False, "المنتج غير متوفر في المخزون (Out of Stock / نفد من المتجر)"
     if price is None or price <= 0:
         return False, "السعر غير متاح على صفحة المتجر أو تم إيقاف البيع"
 
     has_promos = bool(stack_promos) or (extra_pct and extra_pct > 0) or (extra_egp and extra_egp > 0)
     is_famous = has_famous_brand(title, brand)
 
-    # 1) لو عليه كوبون أو كود خصم أو برومو نشط
+    # 1) لو الرابط مرسل يدوياً من المستخدم في الشات الخاص:
+    # نقبله فوراً وننشره طالما متاح في المتجر وله سعر، لأن المستخدم اختاره بنفسه!
+    if is_user_submission:
+        if has_promos:
+            return True, "العرض ساري مع كود خصم/كوبون إضافي"
+        if discount and discount > 0:
+            return True, f"العرض ساري بخصم {discount:.0f}%"
+        if list_price and price and (list_price - price) > 0:
+            return True, f"العرض ساري بتوفير {list_price - price:.0f} ج.م"
+        return True, "العرض متاح للشراء بسعر مميز بناءً على اختيارك"
+
+    # 2) لو عليه كوبون أو كود خصم أو برومو نشط
     if has_promos:
         return True, "العرض ساري مع كود خصم/كوبون إضافي"
 
-    # 2) لو فيه نسبة خصم سارية ومسجلة على المتجر
+    # 3) لو فيه نسبة خصم سارية ومسجلة على المتجر
     min_disc = 8.0 if is_famous else 10.0
     if discount and discount >= min_disc:
         return True, f"العرض ساري بخصم {discount:.0f}%"
 
-    # 3) لو فرق السعر القديم والجديد 25 جنيه أو أكتر
-    if list_price and price and (list_price - price) >= 25:
+    # 4) لو فرق السعر القديم والجديد ملحوظ (15 جنيه للبراندات المشهورة أو 25 جنيه عام)
+    min_diff = 15 if is_famous else 25
+    if list_price and price and (list_price - price) >= min_diff:
         return True, f"العرض ساري بفرق سعر {list_price - price:.0f} ج.م"
 
-    # 4) لو السعر الحالي عند أو أقل من أقل سعر تاريخي مسجل
+    # 5) لو السعر الحالي عند أو أقل من أقل سعر تاريخي مسجل
     if prev_min and price <= prev_min * 1.02:
         return True, "العرض ساري عند أقل سعر تاريخي مسجل للمنتج"
+
+    # 6) لو العرض من قناة تليجرام متابعة وله أي نسبة خصم إيجابية
+    if discount and discount >= 5.0:
+        return True, f"العرض ساري بخصم {discount:.0f}%"
 
     return False, "العرض انتهى على المتجر ورجع للسعر الأصلي بدون خصم كافي"
 
@@ -1096,11 +1117,18 @@ async def scrape_amazon_eg(page):
         await page.mouse.wheel(0, 900)
         await page.wait_for_timeout(900)
 
-    # فحص أقسام وبراندات مختارة + الاهتمامات اللي البوت اتعلمها من اختياراتك
+    # فحص أقسام وبراندات مختارة + الاهتمامات والبراندات اللي البوت اتعلمها تلقائياً
+    all_brands_pool = list(HOT_BRANDS)
+    for lb in learned_prefs.get("brands", []):
+        if len(lb) >= 2 and not any(lb.lower() in [k.lower() for k in b[1]] for b in HOT_BRANDS):
+            all_brands_pool.append((lb, [lb]))
+
     brands_to_check = [
         (b_lbl, f"https://www.amazon.eg/s?k={quote_plus(kw_list[0])}")
-        for b_lbl, kw_list in (HOT_BRANDS[(_brand_rot_idx + i) % len(HOT_BRANDS)] for i in range(6))
+        for b_lbl, kw_list in (all_brands_pool[(_brand_rot_idx + i) % len(all_brands_pool)] for i in range(8))
     ]
+    _brand_rot_idx = (_brand_rot_idx + 8) % len(all_brands_pool)
+
     cats_to_check = [
         AMAZON_CATEGORY_SEARCHES[(_amz_cat_rot_idx + i) % len(AMAZON_CATEGORY_SEARCHES)]
         for i in range(5)
@@ -1111,9 +1139,10 @@ async def scrape_amazon_eg(page):
     l_queries = learned_prefs.get("queries", [])
     if l_queries:
         global _learned_rot_idx
-        for i in range(min(3, len(l_queries))):
+        for i in range(min(5, len(l_queries))):
             lq = l_queries[(_learned_rot_idx + i) % len(l_queries)]
             learned_to_check.append((f"اهتمام متعلّم ({lq})", f"https://www.amazon.eg/s?k={quote_plus(lq)}"))
+        _learned_rot_idx = (_learned_rot_idx + 5) % len(l_queries)
 
     for section_label, search_url in (brands_to_check + cats_to_check + learned_to_check):
         try:
@@ -1136,7 +1165,7 @@ async def scrape_amazon_eg(page):
                 if not sc.get("asin") or not sc.get("price"):
                     continue
                 card_txt = sc.get("text") or ""
-                has_promo_txt = any(w in card_txt for w in ("وفر ", "مع الكوبون", "كوبون", "عند الدفع", "عرض ترويجي", "اشترِ", "اشتري"))
+                has_promo_txt = any(w in card_txt for w in ("وفر ", "مع الكوبون", "كوبون", "عند الدفع", "عرض ترويجي", "اشترِ", "اشتري", "صفقة", "خصم", "deal"))
                 if not sc.get("list_price") and not has_promo_txt:
                     continue
                 link = f"https://www.amazon.eg/dp/{sc['asin']}"
@@ -1174,7 +1203,7 @@ async def scrape_amazon_eg(page):
             if info["list_price"] and info["list_price"] > info["price"]:
                 discount = (1 - info["price"] / info["list_price"]) * 100
 
-            has_card_promo = any(w in text_content for w in ("متاح عرض ترويجي", "مع الكوبون", "كوبون خصم", "وفر ", "عند الدفع", "اشترِ", "اشتري"))
+            has_card_promo = any(w in text_content for w in ("متاح عرض ترويجي", "مع الكوبون", "كوبون خصم", "وفر ", "عند الدفع", "اشترِ", "اشتري", "صفقة", "deal"))
             if discount <= 0 and has_card_promo:
                 egp_m = re.search(r'وفر\s+(\d+(?:\.\d+)?)\s*(?:جنيه|ج\.م)', clean(text_content))
                 if egp_m and info["price"] > float(egp_m.group(1)):
@@ -1182,7 +1211,7 @@ async def scrape_amazon_eg(page):
                     info["list_price"] = info["price"]
                     discount = (saving_v / info["price"]) * 100
                 else:
-                    discount = 15.0
+                    discount = 12.0
             if discount <= 0:
                 continue
 
@@ -1191,11 +1220,11 @@ async def scrape_amazon_eg(page):
             famous = has_famous_brand(info["title"])
             saving_egp = (info["list_price"] - info["price"]) if (info["list_price"] and info["list_price"] > info["price"]) else 0
 
-            # للبراندات المشهورة (مثل أنكر، آي لوك، تورنيدو، فريش، فيليبس، براون...) نقبل خصم من 14% (أو 10% لو معاه كوبون أو توفير >= 50 جنيه)
+            # للبراندات المشهورة والمتعلمة (مثل أنكر، آي لوك، تورنيدو، سنوز، يوجرين، فريش، فيليبس، براون...) نقبل خصم من 8%
             if famous:
-                qualifies = (discount >= 14) or (discount >= 10 and (has_card_promo or saving_egp >= 50)) or freebie
+                qualifies = (discount >= 8) or (discount >= 6 and (has_card_promo or saving_egp >= 40)) or freebie
             else:
-                qualifies = (discount >= 25) or (discount >= 18 and has_card_promo) or freebie
+                qualifies = (discount >= 20) or (discount >= 15 and has_card_promo) or freebie
 
             ok_prelim, _ = should_send_deal(full_link, info["title"], info["price"])
             if qualifies and ok_prelim:
@@ -1462,20 +1491,25 @@ async def scrape_noon_eg(page):
     ]
     _noon_rot_idx = (_noon_rot_idx + 4) % len(NOON_EXTRA_URLS)
 
-    # إضافة بحث مباشر عن البراندات الساخنة + الاهتمامات اللي البوت اتعلمها في نون
+    # إضافة بحث مباشر عن البراندات الساخنة + كل البراندات اللي البوت اتعلمها تلقائياً
+    all_noon_brands = list(HOT_BRANDS)
+    for lb in learned_prefs.get("brands", []):
+        if len(lb) >= 2 and not any(lb.lower() in [k.lower() for k in b[1]] for b in HOT_BRANDS):
+            all_noon_brands.append((lb, [lb]))
+
     brand_urls = []
-    for i in range(6):
-        b_label, kw_list = HOT_BRANDS[(_brand_rot_idx + i) % len(HOT_BRANDS)]
+    for i in range(8):
+        b_label, kw_list = all_noon_brands[(_brand_rot_idx + i) % len(all_noon_brands)]
         brand_urls.append((b_label, f"https://www.noon.com/egypt-ar/search/?q={quote_plus(kw_list[0])}"))
-    _brand_rot_idx = (_brand_rot_idx + 6) % len(HOT_BRANDS)
+    _brand_rot_idx = (_brand_rot_idx + 8) % len(all_noon_brands)
 
     l_queries = learned_prefs.get("queries", [])
     if l_queries:
         global _learned_rot_idx
-        for i in range(min(3, len(l_queries))):
+        for i in range(min(5, len(l_queries))):
             lq = l_queries[(_learned_rot_idx + i) % len(l_queries)]
             brand_urls.append((None, f"https://www.noon.com/egypt-ar/search/?q={quote_plus(lq)}"))
-        _learned_rot_idx = (_learned_rot_idx + 3) % len(l_queries)
+        _learned_rot_idx = (_learned_rot_idx + 5) % len(l_queries)
 
     urls_to_scan = [(None, u) for u in (NOON_CORE_URLS + extra_batch)] + brand_urls
 
@@ -1538,9 +1572,9 @@ async def scrape_noon_eg(page):
             saving_egp = (info["list_price"] - info["price"]) if (info["list_price"] and info["list_price"] > info["price"]) else 0
 
             if famous:
-                qualifies = (discount >= 14) or (discount >= 10 and (has_card_promo or saving_egp >= 50)) or freebie
+                qualifies = (discount >= 8) or (discount >= 6 and (has_card_promo or saving_egp >= 40)) or freebie
             else:
-                qualifies = (discount >= 25) or (discount >= 18 and has_card_promo) or freebie
+                qualifies = (discount >= 20) or (discount >= 15 and has_card_promo) or freebie
 
             ok_prelim, _ = should_send_deal(full_link, prelim_title, info["price"])
             if qualifies and ok_prelim:
@@ -1739,7 +1773,7 @@ def _parse_fallback_message_info(text):
         "discount": float(disc_m.group(1)) if disc_m else 0.0,
     }
 
-async def scrape_single_product(context, raw_url, fallback_text="", fallback_image=None):
+async def scrape_single_product(context, raw_url, fallback_text="", fallback_image=None, is_user_submission=False):
     """
     يستقبل أي رابط منتج (أمازون أو نون أو رابط مختصر)، يستخرج الرابط الأصلي الصافي،
     يسحب كل بيانات المنتج، يضيف كود الأفلييت الخاص بالقناة، ويبني الرسالة الكاملة.
@@ -1765,26 +1799,51 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                 const title = q('#productTitle') || q('#title') || document.querySelector('meta[property="og:title"]')?.content || '';
                 const priceSelectors = [
                     '#corePriceDisplay_desktop_feature_div .priceToPay .a-offscreen',
+                    '#corePriceDisplay_desktop_feature_div .a-price:not(.a-text-price) .a-offscreen',
+                    '#corePrice_desktop .a-price:not(.a-text-price) .a-offscreen',
                     '#corePrice_feature_div .a-price .a-offscreen',
                     '#apex_desktop .priceToPay .a-offscreen',
+                    '#apex_desktop .a-price:not(.a-text-price) .a-offscreen',
+                    '.apexPriceToPay .a-offscreen',
                     '#priceblock_dealprice',
                     '#priceblock_ourprice',
+                    '#priceblock_saleprice',
                     '#price_inside_buybox',
+                    '#newBuyBoxPrice',
                     '#tp_price_block_total_price_ww .a-offscreen',
-                    '#ppd .a-price .a-offscreen',
+                    '#ppd .a-price:not(.a-text-price) .a-offscreen',
+                    'span[data-a-color="price"] span.a-offscreen',
                 ];
                 let priceTxt = priceSelectors.map(q).find(x => x && /\\d/.test(x)) || null;
                 if (!priceTxt) {
-                    const whole = q('#corePriceDisplay_desktop_feature_div .priceToPay .a-price-whole');
+                    const whole = q('#corePriceDisplay_desktop_feature_div .priceToPay .a-price-whole')
+                        || q('#apex_desktop .priceToPay .a-price-whole')
+                        || q('#corePrice_desktop .a-price-whole')
+                        || q('.priceToPay .a-price-whole');
                     const frac = q('#corePriceDisplay_desktop_feature_div .priceToPay .a-price-fraction') || '00';
                     if (whole) priceTxt = whole.replace(/[^0-9,]/g, '') + '.' + frac.replace(/[^0-9]/g, '');
+                }
+                if (!priceTxt) {
+                    for (const s of document.querySelectorAll('script[type="application/ld+json"]')) {
+                        try {
+                            const j = JSON.parse(s.textContent);
+                            const off = Array.isArray(j?.offers) ? j.offers[0] : j?.offers;
+                            if (off?.price) { priceTxt = String(off.price); break; }
+                        } catch(e) {}
+                    }
+                }
+                if (!priceTxt) {
+                    priceTxt = document.querySelector('meta[property="og:price:amount"]')?.content || document.querySelector('meta[name="twitter:data1"]')?.content;
                 }
                 const listSelectors = [
                     '#corePriceDisplay_desktop_feature_div .basisPrice .a-offscreen',
                     '#corePriceDisplay_desktop_feature_div span[data-a-strike="true"] .a-offscreen',
+                    '#corePrice_desktop .basisPrice .a-offscreen',
                     '#apex_desktop .basisPrice .a-offscreen',
+                    '#apex_desktop span[data-a-strike="true"] .a-offscreen',
                     '.basisPrice .a-offscreen',
                     '#price .a-text-price .a-offscreen',
+                    'span[data-a-strike="true"] .a-offscreen',
                 ];
                 const listTxt = listSelectors.map(q).find(x => x && /\\d/.test(x)) || null;
                 const savingsTxt = q('#corePriceDisplay_desktop_feature_div .savingsPercentage') || q('.savingsPercentage');
@@ -1833,9 +1892,23 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                 )];
                 const revs = [...document.querySelectorAll('[data-hook="reviewText"], [data-hook="review-collapsed"], .review-text-content')]
                     .map(e => e.innerText.trim()).filter(x => x.length > 15).slice(0, 3);
-                const unavailTxt = (document.querySelector('#availability, #outOfStock, #availability_feature_div')?.innerText || '').trim();
-                const isOutOfStock = /غير متوفر|غير متاح|currently unavailable|out of stock|temporarily out/i.test(unavailTxt);
-                return {title, priceTxt, listTxt, savingsTxt, bought, seller, brand, ratingTxt, reviewsTxt, feats, image, promos: promos.slice(0, 10), promo_links: promo_links.slice(0, 2), revs, isOutOfStock};
+                
+                // فحص دقيق للتوفر الفعلي في المخزون وعدم الخلط بين قيود شحن السيرفر والنفاد الحقيقي
+                const hasAddToCart = Boolean(
+                    document.querySelector('#add-to-cart-button, #buy-now-button, input[name="submit.add-to-cart"], #buybox-see-all-buying-choices, #addToCart, form[action*="/cart/add"]')
+                );
+                const outOfStockBox = Boolean(document.querySelector('#outOfStock, .out-of-stock'));
+                const availTxt = (document.querySelector('#availability, #availability_feature_div')?.innerText || '').trim();
+                const isExplicitlyUnavailable = /غير متوفر حالياً|غير متوفر مؤقتاً|currently unavailable/i.test(availTxt);
+                const isShippingRestrictionOnly = /غير متوفر للشحن|غير متاح للشحن|لا يمكن شحن|cannot be shipped|delivery location/i.test(availTxt);
+
+                let isOutOfStock = false;
+                if (hasAddToCart) {
+                    isOutOfStock = false;
+                } else if (outOfStockBox || (isExplicitlyUnavailable && !isShippingRestrictionOnly)) {
+                    isOutOfStock = true;
+                }
+                return {title, priceTxt, listTxt, savingsTxt, bought, seller, brand, ratingTxt, reviewsTxt, feats, image, promos: promos.slice(0, 10), promo_links: promo_links.slice(0, 2), revs, isOutOfStock, hasAddToCart};
             }""")
         finally:
             await page.close()
@@ -1939,11 +2012,20 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
         custom_insight = rewrite_channel_insight(fallback_text)
 
         # 🔎 التحقق الصارم أن العرض لسه متاح وساري على المتجر
-        is_available = (not data.get("isOutOfStock")) and live_price_found
+        has_add_to_cart = data.get("hasAddToCart")
+        is_out_of_stock = data.get("isOutOfStock") and not has_add_to_cart
+        is_available = not is_out_of_stock
+        if is_user_submission and price and price > 0:
+            if not is_out_of_stock:
+                is_available = True
+        elif not live_price_found and not fb.get("price"):
+            is_available = False
+
         is_active, active_reason = is_deal_currently_active(
             price, list_price, discount, is_available=is_available,
             stack_promos=stack_promos, extra_pct=extra_pct, extra_egp=extra_egp,
-            brand=brand, title=title, prev_min=prev_min
+            brand=brand, title=title, prev_min=prev_min,
+            is_user_submission=is_user_submission
         )
 
         msg = build_message(
@@ -2024,10 +2106,19 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                     : [];
                 const revs = [...document.querySelectorAll('[class*="reviewComment" i], [class*="reviewDesc" i], [data-qa*="review" i] p')]
                     .map(e => e.innerText.trim()).filter(x => x.length > 15 && x.length < 220).slice(0, 2);
+                const hasAddToCart = Boolean(
+                    document.querySelector('button[data-qa="btn-add-to-cart"]:not([disabled]), button[class*="addToCart" i]:not([disabled])')
+                );
                 const unavailEl = document.querySelector('[data-qa="pdp-out-of-stock"], [class*="outOfStock" i], [class*="soldOut" i]');
                 const unavailTxt = (unavailEl?.innerText || document.querySelector('[data-qa*="stock" i]')?.innerText || '').trim();
-                const isOutOfStock = Boolean(unavailEl) || /غير متوفر|نفدت|out of stock|sold out|غير متاح/i.test(unavailTxt);
-                return {full_title, brand, seller, priceNow, priceWas, savingTxt, ratingTxt, reviewsTxt, feats, image, promos: promos.slice(0, 5), revs, isOutOfStock};
+                const isExplicitlyUnavailable = /غير متوفر|نفدت|out of stock|sold out/i.test(unavailTxt);
+                let isOutOfStock = false;
+                if (hasAddToCart) {
+                    isOutOfStock = false;
+                } else if (unavailEl || isExplicitlyUnavailable) {
+                    isOutOfStock = true;
+                }
+                return {full_title, brand, seller, priceNow, priceWas, savingTxt, ratingTxt, reviewsTxt, feats, image, promos: promos.slice(0, 5), revs, isOutOfStock, hasAddToCart};
             }""")
         finally:
             await page.close()
@@ -2072,11 +2163,20 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
         custom_insight = rewrite_channel_insight(fallback_text)
 
         # 🔎 التحقق الصارم أن العرض لسه متاح وساري على المتجر
-        is_available = (not data.get("isOutOfStock")) and live_price_found
+        has_add_to_cart = data.get("hasAddToCart")
+        is_out_of_stock = data.get("isOutOfStock") and not has_add_to_cart
+        is_available = not is_out_of_stock
+        if is_user_submission and price and price > 0:
+            if not is_out_of_stock:
+                is_available = True
+        elif not live_price_found and not fb.get("price"):
+            is_available = False
+
         is_active, active_reason = is_deal_currently_active(
             price, list_price, discount, is_available=is_available,
             stack_promos=stack_promos, extra_pct=extra_pct, extra_egp=extra_egp,
-            brand=brand, title=title, prev_min=prev_min
+            brand=brand, title=title, prev_min=prev_min,
+            is_user_submission=is_user_submission
         )
 
         msg = build_message(
@@ -2368,7 +2468,7 @@ async def scan_monitored_channels(context, target_channel=None, specific_post_id
 
             try:
                 deal_msg, deal_img, orig_url, our_short_url, title, eff_p, promo_sig, is_active, active_reason, brand = await scrape_single_product(
-                    context, target_url, fallback_text=p_text, fallback_image=p_photo
+                    context, target_url, fallback_text=p_text, fallback_image=p_photo, is_user_submission=False
                 )
                 if not deal_msg or not title:
                     continue
@@ -2567,7 +2667,7 @@ async def poll_private_chat_once(context):
                         break
 
             deal_msg, deal_img, orig_url, our_short_url, title, eff_p, promo_sig, is_active, active_reason, brand = await scrape_single_product(
-                context, target_url, fallback_text=text, fallback_image=fallback_img_id
+                context, target_url, fallback_text=text, fallback_image=fallback_img_id, is_user_submission=True
             )
             # منع نشر نفس الرابط مرتين لو اتبعت في خلال دقيقتين
             now_ts = time.time()
