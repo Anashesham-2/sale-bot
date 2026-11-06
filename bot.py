@@ -24,9 +24,14 @@ if os.path.exists(ENV_FILE):
 
 # إعدادات تليجرام (تُقرأ من ملف .env محلياً أو من GitHub Secrets سحابياً)
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")
-# ممكن تحط أكتر من ID مفصولين بفاصلة (مثلاً حسابك + الجروب): "6725805788,-100xxxxxxxxxx"
-CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "YOUR_CHAT_ID")
+MAIN_CHANNEL_ID = os.getenv("CHANNEL_CHAT_ID", "-1004497784406")
+MAIN_CHANNEL_USERNAME = "@loqta78"
+# ممكن تحط أكتر من ID مفصولين بفاصلة (مثلاً حسابك + القناة): "6725805788,-1004497784406"
+CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", MAIN_CHANNEL_ID)
 CHAT_IDS = [c.strip() for c in CHAT_ID.split(",") if c.strip()]
+# نضمن دائماً أن قناة «لقطة» (-1004497784406) موجودة دائماً في قائمة الوجهات الأساسية
+if MAIN_CHANNEL_ID not in CHAT_IDS and MAIN_CHANNEL_USERNAME not in CHAT_IDS:
+    CHAT_IDS.insert(0, MAIN_CHANNEL_ID)
 # الـ Chat ID الخاص بصاحب البوت لاستقبال أي لينك في الخاص وتحويله لأفلييت القناة ونشره فوراً
 OWNER_CHAT_ID = int(os.getenv("OWNER_CHAT_ID", "6725805788"))
 MIN_DISCOUNT = 30
@@ -1218,6 +1223,14 @@ def send_telegram_msg(text, image=None, target_chat_ids=None):
                     f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
                     json={"chat_id": chat_id, "text": text, "parse_mode": "HTML",
                           "disable_web_page_preview": True},
+                    timeout=10,
+                )
+            if resp is None or not resp.ok:
+                # لو فشل بسبب كابشن أو وسم HTML معطوب، نبعته كنص صافي بدون HTML لتجنب ضياع البوست
+                plain_text = re.sub(r'<[^>]+>', '', text)
+                resp = requests.post(
+                    f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+                    json={"chat_id": chat_id, "text": plain_text, "disable_web_page_preview": True},
                     timeout=10,
                 )
             if resp.ok:
@@ -2791,6 +2804,10 @@ async def scan_monitored_channels(context, target_channel=None, specific_post_id
 
                 mark_deal_sent(orig_url, title, eff_p, promo_sig)
                 channel_only_ids = [cid for cid in CHAT_IDS if str(cid) != str(notify_chat_id)]
+                if not channel_only_ids:
+                    channel_only_ids = [MAIN_CHANNEL_ID]
+                elif MAIN_CHANNEL_ID not in channel_only_ids and MAIN_CHANNEL_USERNAME not in channel_only_ids:
+                    channel_only_ids.append(MAIN_CHANNEL_ID)
                 if channel_only_ids:
                     await pace_and_send(deal_msg, deal_img) if not notify_chat_id else await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, channel_only_ids)
                 if notify_chat_id:
@@ -3005,10 +3022,13 @@ async def poll_private_chat_once(context):
 
                 # 2) فحص هل العرض نزل قبل كده في القناة بدون أي تغيير جديد (منع التكرار)
                 should_send, change_reason = should_send_deal(orig_url, title, eff_p, promo_sig)
-                if not should_send:
+                entry = price_history.get(orig_url, {})
+                last_at = entry.get("last_sent_at") or 0
+                is_recent_duplicate = (now_ts - last_at) < 600
+                if not should_send and is_recent_duplicate:
                     already_txt = (
-                        "ℹ️ <b>العرض ده منشور بالفعل في القناة بنفس السعر والمواصفات ومحصلش عليه أي تغيير جديد!</b>\n"
-                        "<i>(تم منع تكرار النشر في القناة لمنع إزعاج المتابعين، وتم تأكيد تعلّم الماركة):</i>\n\n"
+                        "ℹ️ <b>العرض ده منشور بالفعل في القناة مؤخراً بنفس السعر والمواصفات!</b>\n"
+                        "<i>(تم منع تكرار النشر المتطابق في القناة لمنع إزعاج المتابعين):</i>\n\n"
                         f"🧠 <b>الماركة المتعلمة:</b> {html.escape(brand or 'معروفة')}\n"
                         f"🔗 <b>الرابط الأصلي الصافي:</b>\n{html.escape(orig_url)}\n\n"
                         f"💰 <b>رابط الأفلييت الخاص بينا:</b>\n{html.escape(our_short_url)}"
@@ -3020,8 +3040,12 @@ async def poll_private_chat_once(context):
                 mark_deal_sent(orig_url, title, eff_p, promo_sig)
                 total_posted += 1
                 channel_only_ids = [cid for cid in CHAT_IDS if str(cid) != str(user_chat_id)]
-                if channel_only_ids:
-                    await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, channel_only_ids)
+                if not channel_only_ids:
+                    channel_only_ids = [MAIN_CHANNEL_ID]
+                elif MAIN_CHANNEL_ID not in channel_only_ids and MAIN_CHANNEL_USERNAME not in channel_only_ids:
+                    channel_only_ids.append(MAIN_CHANNEL_ID)
+
+                await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, channel_only_ids)
                 await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, [user_chat_id])
                 channel_note = f"\n📡 <i>وتم حفظ قناة @{html.escape(ch_ref)} في ذاكرة المتابعة التلقائية للبوت!</i>" if ch_kind == "public" else ""
                 summary_txt = (
