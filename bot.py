@@ -2016,23 +2016,167 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
 
     return None, None, canonical_url, branded_url(canonical_url), None, None, ""
 
-def extract_telegram_channel_info(text):
-    """يستخرج اسم قناة تليجرام (ورقم البوست إن وجد) من أي رابط t.me أو معرّف @channel."""
-    if not text:
-        return None, None
-    reserved = {"joinchat", "addstickers", "share", "proxy", "iv", "s", "loqta78", "sosanasbot"}
-    m = re.search(r'(?:https?://)?(?:t\.me|telegram\.me)/(?:s/)?([A-Za-z0-9_]{4,})(?:/(\d+))?', text, re.I)
+def extract_telegram_channel_info(text, msg=None):
+    """يستخرج اسم قناة تليجرام (ورقم البوست ونوع الرابط) من أي رابط t.me أو معرّف @channel أو رسالة محولة (Forward)."""
+    if not text and not msg:
+        return None, None, None
+
+    # 1. فحص إذا كانت الرسالة Forward محولة من قناة (سواء في Telegram Bot API الحديث أو القديم)
+    if msg:
+        fwd_orig = msg.get("forward_origin") or {}
+        if fwd_orig.get("type") == "channel":
+            c = fwd_orig.get("chat") or {}
+            u = (c.get("username") or "").strip().lower()
+            msg_id = str(fwd_orig.get("message_id") or "")
+            if u:
+                return u, msg_id, "public"
+            elif c.get("title"):
+                return c.get("title"), msg_id, "private_forward"
+        fwd_chat = msg.get("forward_from_chat") or {}
+        u = (fwd_chat.get("username") or "").strip().lower()
+        msg_id = str(msg.get("forward_from_message_id") or "")
+        if u:
+            return u, msg_id, "public"
+        elif fwd_chat.get("title"):
+            return fwd_chat.get("title"), msg_id, "private_forward"
+
+    full_text = text or ""
+    if msg:
+        for ent in (msg.get("entities") or []) + (msg.get("caption_entities") or []):
+            if ent.get("type") == "text_link" and ent.get("url"):
+                full_text += " " + ent["url"]
+            elif ent.get("type") == "url":
+                offset = ent.get("offset", 0)
+                length = ent.get("length", 0)
+                if offset + length <= len(full_text):
+                    full_text += " " + full_text[offset:offset+length]
+
+    reserved = {"joinchat", "addstickers", "share", "proxy", "iv", "s", "loqta78", "sosanasbot", "c"}
+
+    # 2. روابط الدعوة الخاصة (+ أو joinchat)
+    inv_m = re.search(r'(?:https?://)?(?:t\.me|telegram\.me)/(?:joinchat/|\+)([A-Za-z0-9_-]+)', full_text, re.I)
+    if inv_m:
+        return inv_m.group(1), None, "invite"
+
+    # 3. روابط الويب تلجرام web.telegram.org
+    web_m = re.search(r'web\.telegram\.org/[ak]/#@?([A-Za-z0-9_]{3,})', full_text, re.I)
+    if web_m:
+        ch = web_m.group(1).lower()
+        if ch not in reserved:
+            return ch, None, "public"
+
+    # 4. روابط القنوات العامة t.me أو telegram.me أو telegram.dog
+    m = re.search(r'(?:https?://)?(?:t\.me|telegram\.me|telegram\.dog)/(?:s/)?([A-Za-z0-9_]{3,})(?:/(\d+))?', full_text, re.I)
     if m:
         ch = m.group(1).lower()
         post_num = m.group(2)
-        if ch not in reserved and not ch.startswith("+"):
-            return ch, post_num
-    m2 = re.search(r'(?:^|\s)@([A-Za-z0-9_]{4,})\b', text)
+        if ch not in reserved:
+            return ch, post_num, "public"
+
+    # 5. معرّف @channel
+    m2 = re.search(r'(?:^|[\s،,:\"\'(])@([A-Za-z0-9_]{3,})\b', full_text)
     if m2:
         ch = m2.group(1).lower()
         if ch not in reserved:
-            return ch, None
-    return None, None
+            return ch, None, "public"
+
+    # 6. كتابة كلمة قناة أو تابع وبعدها المعرف
+    m3 = re.search(r'(?:قناة|جروب|شات|تابع)\s+([A-Za-z0-9_]{3,})\b', full_text)
+    if m3:
+        ch = m3.group(1).lower()
+        if ch not in reserved:
+            return ch, None, "public"
+
+    return None, None, None
+
+def resolve_telegram_invite_link(invite_hash):
+    """يفحص رابط الدعوة ويستخرج اسم القناة ووصفها وإذا كانت قناة عامة بمعرّف."""
+    url = f"https://t.me/+{invite_hash}" if not invite_hash.startswith("+") and not invite_hash.startswith("joinchat/") else f"https://t.me/{invite_hash}"
+    try:
+        r = requests.get(
+            url,
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
+            timeout=10,
+        )
+        if r.ok:
+            title_m = re.search(r'<meta property="og:title" content="([^"]+)"', r.text)
+            desc_m = re.search(r'<meta property="og:description" content="([^"]+)"', r.text)
+            title = html.unescape(title_m.group(1)).strip() if title_m else ""
+            desc = html.unescape(desc_m.group(1)).strip() if desc_m else ""
+            uname_m = re.search(r'@([A-Za-z0-9_]{3,})\b', desc + " " + title)
+            public_uname = (
+                uname_m.group(1).lower()
+                if uname_m and uname_m.group(1).lower() not in {"joinchat", "share", "s", "loqta78", "sosanasbot"}
+                else None
+            )
+            return title, desc, public_uname
+    except Exception:
+        pass
+    return "", "", None
+
+def fetch_channel_posts_http(channel_username, specific_post_id=None):
+    """استخراج سريع وخفيف لبوستات القناة عبر HTTP المباشر في أقل من ثانية بدون استهلاك متصفح."""
+    url = f"https://t.me/s/{channel_username}"
+    if specific_post_id:
+        url += f"/{specific_post_id}"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "ar,en;q=0.9",
+    }
+    try:
+        r = requests.get(url, headers=headers, timeout=12)
+        if not r.ok:
+            return []
+    except Exception as e:
+        print(f"HTTP fetch error for @{channel_username}: {e}")
+        return []
+
+    raw_html = r.text
+    msg_chunks = re.findall(
+        r'<div class="[^"]*tgme_widget_message\b[^>]*data-post="([^"]+)"[^>]*>(.*?)(?=<div class="[^"]*tgme_widget_message\b|\Z)',
+        raw_html,
+        re.DOTALL,
+    )
+
+    posts = []
+    for post_id, chunk in msg_chunks:
+        text = ""
+        text_m = re.search(
+            r'<div class="[^"]*tgme_widget_message_text\b[^>]*>(.*?)</div>\s*(?:<div class="tgme_widget_message_footer"|<div class="tgme_widget_message_info"|<div class="tgme_widget_message_reactions"|\Z)',
+            chunk,
+            re.DOTALL,
+        )
+        if text_m:
+            raw_t = text_m.group(1)
+            raw_t = re.sub(r'<br\s*/?>', '\n', raw_t)
+            raw_t = re.sub(r'</p>', '\n', raw_t)
+            clean_t = re.sub(r'<[^>]+>', '', raw_t)
+            text = html.unescape(clean_t).strip()
+
+        links = []
+        for a_href in re.findall(r'href="([^"]+)"', chunk):
+            h = a_href.strip()
+            if h.startswith("http") and "t.me/" not in h and "telegram.me/" not in h and h not in links:
+                links.append(h)
+
+        for ru in re.findall(r'https?://[^\s<>"\'()،]+', text):
+            if "t.me/" not in ru and "telegram.me/" not in ru and ru not in links:
+                links.append(ru)
+
+        photo = None
+        photo_m = re.search(r'background-image\s*:\s*url\([\'"]?(https?:[^\'")]+)[\'"]?\)', chunk)
+        if photo_m:
+            photo = photo_m.group(1)
+
+        posts.append({
+            "postId": post_id,
+            "text": text,
+            "links": links,
+            "photo": photo
+        })
+
+    return posts
 
 async def scan_monitored_channels(context, target_channel=None, specific_post_id=None, max_to_post=3, notify_chat_id=None):
     """يتابع القنوات المضافة للتعلم منها، يستخرج العروض المرشحة وتجاربهم الإيجابية، يعيد صياغتها بأسلوبنا، ويحول روابطها للأفلييت الخاص بنا."""
@@ -2044,53 +2188,58 @@ async def scan_monitored_channels(context, target_channel=None, specific_post_id
     for ch in channels:
         if total_posted >= max_to_post:
             break
-        preview_url = f"https://t.me/s/{ch}"
-        if specific_post_id:
-            preview_url = f"https://t.me/s/{ch}/{specific_post_id}"
         print(f"📡 فحص قناة تليجرام المتابعة للتعلم منها: @{ch} ...")
-        page = await context.new_page()
-        posts = []
-        try:
-            await page.goto(preview_url, wait_until="domcontentloaded", timeout=35000)
-            await page.wait_for_timeout(1500)
-            posts = await page.evaluate("""() => {
-                const out = [];
-                for (const msgEl of document.querySelectorAll('.tgme_widget_message')) {
-                    const postId = msgEl.getAttribute('data-post') || '';
-                    const textEl = msgEl.querySelector('.tgme_widget_message_text');
-                    const text = textEl ? textEl.innerText.trim() : '';
-                    const links = [];
-                    if (textEl) {
-                        for (const a of textEl.querySelectorAll('a[href]')) {
-                            const h = (a.getAttribute('href') || '').trim();
-                            if (h.startsWith('http') && !h.includes('t.me/') && !h.includes('telegram.me/')) {
-                                links.push(h);
+
+        # 1. محاولة السحب السريع عبر HTTP أولاً
+        posts = await asyncio.to_thread(fetch_channel_posts_http, ch, specific_post_id)
+
+        # 2. لو الـ HTTP مجابش بوستات، استخدام متصفح Playwright كخطة احتياطية
+        if not posts and context:
+            preview_url = f"https://t.me/s/{ch}"
+            if specific_post_id:
+                preview_url = f"https://t.me/s/{ch}/{specific_post_id}"
+            page = await context.new_page()
+            try:
+                await page.goto(preview_url, wait_until="domcontentloaded", timeout=25000)
+                await page.wait_for_timeout(1200)
+                posts = await page.evaluate("""() => {
+                    const out = [];
+                    for (const msgEl of document.querySelectorAll('.tgme_widget_message')) {
+                        const postId = msgEl.getAttribute('data-post') || '';
+                        const textEl = msgEl.querySelector('.tgme_widget_message_text');
+                        const text = textEl ? textEl.innerText.trim() : '';
+                        const links = [];
+                        if (textEl) {
+                            for (const a of textEl.querySelectorAll('a[href]')) {
+                                const h = (a.getAttribute('href') || '').trim();
+                                if (h.startsWith('http') && !h.includes('t.me/') && !h.includes('telegram.me/')) {
+                                    links.push(h);
+                                }
                             }
                         }
-                    }
-                    const rawUrls = text.match(/https?:\\/\\/[^\\s<>"')\\]،]+/g) || [];
-                    for (const ru of rawUrls) {
-                        if (!ru.includes('t.me/') && !ru.includes('telegram.me/') && !links.includes(ru)) {
-                            links.push(ru);
+                        const rawUrls = text.match(/https?:\\/\\/[^\\s<>"')\\]،]+/g) || [];
+                        for (const ru of rawUrls) {
+                            if (!ru.includes('t.me/') && !ru.includes('telegram.me/') && !links.includes(ru)) {
+                                links.push(ru);
+                            }
+                        }
+                        let photo = null;
+                        const photoEl = msgEl.querySelector('.tgme_widget_message_photo_wrap');
+                        if (photoEl) {
+                            const style = photoEl.getAttribute('style') || '';
+                            const m = style.match(/background-image\\s*:\\s*url\\(['"]?(https?:\\/\\/[^'"]+)['"]?\\)/i);
+                            if (m) photo = m[1];
+                        }
+                        if (links.length > 0) {
+                            out.push({ postId, text, links, photo });
                         }
                     }
-                    let photo = null;
-                    const photoEl = msgEl.querySelector('.tgme_widget_message_photo_wrap');
-                    if (photoEl) {
-                        const style = photoEl.getAttribute('style') || '';
-                        const m = style.match(/background-image\\s*:\\s*url\\(['"]?(https?:\\/\\/[^'"]+)['"]?\\)/i);
-                        if (m) photo = m[1];
-                    }
-                    if (links.length > 0) {
-                        out.push({ postId, text, links, photo });
-                    }
-                }
-                return out;
-            }""")
-        except Exception as e:
-            print(f"تعذر قراءة القناة @{ch}: {e}")
-        finally:
-            await page.close()
+                    return out;
+                }""")
+            except Exception as e:
+                print(f"تعذر قراءة القناة @{ch} عبر Playwright: {e}")
+            finally:
+                await page.close()
 
         if not posts:
             continue
@@ -2227,50 +2376,77 @@ async def poll_private_chat_once(context):
         if user_chat_id != OWNER_CHAT_ID:
             continue
 
-        # لو الرسالة معمولة Forward من قناة عامة، نتعلم اسم القناة تلقائياً لمتابعتها
-        fwd_chat = msg.get("forward_from_chat") or {}
-        fwd_username = (fwd_chat.get("username") or "").strip().lower()
-        if fwd_username and fwd_username not in ("loqta78", "sosanasbot") and fwd_username not in learned_prefs["channels"]:
-            learned_prefs["channels"].append(fwd_username)
-            save_learned_prefs()
-            print(f"📡 تم تعلم قناة جديدة تلقائياً من الرسالة المحولة: @{fwd_username}")
-
         all_urls = extract_urls_from_message(msg)
-        product_urls = [u for u in all_urls if not re.search(r'(?:t\.me|telegram\.me)/', u, re.I)]
-        ch_name, specific_post_id = extract_telegram_channel_info(text)
+        product_urls = [u for u in all_urls if not re.search(r'(?:t\.me|telegram\.me|telegram\.dog)/', u, re.I)]
+        ch_ref, specific_post_id, ch_kind = extract_telegram_channel_info(text, msg)
 
-        # لو المستخدم باعت لينك قناة تليجرام (أو بوست في قناة) عشان البوت يتعلم منها ويتابعها
-        if ch_name and not product_urls:
-            is_new_ch = ch_name not in learned_prefs["channels"]
-            if is_new_ch:
-                learned_prefs["channels"].append(ch_name)
-                save_learned_prefs()
-            await asyncio.to_thread(
-                send_telegram_msg,
-                f"📡 <b>تم {'إضافة' if is_new_ch else 'تحديث'} قناة @{html.escape(ch_name)} في ذاكرة التعلم التلقائي للبوت!</b>\n"
-                "⏳ <i>جاري الآن الدخول على القناة، قراءة أحدث العروض والتجارب المرشحة فيها، إعادة صياغة الكلام بأسلوب «لقطة»، وتحويل الروابط لكود الأفلييت الخاص بينا...</i>",
-                None,
-                [user_chat_id],
+        # 1. لو الرابط رابط دعوة خاص (+ أو joinchat)
+        if ch_kind == "invite":
+            inv_title, inv_desc, public_uname = resolve_telegram_invite_link(ch_ref)
+            if public_uname:
+                ch_ref = public_uname
+                ch_kind = "public"
+            else:
+                if "invite_channels" not in learned_prefs:
+                    learned_prefs["invite_channels"] = []
+                inv_entry = inv_title or ch_ref
+                if inv_entry not in learned_prefs["invite_channels"]:
+                    learned_prefs["invite_channels"].append(inv_entry)
+                    save_learned_prefs()
+                reply_invite = (
+                    f"📡 <b>تم استلام رابط القناة بنجاح{' (' + html.escape(inv_title) + ')' if inv_title else ''}!</b>\n\n"
+                    "ℹ️ <i>ملاحظة:</i> الرابط ده رابط دعوة خاص (Invite Link). تليجرام مش بيسمح بقراءة البوستات من المتصفح تلقائياً للروابط الخاصة.\n\n"
+                    "💡 <b>الحل المباشر والسهل جداً:</b> أي بوست عرض يعجبك في القناة دي، اعمله <b>Forward للشات هنا مع البوت</b>، والبوت فوراً هيسحب تفاصيل المنتج، يعيد صياغة التجربة لأسلوب «لقطة»، يحط كود الأفلييت الخاص بينا (<code>is.gd/loqta_...</code>)، وينشره في قناتك فوراً! 🚀💰"
+                )
+                await asyncio.to_thread(send_telegram_msg, reply_invite, None, [user_chat_id])
+                continue
+
+        # 2. لو الرسالة محولة من قناة خاصة بدون معرف عام ولا تحتوي على روابط منتج
+        if ch_kind == "private_forward" and not product_urls:
+            reply_fwd = (
+                f"📡 <b>تم استلام الرسالة المحولة من قناة «{html.escape(ch_ref)}»!</b>\n\n"
+                "💡 عشان أجهز العرض بالصورة وأحط كود الأفلييت بتاعك، ابعت أو اعمل Forward لبوست فيه <b>رابط المنتج</b> (أمازون أو نون) وهتعامل معاه فوراً! 🚀"
             )
-            posted_cnt = await scan_monitored_channels(
-                context, target_channel=ch_name, specific_post_id=specific_post_id, max_to_post=2, notify_chat_id=user_chat_id
-            )
-            done_msg = (
-                f"✅ <b>تم فحص قناة @{html.escape(ch_name)} بنجاح!</b>\n"
-                f"📦 تم استيراد وإعادة صياغة ونشر <b>{posted_cnt}</b> عرض بلينك الأفلييت الخاص بينا.\n"
-                f"🧠 البوت هيفضل متابع <b>@{html.escape(ch_name)}</b> تلقائياً في كل دورة فحص، وأي عرض أو تجربة كويسة هتنزل هناك هيحولها لطريقتنا ولينكنا وينشرها فوراً!"
-            )
-            await asyncio.to_thread(send_telegram_msg, done_msg, None, [user_chat_id])
+            await asyncio.to_thread(send_telegram_msg, reply_fwd, None, [user_chat_id])
             continue
+
+        # 3. لو القناة عامة (رابط t.me أو معرف @ أو معرف مكتوب)
+        if ch_kind == "public":
+            is_new_ch = ch_ref not in learned_prefs["channels"]
+            if is_new_ch:
+                learned_prefs["channels"].append(ch_ref)
+                save_learned_prefs()
+                print(f"📡 تم حفظ قناة تليجرام جديدة للمتابعة: @{ch_ref}")
+
+            # لو المستخدم باعت فقط رابط القناة بدون روابط منتجات مباشرة في نفس الرسالة
+            if not product_urls:
+                await asyncio.to_thread(
+                    send_telegram_msg,
+                    f"📡 <b>تم {'إضافة' if is_new_ch else 'تحديث'} قناة @{html.escape(ch_ref)} في ذاكرة التعلم التلقائي للبوت!</b>\n"
+                    "⏳ <i>جاري الآن الدخول على القناة، فحص أحدث العروض والتجارب المرشحة فيها، إعادة صياغة الكلام بأسلوب «لقطة»، وتحويل الروابط لكود الأفلييت الخاص بينا...</i>",
+                    None,
+                    [user_chat_id],
+                )
+                posted_cnt = await scan_monitored_channels(
+                    context, target_channel=ch_ref, specific_post_id=specific_post_id, max_to_post=2, notify_chat_id=user_chat_id
+                )
+                done_msg = (
+                    f"✅ <b>تم فحص قناة @{html.escape(ch_ref)} بنجاح!</b>\n"
+                    f"📦 تم استيراد وإعادة صياغة ونشر <b>{posted_cnt}</b> عرض بلينك الأفلييت الخاص بينا.\n"
+                    f"🧠 البوت هيفضل متابع <b>@{html.escape(ch_ref)}</b> تلقائياً في كل دورة فحص، وأي عرض أو تجربة كويسة هتنزل هناك هيحولها لطريقتنا ولينكنا وينشرها فوراً! 🚀"
+                )
+                await asyncio.to_thread(send_telegram_msg, done_msg, None, [user_chat_id])
+                continue
 
         urls = product_urls
         if not urls:
-            await asyncio.to_thread(
-                send_telegram_msg,
-                "⚠️ مبعتليش رابط منتج أو رابط قناة تليجرام! ابعت أي رابط منتج من أمازون/نون أو رابط قناة تليجرام (<code>https://t.me/...</code>) وهتعامل معاه فوراً.",
-                None,
-                [user_chat_id],
+            guide_txt = (
+                "👋 <b>تقدر تبعت للبوت أي حاجة من دول ويتعامل معاها فوراً:</b>\n\n"
+                "1️⃣ <b>لينك أي منتج</b> من أمازون مصر أو نون مصر (وحتى لو الرابط مختصر)، وهيحوله لكود الأفلييت الخاص بينا (<code>is.gd/loqta_...</code>) وينشره في القناة بالصورة فوراً.\n\n"
+                "2️⃣ <b>لينك أي قناة تليجرام</b> (مثل: <code>https://t.me/channel</code> أو <code>@channel</code> أو رابط دعوة)، وهيتابعها تلقائياً ويعيد صياغة عروضها بأسلوبنا ولينك الأفلييت بتاعنا.\n\n"
+                "3️⃣ <b>Forward لأي بوست عرض</b> من أي قناة تانية للشات هنا، وهيحوله وينشره فوراً! 🚀💰"
             )
+            await asyncio.to_thread(send_telegram_msg, guide_txt, None, [user_chat_id])
             continue
 
         photos = msg.get("photo") or []
@@ -2311,9 +2487,11 @@ async def poll_private_chat_once(context):
                     await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, channel_only_ids)
                 # 2) إرسال نسخة لصاحب البوت في الشات الخاص
                 await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, [user_chat_id])
+                channel_note = f"\n📡 <i>وتم حفظ قناة @{html.escape(ch_ref)} في ذاكرة المتابعة التلقائية للبوت!</i>" if ch_kind == "public" else ""
                 summary_txt = (
                     "✅ <b>تم تحويل الرابط ونشر العرض بالصورة في القناة بنجاح!</b>\n"
-                    "🧠 <i>وتم حفظ الماركة وفئة المنتج في ذاكرة البوت للبحث التلقائي عن عروض مشابهة!</i>\n\n"
+                    "🧠 <i>وتم حفظ الماركة وفئة المنتج في ذاكرة البوت للبحث التلقائي عن عروض مشابهة!</i>"
+                    f"{channel_note}\n\n"
                     f"🔗 <b>الرابط الأصلي الصافي:</b>\n{html.escape(orig_url)}\n\n"
                     f"💰 <b>رابط الأفلييت الخاص بينا:</b>\n{html.escape(our_short_url)}"
                 )
