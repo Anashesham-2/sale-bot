@@ -81,10 +81,10 @@
     "دوركو",
     "توكزر",
     "Home Care",
-    "Touch Elzenouki"
+    "Touch Elzenouki",
+    "وايت لاين"
   ],
   "queries": [
-    "الة حاسبة رقمية",
     "ديفا استحمام برائحة",
     "منديل للوجه بابيا،",
     "اتوفر تاني",
@@ -163,7 +163,8 @@
     "تخفيضات تسوق العروض،",
     "طقم مفك مسامير توكزر",
     "مضخة هواء محمولة Home Care",
-    "تاتش الزنوكي عصاره Touch Elzenouki"
+    "تاتش الزنوكي عصاره Touch Elzenouki",
+    "فرن غاز بيلت وايت لاين"
   ],
   "channels": [
     "epichardware",
@@ -345,6 +346,8 @@
     "Sal7lyEgypt/39184",
     "Sal7lyEgypt/39183",
     "Sal7lyEgypt/39187",
-    "Sal7lyEgypt/39186"
+    "Sal7lyEgypt/39186",
+    "Sal7lyEgypt/39189",
+    "Sal7lyEgypt/39188"
   ]
 }
