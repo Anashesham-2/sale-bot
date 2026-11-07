@@ -106,9 +106,19 @@ def short_link(link):
     """رابط قصير وثابت للمنتج (بيفضل شغال لما حد ينسخ الرسالة ويشيل أي كود أفلييت قديم)."""
     if not link:
         return link
+    # 1. روابط أمازون العادية: /dp/ASIN أو /gp/product/ASIN أو /product/ASIN
     m = re.search(r'/(?:dp|gp/product|gp/aw/d|product)/([A-Z0-9]{10})', link, re.IGNORECASE)
     if m and ("amazon" in link.lower() or "amzn" in link.lower()):
         return f"https://www.amazon.eg/dp/{m.group(1).upper()}"
+    # 2. روابط بحث وتجميعات أمازون المتضمنة لـ ASIN (مثل hidden-keywords=B0FQFKG4Y1|B0FQFNT8WR أو keywords=ASIN أو asins=ASIN)
+    if "amazon" in link.lower() or "amzn" in link.lower():
+        m_search = re.search(r'[?&](?:hidden-keywords|keywords|asins|asin|k)=([^&]+)', link, re.IGNORECASE)
+        if m_search:
+            asins = re.findall(r'([A-Z0-9]{10})', m_search.group(1), re.IGNORECASE)
+            b_asins = [a for a in asins if a.upper().startswith("B")]
+            best_asin = (b_asins[0] if b_asins else asins[0]) if asins else None
+            if best_asin:
+                return f"https://www.amazon.eg/dp/{best_asin.upper()}"
     m = re.search(r'/([A-Z0-9]{8,})/p/?', link, re.IGNORECASE)
     if m and "noon.com" in link.lower():
         return f"https://www.noon.com/egypt-ar/{m.group(1).upper()}/p/"
@@ -1471,10 +1481,13 @@ def _fit_caption_for_photo(text):
 
 def send_telegram_msg(text, image=None, target_chat_ids=None, reply_markup=None):
     """يبعت العرض بصورة المنتج دائماً (سواء برابط مباشر أو بتحميل الصورة ورفعها لتليجرام أو file_id)، ويدعم أزرار تليجرام التفاعلية."""
+    if not BOT_TOKEN:
+        return False
     img_url = clean_image_url(image)
     is_tg_file_id = bool(image and isinstance(image, str) and not image.startswith("http") and len(image) > 20)
     destinations = target_chat_ids if target_chat_ids is not None else CHAT_IDS
     photo_caption = _fit_caption_for_photo(text)
+    at_least_one_success = False
     for chat_id in destinations:
         try:
             resp = None
@@ -1593,12 +1606,16 @@ def send_telegram_msg(text, image=None, target_chat_ids=None, reply_markup=None)
                     json=msg_payload,
                     timeout=10,
                 )
-            if resp.ok:
+            if resp and resp.ok:
                 print(f"تم إرسال العرض إلى تليجرام ({chat_id}) بنجاح.")
+                at_least_one_success = True
             else:
-                print(f"Telegram API error ({chat_id}, {resp.status_code}): {resp.text}")
+                code = resp.status_code if resp is not None else 0
+                r_txt = resp.text if resp is not None else "No response"
+                print(f"Telegram API error ({chat_id}, {code}): {r_txt}")
         except Exception as e:
             print(f"Error sending message to {chat_id}: {e}")
+    return at_least_one_success
 
 def answer_callback_query(callback_query_id, text=None, show_alert=False):
     """الرد على ضغطات أزرار تليجرام التفاعلية لمنع دوران أيقونة التحميل في تليجرام."""
@@ -2433,8 +2450,19 @@ def _strip_foreign_affiliate_params(url):
     s = short_link(url)
     if s != url:
         return s
-    if "amazon." in url.lower() or "noon.com" in url.lower():
-        return url.split("?")[0].split("#")[0]
+    if "amazon." in url.lower():
+        m_asin = re.search(r'([A-Z0-9]{10})', url)
+        if m_asin and re.search(r'(?:dp|gp/product|keywords|hidden-keywords|asins)', url, re.IGNORECASE):
+            return f"https://www.amazon.eg/dp/{m_asin.group(1).upper()}"
+        clean_base = url.split("?")[0].split("#")[0]
+        if clean_base.rstrip("/").endswith("amazon.eg") or clean_base.rstrip("/").endswith("/s"):
+            return url
+        return clean_base
+    if "noon.com" in url.lower():
+        clean_base = url.split("?")[0].split("#")[0]
+        if clean_base.rstrip("/").endswith("noon.com") or clean_base.rstrip("/").endswith("egypt-ar") or clean_base.rstrip("/").endswith("egypt-en"):
+            return url
+        return clean_base
     return url
 
 async def resolve_original_url(context, raw_url):
@@ -2492,12 +2520,13 @@ async def resolve_original_url(context, raw_url):
             s_body = short_link(nested_body)
             if "/dp/" in s_body or "/p/" in s_body:
                 return s_body
-        m_amz = re.search(r'https?://(?:www\.)?amazon\.eg[^\s"\'<>]+/(?:dp|gp/product)/([A-Z0-9]{10})', body, re.IGNORECASE)
-        if m_amz:
-            return f"https://www.amazon.eg/dp/{m_amz.group(1).upper()}"
-        m_noon = re.search(r'https?://(?:www\.)?noon\.com/[^\s"\'<>]*?/([A-Z0-9]{8,})/p', body, re.IGNORECASE)
-        if m_noon:
-            return f"https://www.noon.com/egypt-ar/{m_noon.group(1).upper()}/p/"
+        if "amazon." not in final_u.lower() and "noon.com" not in final_u.lower():
+            m_amz = re.search(r'https?://(?:www\.)?amazon\.eg[^\s"\'<>]+/(?:dp|gp/product)/([A-Z0-9]{10})', body, re.IGNORECASE)
+            if m_amz:
+                return f"https://www.amazon.eg/dp/{m_amz.group(1).upper()}"
+            m_noon = re.search(r'https?://(?:www\.)?noon\.com/[^\s"\'<>]*?/([A-Z0-9]{8,})/p', body, re.IGNORECASE)
+            if m_noon:
+                return f"https://www.noon.com/egypt-ar/{m_noon.group(1).upper()}/p/"
         if "amazon." in final_u.lower() or "noon.com" in final_u.lower():
             return _strip_foreign_affiliate_params(final_u)
     except Exception:
@@ -2545,12 +2574,23 @@ def _parse_fallback_message_info(text):
 
     disc_m = re.search(r'(\d+)\s*%', t)
     title_cand = None
+    HYPE_PREFIXES = (
+        "اتوفر من تاني", "اتوفّر من تاني", "رجع توفر", "رجع من تاني", "توفر من تاني",
+        "الحق العرض", "عرض نار", "خصم جبار", "سعر لقطة", "عرض لقطة", "ببلاش",
+        "فرصة لا تعوض", "عاجل", "تنبيه", "كود خصم", "كوبون خصم", "وصل حديثاً"
+    )
     for line in [l.strip() for l in t.split('\n') if l.strip()]:
-        clean_l = re.sub(r'^[📦🔥🟡🚨🏷️✨•\-]+\s*', '', line).strip()
+        clean_l = re.sub(r'^[📦🔥🟡🚨🏷️✨•\-🏃‍♂️🏃‍♀️🏃]+\s*', '', line).strip()
+        # تجاهل الأسطر التي تمثل مجرد عبارات ترويجية/حماسية ولا تصف منتج
+        if any(hp in clean_l for hp in HYPE_PREFIXES) and not any(dev in clean_l.lower() for dev in ("موبايل", "سماعة", "شاحن", "لابتوب", "شاشة", "ساعة", "phone", "iphone", "samsung")):
+            continue
+        # حذف السعر لو كان ملحقاً في نفس السطر (مثل: موبايل iPhone 17 بسعر 66949 جنيه)
+        clean_l = re.sub(r'(?:بسعر|بـ|سعر)\s*:?\s*[\d,]+(?:\.\d+)?\s*(?:ج\.م|جنيه|جنية|ج|EGP|LE)?', '', clean_l).strip()
+        clean_l = clean_l.rstrip(":-• ")
         if (
-            len(clean_l) >= 10
+            len(clean_l) >= 4
             and not clean_l.startswith("http")
-            and not any(w in clean_l for w in ("السعر", "سعره", "إجمالي الخصم", "الخصم:", "البائع:", "التقييم:", "على أمازون", "على نون", "رابط العرض", "ملحوظة:", "لينك الشراء"))
+            and not any(w in clean_l for w in ("السعر", "سعره", "إجمالي الخصم", "الخصم:", "البائع:", "التقييم:", "على أمازون", "على نون", "رابط العرض", "ملحوظة:", "لينك الشراء", "هنا:"))
         ):
             title_cand = clean_l[:140]
             break
@@ -3439,20 +3479,36 @@ async def poll_private_chat_once(context):
                 deal_img = deal_info.get("deal_img")
                 our_short_url = deal_info.get("our_short_url") or orig_url
 
-                mark_deal_sent(orig_url, title, eff_p, promo_sig)
                 channel_destinations = [MAIN_CHANNEL_ID]
-                await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, channel_destinations)
+                if MAIN_CHANNEL_USERNAME and MAIN_CHANNEL_USERNAME not in channel_destinations:
+                    channel_destinations.append(MAIN_CHANNEL_USERNAME)
 
-                success_txt = (
-                    "✅ <b>تم نشر العرض في قناة «لقطة» (@loqta78) بنجاح بناءً على اختيارك! 📢</b>\n\n"
-                    f"📦 <b>المنتج:</b> {html.escape(title[:70])}...\n"
-                    f"💰 <b>السعر:</b> {eff_p} ج.م\n"
-                    f"🔗 <b>الرابط المنشور:</b> {html.escape(our_short_url)}"
-                )
-                edit_telegram_msg(cb_chat_id, cb_msg_id, success_txt, reply_markup={"inline_keyboard": []})
-
-                pending_deals.pop(deal_token, None)
-                save_pending_deals()
+                sent_ok = await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, channel_destinations)
+                if sent_ok:
+                    mark_deal_sent(orig_url, title, eff_p, promo_sig)
+                    success_txt = (
+                        "✅ <b>تم نشر العرض في قناة «لقطة» (@loqta78) بنجاح بناءً على اختيارك! 📢</b>\n\n"
+                        f"📦 <b>المنتج:</b> {html.escape(title[:70])}...\n"
+                        f"💰 <b>السعر:</b> {eff_p} ج.م\n"
+                        f"🔗 <b>الرابط المنشور:</b> {html.escape(our_short_url)}"
+                    )
+                    edit_telegram_msg(cb_chat_id, cb_msg_id, success_txt, reply_markup={"inline_keyboard": []})
+                    pending_deals.pop(deal_token, None)
+                    save_pending_deals()
+                else:
+                    fail_txt = (
+                        "⚠️ <b>تعذر إرسال العرض إلى القناة في هذه اللحظة!</b>\n\n"
+                        f"📦 <b>المنتج:</b> {html.escape(title[:70])}...\n"
+                        "قد يكون هناك بطء مؤقت في استجابة تليجرام، اضغط على الزر بالأسفل لإعادة المحاولة فوراً."
+                    )
+                    edit_telegram_msg(cb_chat_id, cb_msg_id, fail_txt, reply_markup={
+                        "inline_keyboard": [
+                            [
+                                {"text": "🔄 إعادة محاولة النشر في القناة", "callback_data": f"post_anyway:{deal_token}"},
+                                {"text": "❌ إلغاء", "callback_data": f"cancel_deal:{deal_token}"}
+                            ]
+                        ]
+                    })
                 continue
 
             if cb_data.startswith("cancel_deal:"):
