@@ -62,10 +62,10 @@
     "GORILLA DRINKS LTD",
     "ابل",
     "بيوكسين",
-    "Eco Pack"
+    "Eco Pack",
+    "شور"
   ],
   "queries": [
-    "طابعة صغيرة محمولة، JEPEErbz",
     "طابعة صغيرة ومحمولة تيكزون",
     "نيمبوت ماكينة صنع",
     "جهاز طابعة الملصقات تيكزون",
@@ -144,7 +144,8 @@
     "شامبو بيوكسين للجنسين",
     "أكياس فرن كوبيتي، Eco Pack",
     "طقم لوحة مفاتيح",
-    "موزع HDMI USB يوجرين"
+    "موزع HDMI USB يوجرين",
+    "شور ميكروفون صوتي"
   ],
   "channels": [
     "epichardware",
@@ -271,6 +272,9 @@
     "epichardware/4469",
     "Sal7lyEgypt/39136",
     "Sal7lyEgypt/39135",
-    "Sal7lyEgypt/39134"
+    "Sal7lyEgypt/39134",
+    "epichardware/4471",
+    "Sal7lyEgypt/39138",
+    "Sal7lyEgypt/39137"
   ]
 }
