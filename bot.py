@@ -444,17 +444,62 @@ def is_blocked_title(text):
                                  "sorry", "something went wrong", "حصل خطأ", "page not found"))
 
 def is_almost_free(price, list_price, badge_discount=None):
-    """يكتشف العروض الحقيقية اللي تعتبر ببلاش (لما السعر الفعلي يكون نزل من 300+ لتحت 100 ونسبة الخصم متطابقة)."""
-    if price is None or price < 10 or not list_price or list_price <= price:
+    """
+    يكتشف العروض الحقيقية اللي تعتبر «ببلاش»:
+    من أول 70% خصم فما فوق (بشرط ألا يقل السعر الأصلي عن 40 ج.م لمنع المنتجات التافهة).
+    """
+    if price is None or price < 5 or not list_price or list_price <= price:
         return False
-    calc_disc = (1 - price / list_price) * 100
-    if badge_discount is not None and abs(calc_disc - badge_discount) > 12:
-        return False
-    if list_price >= 300 and price < 100 and calc_disc >= 68:
-        return True
-    if list_price >= 150 and price <= 25 and calc_disc >= 80:
+    calc_disc = ((list_price - price) / list_price) * 100
+    disc = max(calc_disc, float(badge_discount or 0))
+    if list_price >= 40 and disc >= 70.0:
         return True
     return False
+
+def is_half_price(price, list_price, badge_discount=None):
+    """
+    يكتشف عروض «نص السعر»:
+    من أول 50% لحد 69% خصم (بشرط ألا يقل السعر الأصلي عن 30 ج.م).
+    """
+    if price is None or price < 5 or not list_price or list_price <= price:
+        return False
+    calc_disc = ((list_price - price) / list_price) * 100
+    disc = max(calc_disc, float(badge_discount or 0))
+    if list_price >= 30 and 50.0 <= disc < 70.0:
+        return True
+    return False
+
+def classify_deal_tier(price, list_price, discount=None, deal_highlight=None, stack_promos=None):
+    """
+    يحدد فئة العرض ورتبته بذكاء:
+    1. 'freebie' (ببلاش): خصم 70% فما فوق.
+    2. 'half_price' (نص السعر): خصم من 50% حتى 69%.
+    3. 'big_cash' (توفير كاش ضخم): وفرت 1000 ج.م فما فوق كاش.
+    4. 'bundle' (توفير بالكمية): عروض الشراء المتعدد.
+    5. 'standard' (عرض قياسي).
+    """
+    eff_price = price or 0
+    eff_list = list_price or 0
+    saving_egp = (eff_list - eff_price) if (eff_list > eff_price) else 0
+    calc_disc = ((eff_list - eff_price) / eff_list * 100) if (eff_list > eff_price and eff_list > 0) else 0
+    total_disc = max(calc_disc, float(discount or 0))
+
+    if eff_list >= 40 and total_disc >= 70.0:
+        return "freebie", total_disc, saving_egp
+
+    if eff_list >= 30 and 50.0 <= total_disc < 70.0:
+        return "half_price", total_disc, saving_egp
+
+    if saving_egp >= 1000 and eff_price >= 500:
+        return "big_cash", total_disc, saving_egp
+
+    has_bundle = bool(deal_highlight and any(w in deal_highlight for w in ("قطع", "قطعة", "سبسكرايب", "كمية")))
+    if not has_bundle and stack_promos:
+        has_bundle = any(re.search(r'(?:على\s*\d+\s*(?:سلع|سلعة|قطع|قطعة)|on\s*\d+\s*items?|subscribe|اشترك)', sp.lower()) for sp in stack_promos)
+    if has_bundle:
+        return "bundle", total_disc, saving_egp
+
+    return "standard", total_disc, saving_egp
 
 def detect_brand(title):
     if not title:
@@ -1155,13 +1200,34 @@ def build_message(store, title, price, list_price, discount, link,
                 extra_label = f"بعد كود خصم نون ({NOON_COUPON})"
 
     effective_price = final_price if final_price is not None else price
-    freebie = is_almost_free(effective_price, list_price, discount)
+    tier, eff_disc, saving_egp = classify_deal_tier(
+        effective_price, list_price, discount,
+        deal_highlight=deal_highlight, stack_promos=stack_promos
+    )
+
+    freebie = (tier == "freebie")
+    is_half = (tier == "half_price")
+    is_big_cash = (tier == "big_cash")
+    is_bundle = (tier == "bundle")
+
     if freebie:
-        header = f"🚨🔥 ببلاش حرفياً على {store_ar}! (نزل من {fmt(list_price)} ج.م لـ {fmt(effective_price)} ج.م)"
+        header = f"🚨🔥 ببلاش حرفياً على {store_ar}! (خصم {eff_disc:.0f}% — نزل من {fmt(list_price)} لـ {fmt(effective_price)} ج.م)"
+        deal_hashtags = "#عروض_ببلاش #عروض_لقطة"
+    elif is_half:
+        header = f"🏷️🔥 خصم نص السعر على {store_ar}! (خصم {eff_disc:.0f}%)"
+        deal_hashtags = "#عروض_نص_السعر #عروض_لقطة"
+    elif is_big_cash:
+        header = f"💰🔥 توفير كاش ضخم على {store_ar}! (وفرت {fmt(saving_egp)} ج.م كاش)"
+        deal_hashtags = "#توفير_كاش #عروض_لقطة"
+    elif is_bundle:
+        header = f"🎁🔥 لقطة توفير بالكمية على {store_ar}!"
+        deal_hashtags = "#عروض_توفير #عروض_لقطة"
     elif section_note:
         header = f"{icon} على {store_ar} — {section_note}"
+        deal_hashtags = "#عروض_لقطة"
     else:
         header = f"{icon} على {store_ar}"
+        deal_hashtags = "#عروض_لقطة"
 
     lines = [
         f"<b>{header}</b>",
@@ -1182,7 +1248,14 @@ def build_message(store, title, price, list_price, discount, link,
     if list_price and list_price > (price or 0):
         lines.append(f"❌ السعر القديم: <s>{fmt(list_price)} ج.م</s>")
     if price is not None:
-        tag = " 🔥 (ببلاش تقريباً!)" if (freebie and final_price is None) else ""
+        if freebie and final_price is None:
+            tag = " 🔥 (ببلاش تقريباً!)"
+        elif is_half and final_price is None:
+            tag = " 🔥 (بأقل من نص السعر!)"
+        elif is_big_cash and final_price is None:
+            tag = f" 💰 (وفرت {fmt(saving_egp)} ج.م كاش!)"
+        else:
+            tag = ""
         lines.append(f"💰 السعر الجديد: <b>{fmt(price)} ج.م</b>{tag}")
     if final_price is not None and final_price < price:
         lbl = extra_label or "بعد دمج الخصم الإضافي"
@@ -1246,7 +1319,7 @@ def build_message(store, title, price, list_price, discount, link,
         "",
         "⚠️ <i>ملحوظة: ده مجرد ترشيح للعرض، والتجربة وقرار الشراء عليك.</i>",
         "",
-        HASHTAG,
+        deal_hashtags,
     ]
     return "\n".join(lines)
 
@@ -1827,16 +1900,18 @@ async def scrape_amazon_eg(page):
             if famous:
                 qualifies = (discount >= 8) or (discount >= 6 and (has_card_promo or saving_egp >= 40)) or freebie
             else:
-                qualifies = (discount >= 20) or (discount >= 15 and has_card_promo) or freebie
+                qualifies = (discount >= 20) or (discount >= 15 and has_card_promo) or freebie or (saving_egp >= 1000)
 
             ok_prelim, _ = should_send_deal(full_link, info["title"], info["price"])
             if qualifies and ok_prelim:
-                candidates.append((1 if freebie else 0, 1 if famous else 0, 1 if has_card_promo else 0, discount, full_link, card, info, prev_min, max_p, min_p))
+                c_tier, _, _ = classify_deal_tier(info["price"], info["list_price"], discount)
+                tier_rank = 3 if c_tier == "freebie" else (2 if c_tier in ("half_price", "big_cash") else 0)
+                candidates.append((tier_rank, 1 if famous else 0, 1 if has_card_promo else 0, discount, full_link, card, info, prev_min, max_p, min_p))
         except Exception as e:
             print(f"خطأ في كارت أمازون: {e}")
             continue
 
-    # ترتيب العروض: عروض "ببلاش" أولاً، ثم البراندات المشهورة (أنكر، آي لوك، الأجهزة...)، ثم العروض الإضافية والأعلى خصماً
+    # ترتيب العروض: عروض "ببلاش" أولاً (70%+)، ثم "نص السعر" والتوفير الضخم، ثم البراندات المشهورة، ثم الأعلى خصماً
     candidates.sort(key=lambda x: (x[0], x[1], x[2], x[3]), reverse=True)
     amazon_sent = 0
     consecutive_blocks = 0
@@ -2241,15 +2316,17 @@ async def scrape_noon_eg(page):
             if famous:
                 qualifies = (discount >= 8) or (discount >= 6 and (has_card_promo or saving_egp >= 40)) or freebie
             else:
-                qualifies = (discount >= 20) or (discount >= 15 and has_card_promo) or freebie
+                qualifies = (discount >= 20) or (discount >= 15 and has_card_promo) or freebie or (saving_egp >= 1000)
 
             ok_prelim, _ = should_send_deal(full_link, prelim_title, info["price"])
             if qualifies and ok_prelim:
-                candidates.append((1 if freebie else 0, 1 if famous else 0, 1 if has_card_promo else 0, discount, full_link, card, info, prev_min, max_p, min_p))
+                c_tier, _, _ = classify_deal_tier(info["price"], info["list_price"], discount)
+                tier_rank = 3 if c_tier == "freebie" else (2 if c_tier in ("half_price", "big_cash") else 0)
+                candidates.append((tier_rank, 1 if famous else 0, 1 if has_card_promo else 0, discount, full_link, card, info, prev_min, max_p, min_p))
         except Exception:
             continue
 
-    # ترتيب العروض: عروض "ببلاش" أولاً، ثم البراندات المشهورة، ثم العروض الإضافية والأعلى خصماً
+    # ترتيب العروض: عروض "ببلاش" أولاً (70%+)، ثم "نص السعر" والتوفير الضخم، ثم البراندات المشهورة، ثم الأعلى خصماً
     candidates.sort(key=lambda x: (x[0], x[1], x[2], x[3]), reverse=True)
     print(f"تم العثور على {len(candidates)} عرض موثوق جديد في نون مصر.")
 
