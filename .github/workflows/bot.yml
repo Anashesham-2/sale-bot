@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - 'bot.py'
+      - 'product_intelligence.py'
+      - 'requirements.txt'
       - '.github/workflows/**'
   schedule:
     # كل 30 دقيقة بيتأكد إن فيه تشغيلة شغالة؛ لو التشغيلة الحالية شغالة،
@@ -41,9 +43,16 @@ jobs:
           python-version: '3.12'
           cache: 'pip'
 
+      - name: Cache HuggingFace Vision Model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-clip-onnx-v1
+
       - name: Install dependencies and Chromium
         run: |
           pip install -r requirements.txt
+          python -c "import product_intelligence as pi; pi._ensure_vision_loaded()" || true
           playwright install --with-deps chromium
           sudo apt-get update && sudo apt-get install -y xvfb
 

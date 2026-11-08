@@ -2,3 +2,4 @@ __pycache__/
 *.pyc
 bot.log
 .env
+.en_tr_cache.json

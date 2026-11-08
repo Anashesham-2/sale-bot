@@ -10,6 +10,7 @@ from urllib.parse import quote_plus, unquote
 import urllib.parse
 import requests
 from playwright.async_api import async_playwright
+import product_intelligence as pi
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -279,13 +280,16 @@ _STOP_WORDS_LEARN = {
 def learn_from_product(title, brand=None):
     """يتعلم الماركة ونوع المنتج من أي عرض يبعته صاحب البوت أو من القنوات المراقبة ليبحث عن عروض مشابهة تلقائياً."""
     changed = False
-    if brand:
-        b_clean = brand.strip()
+    b_en_norm = pi.normalize_brand_english(brand, title=title, allow_network=False) if (brand or title) else ""
+    effective_brand = b_en_norm or (brand or "").strip()
+    if effective_brand:
+        b_clean = effective_brand.strip()
         b_low = b_clean.lower()
         if (
             len(b_clean) >= 2
             and len(b_clean) <= 30
             and b_low not in _GENERIC_BRAND_NAMES
+            and "متجر" not in b_low
             and b_low not in [x.lower() for x in learned_prefs["brands"]]
         ):
             learned_prefs["brands"].append(b_clean)
@@ -455,7 +459,9 @@ def is_almost_free(price, list_price, badge_discount=None):
 def detect_brand(title):
     if not title:
         return None
-    # نفحص أول 5 كلمات من العنوان فقط لمنع التضارب مع أجهزة التوافق (مثل: متوافق مع سامسونج وآيفون)
+    b_en = pi.normalize_brand_english("", title=title, allow_network=False)
+    if b_en:
+        return b_en
     t_words = (title or "").lower().split()[:5]
     t_head = " ".join(t_words)
     t_head_norm = _normalize_ar(t_head)
@@ -464,7 +470,7 @@ def detect_brand(title):
             k_low = k.lower()
             k_norm = _normalize_ar(k_low)
             if re.search(r'\b' + re.escape(k_low) + r'\b', t_head) or re.search(r'\b' + re.escape(k_norm) + r'\b', t_head_norm):
-                return label
+                return pi.normalize_brand_english(label, allow_network=False) or label
     return None
 
 def parse_reviews_count(reviews_str):
@@ -797,297 +803,36 @@ BILINGUAL_CATEGORIES = [
     (r'شامبو|بلسم|shampoo|conditioner', 'شامبو للعناية بالشعر', 'Hair Care Shampoo'),
 ]
 
-def extract_bilingual_product_names(title, brand=None, features=None):
+def extract_bilingual_product_names(title, brand=None, features=None, en_slug=None, breadcrumbs=None, specs=None, image_url=None):
     """
-    يستخرج اسم المنتج الذكي والمختصر ببراعة بالعربي وبالإنجليزي:
-    - الاسم بالعربي: نوع المنتج الأساسي + الماركة بالعربي + الموديل/المواصفة الجوهرية (مختصر وواضح بدون حشو).
-    - الاسم بالإنجليزي: الماركة بالإنجليزي + الموديل/المواصفة + نوع المنتج بالإنجليزي.
-    يمنع حشو الوصف في الاسم، ويجعل بداية الرسالة أنيقة ومفهومة ومباشرة.
+    يستخرج اسم المنتج الذكي والمختصر ببراعة بالعربي وبالإنجليزي (مع كتابة الماركة بالإنجليزية دائماً)
+    بالاعتماد على العنوان الكامل والوصف والمواصفات ومسار الفئة وصورة المنتج (Computer Vision).
     """
-    clean_t = clean(title or "").strip()
-    b_ar, b_en = "", ""
-
-    # 1. تحديد الماركة: إعطاء الأولوية القصوى لماركة المتجر الأصلية
-    clean_b_raw = (brand or "").strip()
-    if clean_b_raw and clean_b_raw.lower() not in _GENERIC_BRAND_NAMES:
-        tokens = re.split(r'[/,\|\(\)]', clean_b_raw)
-        for tok in tokens:
-            tok = tok.strip()
-            if not tok or tok.lower() in _GENERIC_BRAND_NAMES:
-                continue
-            tok_norm = _norm_ar_brand(tok)
-            tok_low = tok.lower()
-            if tok_norm in _NORM_BILINGUAL_BRANDS:
-                b_ar, b_en = _NORM_BILINGUAL_BRANDS[tok_norm]
-                break
-            elif tok_low in _NORM_BILINGUAL_BRANDS:
-                b_ar, b_en = _NORM_BILINGUAL_BRANDS[tok_low]
-                break
-
-        # إذا كانت الماركة معطاة رسمياً من المتجر ولكنها غير موجودة بالقاموس:
-        if not b_ar and clean_b_raw:
-            primary_tokens = [t.strip() for t in tokens if t.strip() and t.strip().lower() not in _GENERIC_BRAND_NAMES]
-            chosen_brand = primary_tokens[0] if primary_tokens else clean_b_raw
-            b_ar = chosen_brand
-            b_en = chosen_brand
-
-    # إذا لم توجد ماركة رسمية من المتجر، نبحث فقط في أول 4 كلمات من العنوان
-    # لمنع التقاط أجهزة التوافق المذكورة في العنوان (مثل: متوافق مع هواتف سامسونج أو آبل)
-    if not b_ar:
-        head_words = clean_t.split()[:4]
-        head_text = " ".join(head_words)
-        head_norm = _norm_ar_brand(head_text)
-        for k, (ar_v, en_v) in BILINGUAL_BRANDS.items():
-            k_norm = _norm_ar_brand(k)
-            if re.search(r'\b' + re.escape(k_norm) + r'\b', head_norm, re.I) or re.search(r'\b' + re.escape(k) + r'\b', head_text, re.I):
-                b_ar, b_en = ar_v, en_v
-                break
-
-    # 2. تحديد نوع وفئة المنتج بالعربي والإنجليزي
-    cat_ar, cat_en = "", ""
-    for pat, c_ar, c_en in BILINGUAL_CATEGORIES:
-        if re.search(pat, clean_t, re.IGNORECASE):
-            cat_ar, cat_en = c_ar, c_en
-            break
-
-    # 3. استخراج الموديل أو المواصفات الجوهرية بذكاء
-    spec_ar_list, spec_en_list = [], []
-    extra_en_tail = ""
-
-    # مواصفات اللابتوب المخصصة
-    if cat_en == 'Laptop':
-        v_model = re.search(r'\b(Vivobook\s*\d*|Zenbook\s*\d*|IdeaPad\s*\d*|ThinkPad\s*\w*|Inspiron\s*\d*|Pavilion\s*\d*|Legion\s*\d*|TUF\s*Gaming|ROG\s*\w*|MacBook\s*(?:Air|Pro))\b', clean_t, re.I)
-        if v_model:
-            m_v = v_model.group(1).strip()
-            spec_ar_list.append(m_v)
-            spec_en_list.append(m_v)
-
-        proc_m = re.search(r'\b(Core\s*i[3579]|Ryzen\s*[3579])\b', clean_t, re.I)
-        if proc_m:
-            spec_ar_list.append(proc_m.group(1))
-            spec_en_list.append(proc_m.group(1))
-
-        ram_m = re.search(r'\b(\d+)\s*(?:GB\s*RAM|جيجا\s*رام|جيجا\s*ذاكرة|GB)\b', clean_t, re.I)
-        if ram_m:
-            spec_ar_list.append(f"{ram_m.group(1)} جيجا رام")
-            spec_en_list.append(f"{ram_m.group(1)}GB RAM")
-
-        screen_m = re.search(r'\b(14|15\.6|16|17\.3)\s*(?:بوصة|inch|\")\b', clean_t, re.I)
-        if screen_m:
-            spec_ar_list.append(f"{screen_m.group(1)} بوصة")
-            spec_en_list.append(f"{screen_m.group(1)}-inch")
-    elif cat_en in ('Smart Tablet', 'Smartphone'):
-        # 1. استخراج موديل الهاتف الذكي أو التابلت بدقة
-        phone_model = None
-        # أجهزة أبل آيفون وآيباد
-        m_apple = re.search(r'\b(?:iPhone|iPad|آيفون|ايفون|آيباد|ايباد)\s*(1[1-6]|X[SR]?|SE|Pro|Air|mini|\d+)\s*(Pro\s*Max|Pro|Plus|mini|برو\s*ماكس|برو|بلس|ميني)?\b', clean_t, re.I)
-        if m_apple:
-            prefix = "iPad" if any(w in m_apple.group(0).lower() for w in ("ipad", "آيباد", "ايباد")) else "iPhone"
-            num = m_apple.group(1).capitalize()
-            tail = m_apple.group(2) or ""
-            en_tail = "Pro Max" if any(w in tail.lower() for w in ("pro max", "برو ماكس")) else ("Pro" if any(w in tail.lower() for w in ("pro", "برو")) else ("Plus" if any(w in tail.lower() for w in ("plus", "بلس")) else ("mini" if any(w in tail.lower() for w in ("mini", "ميني")) else "")))
-            phone_model = f"{prefix} {num} {en_tail}".strip()
-
-        # أجهزة سامسونج جالكسي
-        if not phone_model:
-            m_sam = re.search(r'(?:Galaxy\s*|جالكسي\s*|جالاكسي\s*)?(S\d{1,2}|Z\s*(?:Fold|Flip)\s*\d*|A\d{2}[a-z]?|M\d{2}[a-z]?|Tab\s*[SA]\d+)\s*(Ultra|Plus|\+|FE|الترا|بلس)?', clean_t, re.I)
-            if m_sam:
-                mod = m_sam.group(1).upper().replace(" ", "")
-                tail = m_sam.group(2) or ""
-                en_tail = "Ultra" if any(w in tail.lower() for w in ("ultra", "الترا")) else ("Plus" if any(w in tail.lower() for w in ("plus", "بلس", "+")) else ("FE" if "fe" in tail.lower() else ""))
-                phone_model = f"Galaxy {mod} {en_tail}".strip()
-
-        # أجهزة شاومي وريدمي
-        if not phone_model:
-            m_redmi = re.search(r'(?:Redmi\s*Note|ريدمي\s*نوت)\s*(\d+[a-z]?)\s*(Pro\s*\+|Pro|Plus|برو\s*\+|برو|بلس)?', clean_t, re.I)
-            if m_redmi:
-                num = m_redmi.group(1)
-                tail = m_redmi.group(2) or ""
-                en_tail = "Pro+" if any(w in tail.lower() for w in ("pro+", "pro +", "برو+", "برو +")) else ("Pro" if any(w in tail.lower() for w in ("pro", "برو")) else ("Plus" if any(w in tail.lower() for w in ("plus", "بلس")) else ""))
-                phone_model = f"Redmi Note {num} {en_tail}".strip()
-            else:
-                m_redmi_c = re.search(r'(?:Redmi|ريدمي)\s*(\d+[a-z]?(?:\s*[CA])?)', clean_t, re.I)
-                if m_redmi_c:
-                    phone_model = f"Redmi {m_redmi_c.group(1).strip().upper()}"
-
-        # أجهزة بوكو
-        if not phone_model:
-            m_poco = re.search(r'(?:POCO|بوكو)\s*([XFM]\d+\s*(?:Pro|GT)?)', clean_t, re.I)
-            if m_poco:
-                phone_model = f"POCO {m_poco.group(1).strip().upper()}"
-
-        # أجهزة ريلمي
-        if not phone_model:
-            m_realme = re.search(r'(?:Realme|ريلمي)\s*(\d+|C\d{2}[a-z]?|Note\s*\d+)\s*(Pro\s*\+|Pro|Plus|برو\s*\+|برو|بلس)?', clean_t, re.I)
-            if m_realme:
-                mod = m_realme.group(1).strip()
-                tail = m_realme.group(2) or ""
-                en_tail = "Pro+" if any(w in tail.lower() for w in ("pro+", "pro +", "برو+", "برو +")) else ("Pro" if any(w in tail.lower() for w in ("pro", "برو")) else ("Plus" if any(w in tail.lower() for w in ("plus", "بلس")) else ""))
-                phone_model = f"Realme {mod} {en_tail}".strip()
-
-        # أجهزة أخرى (Hot, Note, Smart, Magic, Nova)
-        if not phone_model:
-            m_other = re.search(r'\b(Hot\s*\d+[a-z]?|Note\s*\d+\s*(?:Pro)?|Smart\s*\d+|Magic\s*\d+|Nova\s*\d+)\b', clean_t, re.I)
-            if m_other:
-                phone_model = m_other.group(1).strip()
-
-        if phone_model:
-            spec_ar_list.append(phone_model)
-            spec_en_list.append(phone_model)
-
-        # 2. استخراج مساحة التخزين (ROM) ورامات الموبايل (RAM)
-        m_tb = re.search(r'\b(1|2)\s*(?:تيرابايت|تيرابايت|TB)\b', clean_t, re.I)
-        if m_tb:
-            spec_ar_list.append(f"سعة {m_tb.group(1)}TB")
-            spec_en_list.append(f"{m_tb.group(1)}TB")
-        else:
-            m_rom = re.search(r'\b(64|128|256|512)\s*(?:جيجا(?:بايت)?|GB)\b', clean_t, re.I)
-            if m_rom:
-                spec_ar_list.append(f"سعة {m_rom.group(1)} جيجا")
-                spec_en_list.append(f"{m_rom.group(1)}GB")
-
-        m_ram = re.search(r'\b(4|6|8|12|16|24)\s*(?:جيجا\s*رام|GB\s*RAM|جيجابايت\s*رام)\b', clean_t, re.I)
-        if m_ram:
-            spec_ar_list.append(f"({m_ram.group(1)} جيجا رام)")
-            spec_en_list.append(f"({m_ram.group(1)}GB RAM)")
-    else:
-        model_m = re.search(r'\b(R50i|R100|P20i|737|A1289|14T\s*Pro|13C|14\s*Ultra|TCME-100|IL-102|IL-103|H510|Zeus|Lite\s*Racer|Air\s*3|VC321|M\d{3,4}|K\d{3,4})\b', clean_t, re.I)
-        if model_m:
-            m_val = model_m.group(1).strip()
-            spec_ar_list.append(m_val)
-            spec_en_list.append(m_val)
-
-        # فحص الواط للشواحن، الباور بانك، والأجهزة الكهربائية فقط، مع اشتراط حد كلمة
-        if cat_en in ('Power Bank', 'Fast Charger', 'Fast Wall Charger', 'Car Charger', 'Wireless Charger', 'Power Strip', 'Blender', 'Air Fryer', 'Steam Iron', 'Electric Water Kettle', 'Hair Clipper & Shaver'):
-            watt_m = re.search(r'(?<![A-Za-z0-9])(\d{1,4})\s*(?:وات|واط|W\b)', clean_t, re.I)
-            if watt_m:
-                w = watt_m.group(1)
-                spec_ar_list.append(f"{w}W")
-                spec_en_list.append(f"{w}W")
-
-        mah_m = re.search(r'(\d[\d,.]*)\s*(?:مللي\s*أمبير|مللي\s*امبير|mah)', clean_t, re.I)
-        if mah_m:
-            spec_ar_list.append(f"{mah_m.group(1)} مللي أمبير")
-            spec_en_list.append(f"{mah_m.group(1)}mAh")
-
-        outlets_m = re.search(r'(\d+)\s*(?:منافذ|مخارج|عيون|outlets?|ports?)', clean_t, re.I)
-        if outlets_m:
-            cnt = outlets_m.group(1)
-            spec_ar_list.append(f"{cnt} منافذ")
-            spec_en_list.append(f"{cnt}-Outlet")
-
-        if re.search(r'type-?c|نوع\s*سي|usb-?c', clean_t, re.I):
-            spec_ar_list.append("و USB-C")
-            extra_en_tail = "with USB-C"
-
-    spec_ar = " ".join(spec_ar_list).strip()
-    spec_en = " ".join(spec_en_list).strip()
-
-    if cat_ar:
-        if b_ar and b_ar.lower() in spec_ar.lower():
-            name_ar = f"{cat_ar} {spec_ar}".strip()
-        else:
-            name_ar = f"{cat_ar} {b_ar} {spec_ar}".strip() if b_ar else f"{cat_ar} {spec_ar}".strip()
-    else:
-        clean_words = [
-            w for w in re.sub(r'[\(\[\{].*?[\)\]\}]', ' ', clean_t).split()
-            if len(w) > 1 and not any(sw in w.lower() for sw in ('متوافق', 'اصلي', 'أصلي', 'جودة', 'جديد', 'ماركة', 'للجنسين', 'لون', 'عرض'))
-        ][:7]
-        name_ar = " ".join(clean_words)
-        if b_ar and b_ar.lower() not in name_ar.lower():
-            name_ar = f"{b_ar} — {name_ar}"
-
-    if cat_en:
-        if b_en and b_en.lower() in spec_en.lower():
-            core_en = f"{spec_en} {cat_en}".strip()
-        else:
-            core_en = f"{b_en} {spec_en} {cat_en}".strip() if b_en else f"{spec_en} {cat_en}".strip()
-        name_en = f"{core_en} {extra_en_tail}".strip() if extra_en_tail else core_en
-    else:
-        en_part = re.findall(r'[A-Za-z0-9][A-Za-z0-9\s\-_]{3,50}', clean_t)
-        if en_part:
-            best_en = max(en_part, key=len).strip()
-            name_en = f"{b_en} {best_en}".strip() if (b_en and b_en.lower() not in best_en.lower()) else best_en
-        else:
-            name_en = f"{b_en} {spec_en}".strip() if b_en else name_ar
-
-    name_ar = re.sub(r'\s+', ' ', name_ar).strip()[:85]
-    name_en = re.sub(r'\s+', ' ', name_en).strip()[:85]
-    return name_ar, name_en
+    intel = pi.analyze_product(
+        title,
+        brand=brand,
+        features=features,
+        en_slug=en_slug,
+        breadcrumbs=breadcrumbs,
+        specs=specs,
+        image_url=image_url,
+        use_vision=bool(image_url),
+    )
+    return intel["name_ar"], intel["name_en"]
 
 def build_description(title, features=None, extra_desc=None, brand=None):
     """
     يكوّن وصفاً ذكياً ومفهوماً للمنتج باللغة العربية فقط، يشرح القيمة الحقيقية
-    ووظائف ومميزات المنتج بدقة وبدون أخطاء أو حشو غير مفهوم، وبشكل مستقل تماماً عن الاسم.
+    ووظائف ومميزات المنتج بدقة وبدون أخطاء تصنيف أو حشو غير مفهوم.
     """
-    clean_feats = []
-    if features:
-        for f in features:
-            f_clean = re.sub(r'\s+', ' ', f).strip()
-            if any(w in f_clean for w in ('حول هذه السلعة', 'بلد المنشأ', 'رقم الموديل', 'تاريخ توفر', 'ضمان', 'أبعاد', 'الوزن:', 'وزن السلعة')):
-                continue
-            if len(f_clean) >= 15:
-                clean_feats.append(f_clean)
-
-    ar_feats = [f for f in clean_feats if re.search(r'[\u0600-\u06FF]', f)]
-    if ar_feats:
-        desc_text = '؛ '.join(ar_feats[:2])
-        if len(desc_text) > 220:
-            desc_text = desc_text[:220].rsplit(' ', 1)[0]
-        if not desc_text.endswith('.'):
-            desc_text += '.'
-        return desc_text
-
-    if extra_desc and len(extra_desc.strip()) > 15:
-        clean_extra = re.sub(r'\s+', ' ', extra_desc.strip())
-        if re.search(r'[\u0600-\u06FF]', clean_extra):
-            if len(clean_extra) > 200:
-                clean_extra = clean_extra[:200].rsplit(' ', 1)[0] + '.'
-            return clean_extra
-
-    tl = title.lower()
-    b_txt = (brand or '').strip()
-    b_suffix = f' من {b_txt}' if b_txt else ''
-
-    if any(w in tl for w in ('كابتشر كارد', 'capture card', 'video capture')):
-        return f'كارت تسجيل وبث فيديو احترافي{b_suffix}، ينقل ويسجل الصورة بدقة فائقة وسرعة نقل عالية وبدون أي تأخير، مثالي للبث المباشر وصناع المحتوى ومحبي الألعاب.'
-    elif any(w in tl for w in ('طابعة', 'printer')):
-        return f'طابعة حرارية صغيرة محمولة{b_suffix}، تعمل بدون حبر بتقنية البلوتوث وتتصل بالموبايل مباشرة لطباعة الملصقات والصور واليوميات والمهام بسرعة وسهولة في أي مكان.'
-    elif any(w in tl for w in ('ماوس', 'فأرة', 'mouse')):
-        return f'ماوس عالي الدقة والاستجابة السريعة{b_suffix}، بتصميم مريح لليد يمنحك تحكماً سلساً ودقيقاً للألعاب والمهام اليومية مع متانة عالية وأداء استثنائي.'
-    elif any(w in tl for w in ('كيبورد', 'لوحة مفاتيح', 'keyboard')):
-        return f'لوحة مفاتيح متينة ومريحة في الكتابة{b_suffix}، مصممة بأزرار سريعة الاستجابة وعمر افتراضي طويل لتوفير أعلى إنتاجية وأفضل أداء في العمل والألعاب.'
-    elif any(w in tl for w in ('مشترك', 'power strip')):
-        return f'مشترك كهربائي متين وموثوق{b_suffix}، مزود بمنافذ كهربائية متعددة ومخارج شحن ذكية وسريعة للأجهزة، ومصنوع من خامات مقاومة للحرارة مع حماية متكاملة ضد التذبذب والماس الكهربائي لضمان أمان أجهزتك.'
-    elif any(w in tl for w in ('باور بانك', 'شاحن متنقل', 'بطارية متنقلة', 'power bank')):
-        return f'باور بانك عالي الكفاءة والاعتمادية{b_suffix}، يتميز بسعة شحن حقيقية وتقنية شحن سريع آمنة للحفاظ على بطارية أجهزتك أثناء التنقل والسفر مع حماية متكاملة من زيادة التيار.'
-    elif any(w in tl for w in ('شاحن', 'charger', 'adapter')):
-        return f'شاحن سريع وموثوق{b_suffix}، يدعم تقنيات الشحن الذكي لتوفير أقصى سرعة شحن آمنة لهواتفك وأجهزتك الذكية مع حماية متطورة ضد السخونة وتذبذب التيار.'
-    elif any(w in tl for w in ('لابتوب', 'laptop', 'notebook', 'vivobook', 'zenbook', 'ideapad', 'thinkpad', 'macbook')):
-        return f'لابتوب عملي وقوي الأداء{b_suffix}، يجمع بين السرعة وكفاءة المعالجة للمهام اليومية والدراسة والعمل، مع شاشة مريحة للعين وبطارية تدوم طويلاً.'
-    elif any(w in tl for w in ('سماعة', 'earbuds', 'headset', 'headphones')):
-        return f'سماعة أذن لاسلكية متطورة تمنحك صوتاً نقياً وباس قوي مع ميكروفون مدمج لمكالمات فائقة الوضوح، وتصميم مريح ومحكم داخل الأذن للاستخدام الرياضي واليومي لساعات طويلة.'
-    elif any(w in tl for w in ('قهوة', 'coffee')):
-        return f'ماكينة قهوة عملية وسريعة التحضير{b_suffix}، تمنحك فنجان قهوة مثالي برغوة غنية وقوام متوازن في وقت قياسي، مع لوحة تحكم سهلة ونظام أمان متطور يمنع الفوران.'
-    elif any(w in tl for w in ('حذاء', 'shoes', 'sneakers')):
-        return f'حذاء رياضي أنيق ومريح{b_suffix}، مصمم بنعل مرن ممتص للصدمات مع خامات خفيفة الوزن تسمح بتهوية القدم لتوفير أقصى درجات الراحة أثناء الجري والمشي اليومي.'
-    elif any(w in tl for w in ('كرسي', 'وسادة', 'مسند', 'cushion')):
-        return f'وسادة دعم ومقعد طبي مصمم هندسياً لتخفيف الضغط عن أسفل الظهر والعمود الفقري، مصنوع من حشوات فوم متينة عالية المرونة تدوم طويلاً ومثالية للسيارة أو المكتب أو المنزل.'
-    elif any(w in tl for w in ('موبايل', 'هاتف', 'smartphone')):
-        return f'هاتف ذكي متكامل{b_suffix}، يجمع بين شاشة سريعة وواضحة ومعالج قوي للأداء اليومي والألعاب، مع كاميرات عالية الدقة وبطارية تدوم طوال اليوم وتدعم الشحن السريع.'
-    elif any(w in tl for w in ('قلاية', 'air fryer')):
-        return f'قلاية هوائية صحية وعملية{b_suffix}، تتيح لك طهي الأطعمة المفضلة بقرمشة مثالية وبأقل كمية دهون، مع برامج طهي متعددة وسهولة تامة في التنظيف اليومي.'
-    elif any(w in tl for w in ('حلاقة', 'shaver', 'trimmer')):
-        return f'ماكينة حلاقة وتشذيب دقيقة وعملية{b_suffix}، مزودة بشفرات حادة ولطيفة على البشرة مع بطارية قوية قابلة للشحن للاستخدام السهل في أي وقت.'
-    elif any(w in tl for w in ('مفك', 'screwdriver', 'tools')):
-        return f'طقم مفكات براغي عالي الجودة والصلابة{b_suffix}، يضم رؤوساً متعددة القياسات لتناسب كافة أعمال الصيانة المنزلية والإلكترونية بدقة وسهولة.'
-    elif any(w in tl for w in ('استحمام', 'shower gel', 'صابون')):
-        return f'جل استحمام منعش وغني برائحة مميزة تدوم طويلاً، مع تركيبة لطيفة تنظف البشرة بعمق وتمنحها ترطيباً ونعومة فائقة طوال اليوم.'
-    else:
-        clean_t = re.sub(r'[\(\[\{].*?[\)\]\}]', ' ', title)
-        words = [w for w in clean_t.split() if len(w) > 2 and not any(sw in w for sw in ('متوافق', 'اصلي', 'أصلي', 'جودة', 'جديد', 'ماركة'))][:7]
-        short_title = ' '.join(words)
-        return f'منتج عالي الجودة والاعتمادية{b_suffix} ({short_title})، مصنوع بخامات متينة ومصمم لتقديم أداء ممتاز وقيمة حقيقية مقابل السعر في الاستخدام اليومي.'
+    intel = pi.analyze_product(
+        title,
+        brand=brand,
+        features=features,
+        extra_desc=extra_desc,
+        use_vision=False,
+    )
+    return intel["description"]
 
 def rewrite_channel_insight(raw_text):
     """
@@ -1146,9 +891,15 @@ def build_review_summary(rating, reviews, review_snippets=None, bought_badge=Non
     if custom_insight:
         parts.append(custom_insight)
     elif review_snippets:
-        snippet = re.sub(r'\s+', ' ', review_snippets[0]).strip()[:100]
-        if len(snippet) > 12:
-            parts.append(f"من التعليقات: «{snippet}»")
+        valid_snips = [
+            re.sub(r'\s+', ' ', s).strip()
+            for s in review_snippets
+            if s and "لو اشتريت منتج من نون" not in s and "تقديم التقييم" not in s
+        ]
+        if valid_snips:
+            snippet = valid_snips[0][:100]
+            if len(snippet) > 12:
+                parts.append(f"من التعليقات: «{snippet}»")
 
     if not parts:
         return "منتج عليه خصم قوي؛ لم تتوفر تعليقات كافية بعد."
@@ -1291,15 +1042,30 @@ def build_message(store, title, price, list_price, discount, link,
                   review_snippets=None, bought_badge=None,
                   stack_promos=None, stack_howto=None, section_note=None,
                   extra_pct=0.0, extra_egp=0.0, extra_label=None, promo_links=None,
-                  brand=None, custom_insight=None):
+                  brand=None, custom_insight=None,
+                  en_slug=None, breadcrumbs=None, specs=None, image_url=None):
     store_ar = "أمازون" if store.lower() == "amazon" else ("نون" if store.lower() == "noon" else store)
     icon = "🔥" if store.lower() == "amazon" else "🟡"
 
     b_raw = (brand or "").strip()
     if b_raw.lower() in _GENERIC_BRAND_NAMES:
         b_raw = ""
-    brand_clean = b_raw or (detect_brand(title) or "").strip()
-    name_ar, name_en = extract_bilingual_product_names(title, brand=brand_clean, features=features)
+
+    # التحليل الذكي متعدد الوسائط (العنوان الكامل + الوصف والمواصفات + مسار الفئة + الصورة بالرؤية الحاسوبية)
+    intel = pi.analyze_product(
+        title,
+        brand=b_raw,
+        features=features,
+        en_slug=en_slug,
+        breadcrumbs=breadcrumbs,
+        specs=specs,
+        image_url=image_url,
+        use_vision=bool(image_url),
+    )
+    brand_en = intel["brand_en"]
+    name_ar = intel["name_ar"]
+    name_en = intel["name_en"]
+    desc = intel["description"]
 
     final_price = None
     if price is not None:
@@ -1346,8 +1112,8 @@ def build_message(store, title, price, list_price, discount, link,
     elif discount and discount > 0:
         lines.append(f"📉 الخصم: <b>{discount:.0f}%</b>")
 
-    if brand_clean:
-        lines.append(f"🏷️ الماركة: <b>{html.escape(brand_clean[:40])}</b>")
+    if brand_en:
+        lines.append(f"🏷️ الماركة: <b>{html.escape(brand_en[:40])}</b>")
     if seller:
         lines.append(f"🏪 البائع: {html.escape(seller[:40])}")
     if rating:
@@ -1369,7 +1135,6 @@ def build_message(store, title, price, list_price, discount, link,
     ]
 
     # 3) وصف المنتج (مختصر ومفهوم وذكي بالعربي فقط)
-    desc = build_description(title, features=features, brand=brand_clean)
     if desc:
         lines += ["", f"📝 <b>وصف المنتج:</b>\n{html.escape(desc)}"]
 
@@ -1712,27 +1477,29 @@ def parse_amazon_card(text):
     }
 
 async def amazon_product_details(context, link):
-    """يفتح صفحة المنتج لجلب البائع، الماركة، التقييمات، المميزات، تعليقات المشترين، الصورة، وعروض دمج الخصومات وروابطها."""
+    """يفتح صفحة المنتج لجلب البائع، الماركة، التقييمات، المميزات، تعليقات المشترين، الصورة، وعروض دمج الخصومات وروابطها، والسياق الكامل للمنتج."""
     page = await context.new_page()
     seller, brand, pdp_rating, pdp_reviews, features, image, reviews_list, promos_list, promo_links = None, None, None, None, [], None, [], [], []
+    extra_ctx = {}
     try:
         await page.goto(link, wait_until="domcontentloaded", timeout=45000)
         await page.wait_for_timeout(2000)
         title = await page.title()
         if is_blocked_title(title) or await page.query_selector('form[action*="validateCaptcha"]'):
             print(f"صفحة منتج أمازون محجوبة ({title[:40]}) - هنكتفي ببيانات الكارت.")
-            return None, None, None, None, None, None, [], [], []
+            return None, None, None, None, None, None, [], [], [], {}
         await page.evaluate("window.scrollTo(0, document.body.scrollHeight * 0.65)")
         await page.wait_for_timeout(1200)
         data = await page.evaluate("""() => {
             const q = s => document.querySelector(s)?.innerText?.trim();
+            const pdp_title = q('#productTitle') || q('#title') || '';
             const seller = q('#sellerProfileTriggerId')
                 || q('#merchantInfoFeature_feature_div .offer-display-feature-text-message')
                 || q('#merchant-info a') || q('#merchant-info');
             let brand = q('tr.po-brand td.a-span9') || q('#bylineInfo');
             if (brand) {
                 brand = brand
-                    .replace(/^(زيارة متجر|العلامة التجارية:|الماركة:|Visit the|Brand:)\\s*/i, '')
+                    .replace(/^(قم بزيارة متجر|زيارة متجر|العلامة التجارية:|الماركة:|Visit the|Brand:)\\s*/i, '')
                     .replace(/\\s*Store$/i, '')
                     .trim();
             }
@@ -1740,6 +1507,15 @@ async def amazon_product_details(context, link):
             const reviewsTxt = q('#acrCustomerReviewText');
             const feats = [...document.querySelectorAll('#feature-bullets li span.a-list-item')]
                 .map(e => e.innerText.trim()).filter(x => x.length > 10);
+            const overview = (q('#productDescription') || '').replace(/\\s+/g, ' ').trim();
+            if (!feats.length && overview.length > 20) {
+                feats.push(overview.slice(0, 220));
+            }
+            const breadcrumbs = [...document.querySelectorAll('#wayfinding-breadcrumbs_feature_div li a, #wayfinding-breadcrumbs_container a')]
+                .map(e => e.innerText.trim()).filter(Boolean);
+            const specs = [...document.querySelectorAll('#productOverview_feature_div tr, #prodDetails tr, #technicalSpecifications_section_1 tr')]
+                .map(r => r.innerText.replace(/\\s+/g, ' ').trim()).filter(x => x.length > 3 && x.length < 140).slice(0, 18);
+            const en_slug = document.querySelector('link[rel="alternate"][hreflang="en-eg"], link[rel="alternate"][href*="/-/en/"], link[rel="canonical"]')?.href || '';
             const img = document.querySelector('#landingImage, #imgBlkFront, #main-image, #imgTagWrapperId img');
             let image = img?.getAttribute('data-old-hires');
             if (!image || !image.startsWith('http')) {
@@ -1770,7 +1546,7 @@ async def amazon_product_details(context, link):
             )];
             const revs = [...document.querySelectorAll('[data-hook="reviewText"], [data-hook="review-collapsed"], .review-text-content')]
                 .map(e => e.innerText.trim()).filter(x => x.length > 15).slice(0, 3);
-            return {seller, brand, ratingTxt, reviewsTxt, feats, image, promos: promos.slice(0, 10), promo_links: promo_links.slice(0, 2), revs};
+            return {pdp_title, seller, brand, ratingTxt, reviewsTxt, feats, breadcrumbs, specs, en_slug, image, promos: promos.slice(0, 10), promo_links: promo_links.slice(0, 2), revs};
         }""")
         seller = data.get("seller")
         brand = data.get("brand")
@@ -1785,11 +1561,17 @@ async def amazon_product_details(context, link):
         promos_list = data.get("promos") or []
         promo_links = data.get("promo_links") or []
         reviews_list = data.get("revs") or []
+        extra_ctx = {
+            "pdp_title": data.get("pdp_title") or "",
+            "en_slug": data.get("en_slug") or "",
+            "breadcrumbs": data.get("breadcrumbs") or [],
+            "specs": data.get("specs") or [],
+        }
     except Exception as e:
         print(f"تعذر جلب تفاصيل المنتج: {e}")
     finally:
         await page.close()
-    return seller, brand, pdp_rating, pdp_reviews, features, image, reviews_list, promos_list, promo_links
+    return seller, brand, pdp_rating, pdp_reviews, features, image, reviews_list, promos_list, promo_links, extra_ctx
 
 AMAZON_SCROLLS = int(os.getenv("AMAZON_SCROLLS", "10"))
 
@@ -1947,19 +1729,22 @@ async def scrape_amazon_eg(page):
         if amazon_sent >= MAX_PER_CYCLE:
             break
         try:
-            seller, brand, pdp_rating, pdp_reviews, features, image, rev_snippets, page_promos, promo_links = None, None, None, None, [], None, [], [], []
+            seller, brand, pdp_rating, pdp_reviews, features, image, rev_snippets, page_promos, promo_links, extra_ctx = None, None, None, None, [], None, [], [], [], {}
             if consecutive_blocks < 3 and pdp_Lookups < 28:
                 pdp_Lookups += 1
-                seller, brand, pdp_rating, pdp_reviews, features, image, rev_snippets, page_promos, promo_links = await amazon_product_details(page.context, full_link)
+                seller, brand, pdp_rating, pdp_reviews, features, image, rev_snippets, page_promos, promo_links, extra_ctx = await amazon_product_details(page.context, full_link)
                 if features is None:
                     consecutive_blocks += 1
                     features = []
                 else:
                     consecutive_blocks = 0
 
+            full_title_amz = extra_ctx.get("pdp_title") or info["title"]
+            if is_blocked_title(full_title_amz):
+                full_title_amz = info["title"]
             rating = info["rating"] or pdp_rating
             reviews = info["reviews"] or pdp_reviews
-            if not is_trusted_product(info["title"], brand=brand, rating=rating, reviews=reviews):
+            if not is_trusted_product(full_title_amz, brand=brand, rating=rating, reviews=reviews):
                 continue
 
             stack_promos, stack_howto, extra_pct, extra_egp, extra_label, promo_links = detect_stacking_promos(
@@ -1973,24 +1758,29 @@ async def scrape_amazon_eg(page):
                 eff_price = round(eff_price - extra_egp, 2)
 
             promo_sig = "|".join(stack_promos)
-            ok_send, update_reason = should_send_deal(full_link, info["title"], eff_price, promo_sig)
+            ok_send, update_reason = should_send_deal(full_link, full_title_amz, eff_price, promo_sig)
             if not ok_send:
                 continue
 
-            mark_deal_sent(full_link, info["title"], eff_price, promo_sig)
+            mark_deal_sent(full_link, full_title_amz, eff_price, promo_sig)
             amazon_sent += 1
 
+            chosen_img_amz = image or card.get("img")
             msg = build_message(
-                "Amazon", info["title"], info["price"], info["list_price"], discount, full_link,
+                "Amazon", full_title_amz, info["price"], info["list_price"], discount, full_link,
                 seller=seller, rating=rating, reviews=reviews, features=features,
                 prev_min=prev_min, max_price=max_p, min_price=min_p,
                 review_snippets=rev_snippets, bought_badge=info.get("bought"),
                 stack_promos=stack_promos, stack_howto=stack_howto, section_note=update_reason,
                 extra_pct=extra_pct, extra_egp=extra_egp, extra_label=extra_label, promo_links=promo_links,
                 brand=brand,
+                en_slug=extra_ctx.get("en_slug"),
+                breadcrumbs=extra_ctx.get("breadcrumbs"),
+                specs=extra_ctx.get("specs"),
+                image_url=chosen_img_amz,
             )
             is_free_now = is_almost_free(eff_price, info["list_price"], discount)
-            await pace_and_send(msg, image=image or card.get("img"), is_freebie=is_free_now)
+            await pace_and_send(msg, image=chosen_img_amz, is_freebie=is_free_now)
         except Exception as e:
             print(f"خطأ في إرسال عرض أمازون: {e}")
             continue
@@ -2081,9 +1871,10 @@ def noon_title(text):
     return "منتج على نون"
 
 async def noon_product_details(context, link):
-    """يفتح صفحة المنتج في نون لجلب الاسم الكامل، الماركة، البائع، المميزات، التعليقات، العروض الإضافية، والصورة."""
+    """يفتح صفحة المنتج في نون لجلب الاسم الكامل، الماركة، البائع، المميزات، المواصفات، الرابط الإنجليزي، التعليقات، العروض الإضافية، والصورة."""
     page = await context.new_page()
     full_title, brand, seller, features, image, promos, reviews_list = None, None, None, [], None, [], []
+    extra_ctx = {}
     try:
         await page.goto(link, wait_until="domcontentloaded", timeout=40000)
         try:
@@ -2094,7 +1885,7 @@ async def noon_product_details(context, link):
         h1 = await page.evaluate("() => document.querySelector('h1')?.innerText || ''")
         if is_blocked_title(page_title) or is_blocked_title(h1) or not await page.query_selector('[data-qa="pdp-container"]'):
             print(f"صفحة منتج نون محجوبة ({(h1 or page_title)[:40]}) - هنكتفي ببيانات الكارت.")
-            return None, None, None, None, None, [], []
+            return None, None, None, None, None, [], [], {}
         await page.evaluate("window.scrollTo(0, document.body.scrollHeight * 0.5)")
         await page.wait_for_timeout(800)
         data = await page.evaluate("""() => {
@@ -2138,13 +1929,26 @@ async def noon_product_details(context, link):
                     .map(e => e.innerText.trim())
                     .filter(x => x.length > 20 && x.length < 220 && !x.includes('\\n'))
                 : [];
+            const overview = (container?.querySelector('[data-qa*="overview" i], [class*="overview" i]')?.innerText || '')
+                .replace(/^(نظرة عامة|المميزات الأساسية|Overview)\\s*/i, '')
+                .replace(/\\s+/g, ' ').trim();
+            if (!feats.length && overview.length > 25) {
+                feats.push(overview.slice(0, 220));
+            }
+            const breadcrumbs = [...document.querySelectorAll('[data-qa*="breadcrumb" i] a, nav[aria-label*="breadcrumb" i] a, [class*="breadcrumb" i] a')]
+                .map(e => e.innerText.trim()).filter(Boolean);
+            const specs = [...(container || document).querySelectorAll('table tr')]
+                .map(r => r.innerText.replace(/\\s+/g, ' ').trim()).filter(x => x.length > 3 && x.length < 140).slice(0, 18);
+            const en_slug = document.querySelector('link[rel="alternate"][hreflang*="en"], link[rel="alternate"][href*="-en/"]')?.href || '';
             const promos = container
                 ? [...container.querySelectorAll('[class*="coupon" i], [class*="voucher" i], [class*="promo" i], [data-qa*="coupon" i], [class*="cashback" i]')]
                     .map(e => e.innerText.trim()).filter(x => x.length > 6 && x.length < 220)
                 : [];
             const revs = [...document.querySelectorAll('[class*="reviewComment" i], [class*="reviewDesc" i], [data-qa*="review" i] p')]
-                .map(e => e.innerText.trim()).filter(x => x.length > 15 && x.length < 220).slice(0, 2);
-            return {full_title, brand, seller, feats, image, promos: promos.slice(0, 5), revs};
+                .map(e => e.innerText.trim())
+                .filter(x => x.length > 15 && x.length < 220 && !x.includes('لو اشتريت منتج من نون') && !x.includes('تقديم التقييم'))
+                .slice(0, 2);
+            return {full_title, brand, seller, feats, breadcrumbs, specs, en_slug, image, promos: promos.slice(0, 5), revs};
         }""")
         full_title = data.get("full_title")
         if is_blocked_title(full_title):
@@ -2155,11 +1959,16 @@ async def noon_product_details(context, link):
         image = clean_image_url(data.get("image"))
         promos = data.get("promos") or []
         reviews_list = data.get("revs") or []
+        extra_ctx = {
+            "en_slug": data.get("en_slug") or "",
+            "breadcrumbs": data.get("breadcrumbs") or [],
+            "specs": data.get("specs") or [],
+        }
     except Exception as e:
         print(f"تعذر جلب تفاصيل منتج نون: {e}")
     finally:
         await page.close()
-    return full_title, brand, seller, features, image, promos, reviews_list
+    return full_title, brand, seller, features, image, promos, reviews_list, extra_ctx
 
 NOON_CARDS_JS = """() => [...document.querySelectorAll('a[href*="/p/"]')].map(a => {
     const qaImg = a.querySelector('[data-qa^="productImagePLP_"]');
@@ -2228,8 +2037,6 @@ async def scrape_noon_eg(page):
             for _ in range(8):
                 for c in await page.evaluate(NOON_CARDS_JS):
                     if c["href"]:
-                        if b_hint and not c.get("brand"):
-                            c["brand"] = b_hint
                         base = c["href"].split('?')[0]
                         link = short_link(f"https://www.noon.com{base}" if base.startswith('/') else base)
                         if link not in products:
@@ -2298,10 +2105,10 @@ async def scrape_noon_eg(page):
             break
         try:
             card_title = card.get("name") or noon_title(card["text"])
-            full_title, pdp_brand, seller, features, image, page_promos, rev_snippets = None, None, None, [], None, [], []
+            full_title, pdp_brand, seller, features, image, page_promos, rev_snippets, extra_ctx = None, None, None, [], None, [], [], {}
             if consecutive_blocks < 3 and pdp_lookups < 28:
                 pdp_lookups += 1
-                full_title, pdp_brand, seller, features, image, page_promos, rev_snippets = await noon_product_details(page.context, full_link)
+                full_title, pdp_brand, seller, features, image, page_promos, rev_snippets, extra_ctx = await noon_product_details(page.context, full_link)
                 if features is None:
                     consecutive_blocks += 1
                     features = []
@@ -2334,6 +2141,7 @@ async def scrape_noon_eg(page):
 
             mark_deal_sent(full_link, title, eff_price, promo_sig)
             noon_sent += 1
+            chosen_img_noon = image or card.get("img")
             msg = build_message(
                 "Noon", title, info["price"], info["list_price"], discount, full_link,
                 seller=seller, rating=info["rating"], reviews=info["reviews"], features=features,
@@ -2342,9 +2150,13 @@ async def scrape_noon_eg(page):
                 stack_promos=stack_promos, stack_howto=stack_howto, section_note=update_reason,
                 extra_pct=extra_pct, extra_egp=extra_egp, extra_label=extra_label, promo_links=promo_links,
                 brand=brand,
+                en_slug=extra_ctx.get("en_slug"),
+                breadcrumbs=extra_ctx.get("breadcrumbs"),
+                specs=extra_ctx.get("specs"),
+                image_url=chosen_img_noon,
             )
             is_free_now = is_almost_free(eff_price, info["list_price"], discount)
-            await pace_and_send(msg, image=image or card.get("img"), is_freebie=is_free_now)
+            await pace_and_send(msg, image=chosen_img_noon, is_freebie=is_free_now)
         except Exception as e:
             print(f"خطأ في منتج نون: {e}")
             continue
@@ -2709,6 +2521,15 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                 const reviewsTxt = q('#acrCustomerReviewText');
                 const feats = [...document.querySelectorAll('#feature-bullets li span.a-list-item')]
                     .map(e => e.innerText.trim()).filter(x => x.length > 10);
+                const overview = (q('#productDescription') || '').replace(/\\s+/g, ' ').trim();
+                if (!feats.length && overview.length > 20) {
+                    feats.push(overview.slice(0, 220));
+                }
+                const breadcrumbs = [...document.querySelectorAll('#wayfinding-breadcrumbs_feature_div li a, #wayfinding-breadcrumbs_container a')]
+                    .map(e => e.innerText.trim()).filter(Boolean);
+                const specs = [...document.querySelectorAll('#productOverview_feature_div tr, #prodDetails tr, #technicalSpecifications_section_1 tr')]
+                    .map(r => r.innerText.replace(/\\s+/g, ' ').trim()).filter(x => x.length > 3 && x.length < 140).slice(0, 18);
+                const en_slug = document.querySelector('link[rel="alternate"][hreflang="en-eg"], link[rel="alternate"][href*="/-/en/"], link[rel="canonical"]')?.href || '';
                 const img = document.querySelector('#landingImage, #imgBlkFront, #main-image, #imgTagWrapperId img');
                 let image = img?.getAttribute('data-old-hires');
                 if (!image || !image.startsWith('http')) {
@@ -2759,7 +2580,7 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                 } else if (outOfStockBox || (isExplicitlyUnavailable && !isShippingRestrictionOnly)) {
                     isOutOfStock = true;
                 }
-                return {title, priceTxt, listTxt, savingsTxt, bought, seller, brand, ratingTxt, reviewsTxt, feats, image, promos: promos.slice(0, 10), promo_links: promo_links.slice(0, 2), revs, isOutOfStock, hasAddToCart};
+                return {title, priceTxt, listTxt, savingsTxt, bought, seller, brand, ratingTxt, reviewsTxt, feats, breadcrumbs, specs, en_slug, image, promos: promos.slice(0, 10), promo_links: promo_links.slice(0, 2), revs, isOutOfStock, hasAddToCart};
             }""")
         finally:
             await page.close()
@@ -2895,8 +2716,13 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
             stack_promos=stack_promos, stack_howto=stack_howto,
             extra_pct=extra_pct, extra_egp=extra_egp, extra_label=extra_label, promo_links=promo_links,
             brand=brand, custom_insight=custom_insight,
+            en_slug=data.get("en_slug") or canonical_url,
+            breadcrumbs=data.get("breadcrumbs"),
+            specs=data.get("specs"),
+            image_url=image,
         )
-        return msg, image, canonical_url, branded_url(canonical_url), title, eff_price, "|".join(stack_promos), is_active, active_reason, brand
+        brand_en_out = pi.normalize_brand_english(brand, title=title, allow_network=False) or brand
+        return msg, image, canonical_url, branded_url(canonical_url), title, eff_price, "|".join(stack_promos), is_active, active_reason, brand_en_out
 
     if "noon.com" in ul:
         page = await context.new_page()
@@ -3000,12 +2826,25 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                         .map(e => e.innerText.trim())
                         .filter(x => x.length > 20 && x.length < 220 && !x.includes('\\n'))
                     : [];
+                const overview = (container?.querySelector('[data-qa*="overview" i], [class*="overview" i]')?.innerText || '')
+                    .replace(/^(نظرة عامة|المميزات الأساسية|Overview)\\s*/i, '')
+                    .replace(/\\s+/g, ' ').trim();
+                if (!feats.length && overview.length > 25) {
+                    feats.push(overview.slice(0, 220));
+                }
+                const breadcrumbs = [...document.querySelectorAll('[data-qa*="breadcrumb" i] a, nav[aria-label*="breadcrumb" i] a, [class*="breadcrumb" i] a')]
+                    .map(e => e.innerText.trim()).filter(Boolean);
+                const specs = [...(container || document).querySelectorAll('table tr')]
+                    .map(r => r.innerText.replace(/\\s+/g, ' ').trim()).filter(x => x.length > 3 && x.length < 140).slice(0, 18);
+                const en_slug = document.querySelector('link[rel="alternate"][hreflang*="en"], link[rel="alternate"][href*="-en/"]')?.href || '';
                 const promos = container
                     ? [...container.querySelectorAll('[class*="coupon" i], [class*="voucher" i], [class*="promo" i], [data-qa*="coupon" i], [class*="cashback" i]')]
                         .map(e => e.innerText.trim()).filter(x => x.length > 6 && x.length < 220)
                     : [];
                 const revs = [...document.querySelectorAll('[class*="reviewComment" i], [class*="reviewDesc" i], [data-qa*="review" i] p')]
-                    .map(e => e.innerText.trim()).filter(x => x.length > 15 && x.length < 220).slice(0, 2);
+                    .map(e => e.innerText.trim())
+                    .filter(x => x.length > 15 && x.length < 220 && !x.includes('لو اشتريت منتج من نون') && !x.includes('تقديم التقييم'))
+                    .slice(0, 2);
                 const hasAddToCart = Boolean(
                     document.querySelector('button[data-qa="btn-add-to-cart"]:not([disabled]), button[class*="addToCart" i]:not([disabled])')
                 );
@@ -3018,7 +2857,7 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                 } else if (unavailEl || isExplicitlyUnavailable) {
                     isOutOfStock = true;
                 }
-                return {full_title, brand, seller, priceNow, priceWas, savingTxt, ratingTxt, reviewsTxt, feats, image, promos: promos.slice(0, 5), revs, isOutOfStock, hasAddToCart};
+                return {full_title, brand, seller, priceNow, priceWas, savingTxt, ratingTxt, reviewsTxt, feats, breadcrumbs, specs, en_slug, image, promos: promos.slice(0, 5), revs, isOutOfStock, hasAddToCart};
             }""")
         finally:
             await page.close()
@@ -3093,8 +2932,13 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
             stack_promos=stack_promos, stack_howto=stack_howto,
             extra_pct=extra_pct, extra_egp=extra_egp, extra_label=extra_label, promo_links=promo_links,
             brand=brand, custom_insight=custom_insight,
+            en_slug=data.get("en_slug") or canonical_url,
+            breadcrumbs=data.get("breadcrumbs"),
+            specs=data.get("specs"),
+            image_url=image,
         )
-        return msg, image, canonical_url, branded_url(canonical_url), title, eff_price, "|".join(stack_promos), is_active, active_reason, brand
+        brand_en_out = pi.normalize_brand_english(brand, title=title, allow_network=False) or brand
+        return msg, image, canonical_url, branded_url(canonical_url), title, eff_price, "|".join(stack_promos), is_active, active_reason, brand_en_out
 
     return None, None, canonical_url, branded_url(canonical_url), None, None, "", False, "رابط غير مدعوم", None
 

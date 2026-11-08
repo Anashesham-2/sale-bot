@@ -1,3 +1,7 @@
 playwright
 requests
-
+Pillow
+numpy
+onnxruntime
+tokenizers
+huggingface_hub
