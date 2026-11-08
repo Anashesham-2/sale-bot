@@ -1051,7 +1051,7 @@ def build_message(store, title, price, list_price, discount, link,
     if b_raw.lower() in _GENERIC_BRAND_NAMES:
         b_raw = ""
 
-    # التحليل الذكي متعدد الوسائط (العنوان الكامل + الوصف والمواصفات + مسار الفئة + الصورة بالرؤية الحاسوبية)
+    # التحليل الذكي متعدد الوسائط (العنوان الكامل + الوصف والمواصفات + مسار الفئة + السعر + الصورة بالرؤية الحاسوبية)
     intel = pi.analyze_product(
         title,
         brand=b_raw,
@@ -1060,6 +1060,7 @@ def build_message(store, title, price, list_price, discount, link,
         breadcrumbs=breadcrumbs,
         specs=specs,
         image_url=image_url,
+        price=price,
         use_vision=bool(image_url),
     )
     brand_en = intel["brand_en"]

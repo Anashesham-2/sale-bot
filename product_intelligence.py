@@ -12,7 +12,16 @@ import requests
 _GENERIC_BRAND_SET = {
     "generic", "عام", "أخرى", "اخرى", "other", "others", "no brand", "unbranded",
     "بدون ماركة", "بدون علامة تجارية", "غير محدد", "n/a", "oem", "none", "unknown",
-    "جينيريك", "جينريك", "متنوع", "متعدد", "brand",
+    "جينيريك", "جينريك", "متنوع", "متعدد", "brand", "travel", "traveling",
+    "outdoor", "household", "portable", "universal", "classic", "fashion",
+}
+
+# ماركات إكسسوارات وصوتيات وطرفيات لا تصنع موبايلات أو تابلت أو لابتوب أو تلفزيونات أو ثلاجات
+_NO_MAJOR_DEVICE_BRANDS = {
+    "UGREEN", "Anker", "Soundcore", "Baseus", "Joyroom", "Oraimo", "iLock", "LDNIO",
+    "Belkin", "Promate", "Spigen", "Ringke", "ESR", "Sekai", "Havit", "Onikuma",
+    "Fantech", "JBL", "Logitech", "HyperX", "SanDisk", "Kingston", "Lexar", "Memo",
+    "Niimbot", "Choetech", "Arselo", "G-Power", "X-Fast", "Cellularline", "Hama",
 }
 
 _STORE_BRAND_NOISE_RE = re.compile(
@@ -93,7 +102,11 @@ RAW_BRAND_EN_MAP = {
     "لافيتنو": "Lavento", "لافينتو": "Lavento", "lavento": "Lavento",
     "ميدياتيك": "MediaTech", "ميديا تيك": "MediaTech", "mediatech": "MediaTech",
     "بيوتي بيست": "Beauty Beast", "بيوتى بيست": "Beauty Beast", "beauty beast": "Beauty Beast",
-    "ترافل": "Travel", "travel": "Travel",
+    "سيسيجاد": "Sisigad", "sisigad": "Sisigad",
+    "اسبيجن": "Spigen", "سبيجن": "Spigen", "spigen": "Spigen",
+    "رينجكي": "Ringke", "ringke": "Ringke",
+    "إي إس آر": "ESR", "اي اس ار": "ESR", "esr": "ESR",
+    "أكس-سكوت": "X-Scot", "اكس سكوت": "X-Scot", "اكس-سكوت": "X-Scot", "أكس سكوت": "X-Scot", "aks-skot": "X-Scot", "x-scot": "X-Scot",
     "جولدن ماسك": "Golden Mask", "golden mask": "Golden Mask",
     "فو ميالتكنولوجيا المحدودة": "Fomi", "فومي": "Fomi", "fomi": "Fomi",
     "امازون": "Amazon", "أمازون": "Amazon", "amazon": "Amazon", "amazon basics": "Amazon Basics",
@@ -169,7 +182,8 @@ RAW_BRAND_EN_MAP = {
     "سوكاني": "Sokany", "sokany": "Sokany",
     "سوناي": "Sonai", "sonai": "Sonai",
     "راف": "RAF", "raf": "RAF",
-    "أكانه": "Akane", "اكانه": "Akane", "akane": "Akane",
+    "أكانه": "Akane", "اكانه": "Akane", "أكاني": "Akane", "اكاني": "Akane", "akane": "Akane",
+    "هوم جاليري": "Home Gallery", "hom galyry": "Home Gallery", "home gallery": "Home Gallery",
     "توتال": "Total", "total": "Total",
     "توتال انرجيز": "TotalEnergies", "totalenergies": "TotalEnergies",
     "إنجكو": "Ingco", "انجكو": "Ingco", "ingco": "Ingco",
@@ -238,7 +252,7 @@ RAW_BRAND_EN_MAP = {
     "هيد اند شولدرز": "Head & Shoulders", "head & shoulders": "Head & Shoulders",
     "تريسمي": "TRESemme", "tresemme": "TRESemme",
     "كارسيل": "Karseell", "karseell": "Karseell",
-    "ميبيلين": "Maybelline", "maybelline": "Maybelline",
+    "ميبيلين": "Maybelline", "ميبلين": "Maybelline", "maybelline": "Maybelline",
     "سيجنال": "Signal", "signal": "Signal",
     "سنسوداين": "Sensodyne", "sensodyne": "Sensodyne",
     "ليسترين": "Listerine", "listerine": "Listerine",
@@ -339,6 +353,8 @@ _NON_BRAND_LATIN = {
     "vga", "lan", "ssd", "hdd", "ram", "rom", "cpu", "gpu", "fps", "dpi", "mah", "watt",
     "egp", "new", "for", "with", "and", "the", "pack", "pcs", "set", "kit", "box", "bag",
     "car", "home", "smart", "fast", "super", "power", "water", "series", "gen", "model",
+    "travel", "traveling", "outdoor", "household", "portable", "universal", "classic",
+    "fashion", "women", "men", "kids", "baby", "storage", "clothing",
 }
 
 _AR_TRANSLIT_TABLE = {
@@ -426,9 +442,11 @@ def save_tr_cache():
 # استخراج وتوحيد الماركة بالإنجليزية دائماً
 # ---------------------------------------------------------------------------
 COMPAT_SPLIT_RE = re.compile(
-    r'\b(?:متوافق(?:ة)?\s*مع|مناسب(?:ة)?\s*لـ?|مخصص(?:ة)?\s*لـ?|مصمم(?:ة)?\s*لـ?|بديل(?:ة)?\s*لـ?|'
-    r'لأجهزة|لاجهزة|لهواتف|لموبايل|لجهاز|لباور\s*بانك|'
-    r'compatible\s+with|designed\s+for|fit\s+for|made\s+for|replacement\s+for|case\s+for|cover\s+for|strap\s+for)\b',
+    r'(?:\b(?:متوافق(?:ة)?\s*مع|مناسب(?:ة)?\s*لـ?|مخصص(?:ة)?\s*لـ?|مصمم(?:ة)?\s*لـ?|بديل(?:ة)?\s*لـ?|'
+    r'لأجهزة|لاجهزة|لهواتف|لموبايل|للموبايل|لهاتف|للهاتف|لجهاز|لباور\s*بانك|'
+    r'compatible\s+with|designed\s+for|fit\s+for|made\s+for|replacement\s+for|case\s+for|cover\s+for|strap\s+for)\b|'
+    r'\bل(?=ايفون|آيفون|أيفون|ايباد|آيباد|سامسونج|جالكسي|جالاكسي|شاومي|ريدمي|هواوي)|'
+    r'\bfor(?=\s+(?:iphone|ipad|ipod|macbook|airpods|apple\s*watch|samsung|galaxy|xiaomi|redmi|huawei|honor|oppo|realme|vivo|infinix|laptop|ps[45]|xbox)\b))',
     re.IGNORECASE,
 )
 
@@ -771,9 +789,13 @@ SMART_CATEGORIES = [
      "لوحة مفاتيح (كيبورد)", "Computer Keyboard",
      "لوحة مفاتيح مريحة وهادئة بأزرار متينة سريعة الاستجابة لتجربة كتابة سلسة ومريحة طوال اليوم."),
 
-    ("usb_hub", r'(?:\bموزع\b|محول\s*متعدد\s*المنافذ|usb(?:-?c)?\s*hub|type-?c\s*hub|\d+\s*-?\s*port\s*hub|\bhub\s*(?:lite|pro|\d)|docking\s*station|multi-?port\s*(?:hub|adapter))',
+    ("usb_hub", r'(?:\bموزع\b|محول\s*متعدد\s*المنافذ|محور\s*usb|محول\s*usb\s*متعدد|usb(?:-?c)?\s*hub|type-?c\s*hub|\d+\s*-?\s*port\s*hub|\bhub\s*(?:lite|pro|\d)|docking\s*station|multi-?port\s*(?:hub|adapter))',
      "موزع منافذ USB-C متعدد", "Multi-Port USB-C Hub",
      "موزع منافذ متعدد عالي السرعة يوسّع مداخل اللابتوب والموبايل لتوصيل الشاشات والفلاشات والشحن السريع في وقت واحد."),
+
+    ("phone_cooler", r'(?:مبرد\s*(?:موبايل|هاتف|جوال|مغناطيسي)|مروحة\s*تبريد\s*(?:للموبايل|للهاتف|موبايل)|mobile\s*(?:phone\s*)?cooler|phone\s*cooler|magnetic\s*cooler)',
+     "مبرد موبايل للألعاب", "Magnetic Mobile Phone Cooler",
+     "مبرد موبايل مغناطيسي قوي بتبريد فوري سريع يحافظ على برودة الهاتف وثبات الفريمات أثناء الألعاب الثقيلة."),
 
     ("laptop_cooler", r'(?:قاعدة\s*تبريد|مبرد\s*لابتوب|مروحة\s*تبريد\s*لابتوب|cooling\s*pad|laptop\s*cooler)',
      "قاعدة تبريد لابتوب", "Laptop Cooling Pad",
@@ -799,11 +821,11 @@ SMART_CATEGORIES = [
      "سوار ساعة ذكية", "Smartwatch Band Strap",
      "سوار معصم مريح ومتين بخامات لطيفة على الجلد ومقاومة للتعرق، سهل التركيب وتعديل المقاس للاستخدام الرياضي واليومي."),
 
-    ("power_strip", r'(?:مشترك\s*كهربائ?ي?|مشترك\s*(?:مضيئ|مضيء|ذكي|سلك|بمنافذ|حماية)|وصلة\s*مشترك|power\s*strip|extension\s*(?:socket|cord|lead)|surge\s*protector)',
+    ("power_strip", r'(?:مشترك\s*كهربائ?ي?|مشترك\s*(?:مضيئ|مضيء|ذكي|سلك|بمنافذ|حماية|اي\s*لوك|آي\s*لوك|ilock|لدنيو|ldnio)|مشترك\b[^\n،,]{0,35}?\b(?:منافذ|مخارج|فيش|3500|2500)|وصلة\s*مشترك|power\s*strip|extension\s*(?:socket|cord|lead)|surge\s*protector)',
      "مشترك كهربائي", "Power Strip Extension",
      "مشترك كهربائي آمن ومتين بمنافذ متعددة وخامات مقاومة للحرارة مع حماية متكاملة للأجهزة من تذبذب التيار والماس الكهربائي."),
 
-    ("power_bank", r'(?:باور\s*بانك|شاحن\s*متنقل|بطارية\s*(?:متنقلة|احتياطية|محمولة)|شاحن\s*محمول|power\s*bank|portable\s*(?:charger|power))',
+    ("power_bank", r'(?:باور\s*بانك|ب[ا]?نك\s*الطاقة|شاحن\s*متنقل|بطارية\s*(?:متنقلة|احتياطية|محمولة|خارجية)|شاحن\s*محمول|power\s*bank|portable\s*(?:charger|power))',
      "باور بانك (شاحن متنقل)", "Portable Power Bank",
      "باور بانك بسعة شحن عملية وتقنيات شحن سريع آمنة لشحن الموبايل والأجهزة بكفاءة أثناء السفر والتنقل."),
 
@@ -819,7 +841,7 @@ SMART_CATEGORIES = [
      "شاحن لابتوب", "Laptop Power Adapter Charger",
      "شاحن لابتوب عالي الكفاءة بقدرة كهربائية مستقرة وحماية متكاملة ضد زيادة الجهد والحرارة لشحن آمن وسريع."),
 
-    ("wall_charger", r'(?:شاحن\s*(?:حائط|جداري|سريع|منزلي|مكتبي|أصلي|تايب\s*سي|من\s+\w+|بمنفذ|بقوة|بقدرة|gan)|راس\s*شاحن|رأس\s*شاحن|شاحن\s*r\d+|wall\s*charger|fast\s*charger|gan\s*charger|usb-?c\s*charger)',
+    ("wall_charger", r'(?:شاحن\s*(?:[A-Za-z0-9\-]{1,10}\s+)?(?:حائط|جداري|سريع|عالي\s*السرعة|منزلي|مكتبي|أصلي|تايب\s*سي|usb-?c|من\s+\w+|بمنفذ|بقوة|بقدرة|gan|\d{2,3}\s*(?:وات|واط|w\b))|راس\s*شاحن|رأس\s*شاحن|شاحن\s*r\d+|wall\s*charger|fast\s*charger|gan\s*charger|usb-?c\s*charger)',
      "شاحن سريع", "Fast Wall Charger",
      "شاحن حائط سريع يدعم تقنيات الشحن الذكي لتزويد هاتفك وأجهزتك بأعلى سرعة شحن آمنة مع حماية ضد السخونة."),
 
@@ -855,7 +877,7 @@ SMART_CATEGORIES = [
      "ساعة يد أنيقة", "Wristwatch",
      "ساعة يد أنيقة بتصميم عصري وخامات متينة مقاومة للخدش تمنحك مظهراً راقياً ودقة عالية في التوقيت."),
 
-    ("gaming_monitor", r'(?:شاشة\s*(?:ألعاب|العاب|كمبيوتر|منحنية|جيمنج)|gaming\s*monitor|curved\s*monitor|\b\d{2}\s*(?:انش|بوصة|inch)\s*\d{2,3}\s*hz\b|\bmonitor\b)',
+    ("gaming_monitor", r'(?:شاشة\s*(?:ألعاب|العاب|كمبيوتر|منحنية|جيمنج)|شاشة\s*[^\n،,]{0,25}?\b(?:22|24|27|32|34)\s*(?:بوصة|انش|إنش|inch)|gaming\s*monitor|curved\s*monitor|\b\d{2}\s*(?:انش|بوصة|inch)\s*\d{2,3}\s*hz\b|\bmonitor\b)',
      "شاشة كمبيوتر وألعاب", "Gaming & PC Monitor",
      "شاشة عرض عالية الدقة بمعدل تحديث سريع وألوان غنية وزوايا رؤية واسعة لتجربة ألعاب وعمل احترافية مريحة للعين."),
 
@@ -863,7 +885,7 @@ SMART_CATEGORIES = [
      "شاشة تلفزيون ذكية", "Smart TV",
      "شاشة تلفزيون ذكية بدقة فائقة وألوان نابضة بالحياة مع نظام ذكي مدمج لتشغيل تطبيقات المشاهدة وصوت نقي غامر."),
 
-    ("smartphone", r'(?:\bموبايل\b|هاتف\s*(?:ذكي|محمول)|\bجوال\b|\bsmartphone\b|\biphone\s*1\d\b|موبايل\s*(?:سامسونج|شاومي|أبل|ابل|ريلمي|أوبو|اوبو|إنفينيكس|انفينكس|هونر|فيفو))',
+    ("smartphone", r'(?:\bموبايل\b|هاتف\s*(?:ذكي|محمول)|\bجوال\b|\bsmartphone\b|\b(?:iphone|آيفون|ايفون)\s*1\d\b|(?:جالكسي|جالاكسي|galaxy)\s*(?:s\d{1,2}|a\d{2}|m\d{2}|z\s*(?:fold|flip))\b|(?:redmi\s*note|ريدمي\s*نوت)\s*\d+\b|(?:ثنائي\s*الشريحة|dual\s*sim).*?\b(?:4g|5g|جيجابايت|\d+gb)\b|موبايل\s*(?:سامسونج|شاومي|أبل|ابل|ريلمي|أوبو|اوبو|إنفينيكس|انفينكس|هونر|فيفو))',
      "موبايل ذكي", "Smartphone",
      "هاتف ذكي متكامل بمعالج قوي وشاشة سريعة الوضوح وكاميرات عالية الدقة مع بطارية كبيرة تدعم الشحن السريع."),
 
@@ -879,7 +901,7 @@ SMART_CATEGORIES = [
      "سماعة أذن سلكية", "Wired In-Ear Earphones",
      "سماعة أذن سلكية، بصوت نقي وباس متوازن وميكروفون مدمج للمكالمات الواضحة مع سلك متين وتصميم مريح للأذن."),
 
-    ("earbuds", r'(?:سماعات?\s*(?:أذن|اذن|بلوتوث|لاسلكية|ايربودز?|إيربودز?)|earbuds|airpods|true\s*wireless|\btws\b|freeclips|spacebuds)',
+    ("earbuds", r'(?:سماعات?\s*(?:أذن|اذن|بلوتوث|لاسلكية|ايربودز?|إيربودز?)|داخل\s*الأذن|in-?ear\s*(?:earphones|earbuds|wireless)|earbuds|airpods|true\s*wireless|\btws\b|freeclips|spacebuds|freebuds|\b(?:r50i|p20i|k20i|a20i)\b|liberty\s*(?:buds|\d)|wave\s*(?:beam|buds|flex))',
      "سماعة أذن لاسلكية", "True Wireless Earbuds",
      "سماعة أذن لاسلكية بصوت نقي غني بالباس وميكروفون واضح للمكالمات مع بطارية تدوم طويلاً وعلبة شحن مدمجة."),
 
@@ -1074,6 +1096,34 @@ SMART_CATEGORIES = [
     ("auto_care", r'(?:ماء\s*مساحات|زيت\s*محرك|ملمع\s*(?:تابلوه|إطارات)|منفاخ\s*إطارات|مساحات\s*زجاج|شامبو\s*سيارات|motor\s*oil|windshield\s*washer)',
      "عناية ومستلزمات سيارات", "Car Care & Automotive",
      "منتج عملي للعناية بالسيارة والحفاظ على كفاءة التشغيل والنظافة بأداء موثوق."),
+
+    ("sandwich_maker", r'(?:صانعة?\s*(?:ساندوتش(?:ات)?|ساندويتش(?:ات)?|وافل)|محضرة\s*الوجبات\s*الخفيفة.*?ساندو[ي]?تش|\bتوستر\b|محمصة\s*خبز|شواية\s*كهربائية|جريل\s*كهربائي|sandwich\s*(?:maker|grill)|waffle\s*maker|\btoaster\b|contact\s*grill|health\s*grill)',
+     "صانعة ساندوتشات وشواية كهربائية", "Sandwich Maker & Electric Grill",
+     "صانعة ساندوتشات وشواية كهربائية بألواح غير لاصقة سهلة التنظيف وتسخين سريع متساوٍ لتحضير أشهى الساندوتشات والمشويات."),
+
+    ("electric_stove", r'(?:طبق\s*تسخين|مسطح\s*(?:كهربائي|بلت|غاز|سيراميك)|\bبوتاجاز\b|شعلة\s*كهربائية|عين\s*كهربائية|ceramic\s*heating\s*plate|hot\s*plate|electric\s*(?:cooktop|stove|burner))',
+     "مسطح وسخان طهي كهربائي", "Electric Hot Plate & Cooktop",
+     "مسطح وسخان طهي عملي بتسخين سريع وتحكم مريح في درجات الحرارة لطهي وتسخين الطعام بكفاءة وأمان."),
+
+    ("scooter_hoverboard", r'(?:هوفر\s*بورد|سكوتر\s*(?:كهربائي|ذكي|توازن|ركلة|أطفال)|\bhoverboard\b|self[\s\-]*balancing\s*scooter|electric\s*scooter|kick\s*scooter)',
+     "سكوتر وهوفر بورد ذكي", "Smart Hoverboard & Scooter",
+     "سكوتر وهوفر بورد عصري بتوازن ذكي وحركة سلسة وهيكل متين يمنح تجربة قيادة ممتعة وآمنة."),
+
+    ("batteries", r'(?:بطاري[ةه]\s*(?:ليثيوم|قلوية|قلم|ألكالاين|الكالاين|عملة)|\bبطاريات\s*(?:قلم|ليثيوم|قلوية|ألكالاين|قابلة\s*للشحن)\b|\bcr20(?:32|25|16)\b|\b(?:aa|aaa)\s*batter|lithium\s*(?:coin\s*)?battery|alkaline\s*batter)',
+     "بطاريات طاقة", "Alkaline & Lithium Batteries",
+     "بطاريات طاقة أصلية طويلة العمر بتفريغ مستقر وآمن لتشغيل الريموت والساعات والأجهزة الإلكترونية بكفاءة."),
+
+    ("home_decor", r'(?:لوح[ةه]\s*(?:فنية|حائط|جدارية|كانفاس|مطبوعة)|لوحات\s*(?:فنية|حائط|جدارية)|تابلوه|بوهو\s*مرسومة|ديكور\s*(?:منزلي|حائط)|wall\s*art|printed\s*canvas|home\s*gallery\s*set)',
+     "لوحات وديكور منزلي", "Wall Art & Home Decor",
+     "لوحات وديكور جداري أنيق بطباعة عالية الوضوح وألوان جذابة تضيف لمسة فنية راقية لغرف المعيشة والمكاتب."),
+
+    ("makeup", r'(?:أحمر\s*شفاه|ملمع\s*شفاه|ماسكارا|ماسكرا|كريم\s*أساس|فاونديشن|كونسيلر|آيلاينر|ايلاينر|بلاشر|مكياج|طلاء\s*أظافر|lipstick|lip\s*gloss|mascara|foundation|concealer|eyeliner|\bmakeup\b)',
+     "مستحضرات تجميل ومكياج", "Makeup & Cosmetics",
+     "مستحضر تجميل بتركيبة ناعمة وثبات مميز يمنحك إطلالة جذابة وطبيعية طوال اليوم."),
+
+    ("mop_cleaning_tool", r'(?:طقم\s*(?:دلو\s*و)?ممسحة|ممسحة\s*(?:دوارة|أرضيات|مايكروفايبر)|جردل\s*وممسحة|مساحة\s*أرضيات|floor\s*mop|spin\s*mop|mop\s*bucket)',
+     "طقم ممسحة وتنظيف أرضيات", "Spin Floor Mop & Bucket Set",
+     "طقم ممسحة أرضيات عملي برأس مايكروفايبر فائق الامتصاص وعصر مريح لتنظيف جميع الأسطح بسهولة وسرعة."),
 ]
 
 CATEGORY_BY_KEY = {row[0]: row for row in SMART_CATEGORIES}
@@ -1108,13 +1158,29 @@ def _clean_for_cat_match(text):
     return re.sub(r'\s+', ' ', s).strip()
 
 
-def _score_text_categories(title, en_slug="", breadcrumbs="", features_text=""):
+def _is_cat_forbidden(cat_key, brand_en="", price=None):
+    """يتحقق مما إذا كانت الفئة مستحيلة منطقياً للماركة أو السعر (مثل موبايل UGREEN أو لابتوب بسعر 300 ج.م)."""
+    if brand_en in _NO_MAJOR_DEVICE_BRANDS and cat_key in ("smartphone", "tablet", "laptop", "smart_tv", "refrigerator", "washing_machine", "air_conditioner"):
+        return True
+    if brand_en == "Redragon" and cat_key in ("smartphone", "tablet", "laptop", "smart_tv"):
+        return True
+    if price is not None and price > 0:
+        if price < 1400 and cat_key in ("smartphone", "tablet"):
+            return True
+        if price < 4500 and cat_key == "laptop":
+            return True
+        if price < 2500 and cat_key in ("smart_tv", "refrigerator", "washing_machine", "air_conditioner"):
+            return True
+    return False
+
+
+def _score_text_categories(title, en_slug="", breadcrumbs="", features_text="", brand_en="", price=None):
     """
     يحسب نقاط كل فئة بذكاء سياقي كامل:
-    - مسار الفئة في المتجر (Breadcrumbs): وزن 45 نقطة
-    - بداية العنوان قبل (متوافق مع / مع / بدون): وزن 40 نقطة + مكافأة الكلمات الأولى (+25)
-    - الاسم الإنجليزي الرسمي (en_slug): وزن 32 نقطة للبداية و14 للباقي
-    - باقي العنوان قبل (متوافق مع): وزن 12 نقطة
+    - بداية العنوان قبل (متوافق مع / مع / بدون): وزن 38 نقطة + مكافأة الكلمات الأولى (+28)
+    - الاسم الإنجليزي الرسمي (en_slug): وزن 30 نقطة للبداية + مكافأة (+20)
+    - مسار الفئة في المتجر (Breadcrumbs): وزن مساعد 22 نقطة (بدون اعتباره بداية عنوان حتى لا يطغى القسم العام على المنتج)
+    - باقي العنوان قبل (متوافق مع): وزن 14 نقطة
     - الوصف الكامل والمواصفات (Features / Overview / Specs): وزن 15 نقطة
     """
     scores = {}
@@ -1137,8 +1203,7 @@ def _score_text_categories(title, en_slug="", breadcrumbs="", features_text=""):
     for cat_key, pat, _, _, _ in SMART_CATEGORIES:
         sc = 0.0
         if c_crumbs and re.search(pat, c_crumbs, re.IGNORECASE):
-            sc += 45.0
-            head_matched_cats.add(cat_key)
+            sc += 22.0
 
         if c_head:
             m = re.search(pat, c_head, re.IGNORECASE)
@@ -1169,6 +1234,33 @@ def _score_text_categories(title, en_slug="", breadcrumbs="", features_text=""):
             scores[cat_key] = sc
 
     # قواعد حسم التضارب المنطقي السياقي:
+    # 0) قواعد منطق الماركة والسعر (إكسسوارات مثل UGREEN/Anker/Soundcore أو سعر < 1400 ج.م مستحيل تكون موبايل أو لابتوب!)
+    if brand_en in _NO_MAJOR_DEVICE_BRANDS:
+        for imp_cat in ("smartphone", "tablet", "laptop", "smart_tv", "refrigerator", "washing_machine", "air_conditioner"):
+            scores.pop(imp_cat, None)
+    elif brand_en == "Redragon":
+        for imp_cat in ("smartphone", "tablet", "laptop", "smart_tv"):
+            scores.pop(imp_cat, None)
+
+    if price is not None and price > 0:
+        if price < 1400:
+            scores.pop("smartphone", None)
+            scores.pop("tablet", None)
+        if price < 4500:
+            scores.pop("laptop", None)
+        if price < 2500:
+            for heavy_cat in ("smart_tv", "refrigerator", "washing_machine", "air_conditioner"):
+                scores.pop(heavy_cat, None)
+
+    # قدرة كهربائية >= 1000W أو مشترك iLock بمنافذ مستحيل يكون شاحن موبايل حائط (شاحن الحائط أقصاه 240W) -> مشترك كهربائي!
+    if "wall_charger" in scores:
+        combined_title_slug = f"{title or ''} {en_clean}"
+        if re.search(r'\b[1-4]\d{3}\s*(?:وات|واط|w\b|watt)', combined_title_slug, re.I) or (
+            brand_en == "iLock" and re.search(r'منافذ|مخارج|ports?|outlets?|3500|2500', combined_title_slug, re.I)
+        ):
+            scores.pop("wall_charger", None)
+            scores["power_strip"] = max(scores.get("power_strip", 0.0), 75.0)
+
     # 1) مشغل الوسائط TV Stick يلغي التلفزيون Smart TV تماماً
     if "tv_stick" in scores:
         scores["tv_stick"] += 40.0
@@ -1177,7 +1269,7 @@ def _score_text_categories(title, en_slug="", breadcrumbs="", features_text=""):
     if any(k in scores for k in ("stand_fan", "fan", "stand_mixer", "steam_iron", "baby_chair")):
         scores.pop("stand_holder", None)
     # 3) الساعة الذكية وسوار الساعة يلغيان الموبايل والشاشة الذكية
-    if "watch_strap" in head_matched_cats:
+    if "watch_strap" in scores and "watch_strap" in head_matched_cats:
         scores["watch_strap"] += 35.0
         scores.pop("smartwatch", None)
         scores.pop("smartphone", None)
@@ -1186,23 +1278,43 @@ def _score_text_categories(title, en_slug="", breadcrumbs="", features_text=""):
         scores.pop("smartphone", None)
         scores.pop("smart_tv", None)
         scores.pop("gaming_monitor", None)
-    # 4) جراب الحماية ولاصقة الشاشة في بداية العنوان يلغيان الجهاز المتوافق معه (موبايل/تابلت/باور بانك/لابتوب)
-    for acc_k in ("protective_case", "screen_protector", "laptop_bag", "laptop_cooler", "laptop_charger"):
-        if acc_k in head_matched_cats:
-            scores[acc_k] += 35.0
+    # 4) جراب الحماية ولاصقة الشاشة والمبرد والملحقات في بداية العنوان يلغون الجهاز المتوافق معه
+    for acc_k in ("protective_case", "screen_protector", "laptop_bag", "laptop_cooler", "phone_cooler", "laptop_charger", "charging_cable", "wall_charger", "car_charger", "wireless_charger", "stand_holder"):
+        if acc_k in scores and acc_k in head_matched_cats:
+            scores[acc_k] += 30.0
             for dev_k in ("smartphone", "tablet", "power_bank", "laptop", "earbuds"):
                 if dev_k not in head_matched_cats:
                     scores.pop(dev_k, None)
+    if "phone_cooler" in scores:
+        scores["phone_cooler"] += 35.0
+        for k_rm in ("lantern", "smartphone", "protective_case"):
+            if k_rm not in head_matched_cats:
+                scores.pop(k_rm, None)
+    if "scooter_hoverboard" in scores:
+        scores["scooter_hoverboard"] += 40.0
+        for k_rm in ("earbuds", "speaker", "lantern"):
+            scores.pop(k_rm, None)
+    if "batteries" in scores and "batteries" in head_matched_cats:
+        scores["batteries"] += 35.0
+        scores.pop("power_bank", None)
+        scores.pop("smartwatch", None)
+    if any(k in head_matched_cats for k in ("food_chopper", "blender", "stand_mixer")):
+        scores.pop("milk_frother", None)
     # 5) كابل شحن صريح في أول العنوان يلغي الشاحن الجداري (مثل: كابل شاحن سريع 66W)
     if "charging_cable" in head_matched_cats and "wall_charger" in scores:
         if not re.search(r'^\s*(?:[\w\u0600-\u06FF]+\s+)?(?:شاحن|مجموعة\s*شاحن|راس\s*شاحن|wall\s*charger)', c_head, re.I):
             scores.pop("wall_charger", None)
-    # 6) سماعة الرأس للألعاب أو فوق الأذن تلغي إيربودز الأذن
-    if any(k in head_matched_cats for k in ("gaming_headset", "headphones", "wired_earphones")):
+    # 6) التمييز الدقيق بين سماعة الأذن اللاسلكية (Earbuds مثل R50i/K20i) وسماعة الرأس (Over-Ear Headphones)
+    if "earbuds" in scores and "earbuds" in head_matched_cats and not re.search(r'فوق\s*الأذن|على\s*الأذن|over-?ear|on-?ear|gaming\s*headset|سماعة\s*رأس\s*للألعاب', f"{c_head} {c_en_head}", re.I):
+        scores["earbuds"] += 25.0
+        scores.pop("headphones", None)
+    elif any(k in head_matched_cats for k in ("gaming_headset", "headphones", "wired_earphones")):
         scores.pop("earbuds", None)
     # 7) القهوة سريعة التحضير/الحبيبات بدون كلمة "ماكينة/صانعة" تلغي ماكينة القهوة
     if "coffee_drink" in scores and "coffee_maker" not in head_matched_cats:
         scores.pop("coffee_maker", None)
+    if "gaming_monitor" in scores and "smart_tv" in head_matched_cats:
+        scores.pop("gaming_monitor", None)
 
     return scores, head_matched_cats
 
@@ -1369,10 +1481,11 @@ def _extract_rich_specs(title, en_slug="", specs_text="", cat_key="", brand_en="
 
     # 6. استخراج رقم/اسم الموديل العام (مثل Tapo C202, C530WS, OTW-323, R50i, HD9314, fx-570ES, Go 4, FreeClips, Zeus H510)
     m_named = re.search(
-        r'\b(Tapo\s*[A-Z]?\d{2,4}[A-Z]*|OneBlade|FreeClips|SpaceBuds(?:\s*Neo)?|Zeus\s*(?:H\d+)?|'
-        r'Go\s*[34]|Flip\s*[56]|Charge\s*5|Wave\s*(?:Beam|Buds|Flex)|Life\s*[APQ]\d\w*|Liberty\s*\d\w*|'
-        r'R50i|P20i|K20i|OEP[\s\-]?\d{3}|OTW[\s\-]?\d{3}|OCF[\s\-]?\d{3}[A-Z]?|'
+        r'\b(Tapo\s*[A-Z]?\d{2,4}[A-Z]*|OneBlade|FreeClips|FreeBuds(?:\s*SE\s*\d?)?|SpaceBuds(?:\s*Neo)?|Zeus\s*(?:H\d+)?|'
+        r'Go\s*[34]|Flip\s*[56]|Charge\s*5|Wave\s*(?:Beam|Buds|Flex)|Life\s*[APQ]\d\w*|Liberty\s*(?:Buds|\d\w*)|'
+        r'R50i|P20i|K20i|A20i|OEP[\s\-]?\d{3}|OTW[\s\-]?\d{3}|OCF[\s\-]?\d{3}[A-Z]?|'
         r'[Ff][Xx][\s\-]?\d{2,4}[A-Za-z]+|HD\d{4}(?:/\d{2})?|KM\d{4,5}[A-Z]?|'
+        r'CR20(?:32|25|16)|UC\d{2}|CX\d{2}|K552|XS[\s\-]?655|'
         r'C\d{3}[A-Z]{1,3}|TC\d{2,3}|GS\d{3}|H\d{3}|M\d{3}|VC\d{3})\b',
         primary + " " + re.sub(r'[-_]+', ' ', en_slug or ""),
         re.I,
@@ -1381,13 +1494,13 @@ def _extract_rich_specs(title, en_slug="", specs_text="", cat_key="", brand_en="
         mv = re.sub(r'\s+', ' ', m_named.group(1)).strip()
         if re.match(r'^fx', mv, re.I):
             mv = "fx-" + re.sub(r'^[Ff][Xx][\s\-]*', '', mv).upper()
-        elif re.match(r'^(?:R50i|P20i|K20i)$', mv, re.I):
+        elif re.match(r'^(?:R50i|P20i|K20i|A20i)$', mv, re.I):
             mv = mv[0].upper() + mv[1:-1] + "i"
-        elif re.match(r'^(?:OEP|OTW|OCF|HD|KM|TC|GS|VC|C\d)', mv, re.I):
+        elif re.match(r'^(?:OEP|OTW|OCF|HD|KM|TC|GS|VC|CR20|UC|CX|K552|XS|C\d)', mv, re.I):
             mv = mv.upper()
         else:
             _casing_map = {
-                "freeclips": "FreeClips", "spacebuds": "SpaceBuds", "oneblade": "OneBlade",
+                "freeclips": "FreeClips", "freebuds": "FreeBuds", "se": "SE", "spacebuds": "SpaceBuds", "oneblade": "OneBlade",
                 "tapo": "Tapo", "zeus": "Zeus", "neo": "Neo", "liberty": "Liberty",
                 "wave": "Wave", "beam": "Beam", "buds": "Buds", "flex": "Flex",
                 "life": "Life", "charge": "Charge", "flip": "Flip", "go": "Go",
@@ -1410,6 +1523,11 @@ def _extract_rich_specs(title, en_slug="", specs_text="", cat_key="", brand_en="
         if m_lit and 0.2 <= float(m_lit.group(1)) <= 60:
             spec_ar.append(f"سعة {m_lit.group(1)} لتر" if cat_key not in ("detergent", "grocery") else f"{m_lit.group(1)} لتر")
             spec_en.append(f"{m_lit.group(1)}L")
+        elif cat_key in ("food_chopper", "blender"):
+            m_ml_ch = re.search(r'\b(\d{3,4})\s*(?:مل(?:لي(?:لتر)?)?|ml\b)', primary + " " + (en_slug or "").replace("-", " "), re.I)
+            if m_ml_ch and 200 <= int(m_ml_ch.group(1)) <= 2000:
+                spec_ar.append(f"سعة {m_ml_ch.group(1)} مل")
+                spec_en.append(f"{m_ml_ch.group(1)}ml")
 
     if cat_key in ("washing_machine", "grocery", "detergent", "supplements", "weights_fitness"):
         m_kg = re.search(r'(?<![\d.])(\d{1,3}(?:\.\d)?)\s*(?:كجم|كيلو(?:\s*جرام)?|kg\b)', primary, re.I)
@@ -1464,7 +1582,7 @@ def _extract_rich_specs(title, en_slug="", specs_text="", cat_key="", brand_en="
         "power_bank", "wall_charger", "car_charger", "wireless_charger", "laptop_charger",
         "charging_cable", "power_strip", "kettle", "air_fryer", "stand_mixer", "blender",
         "food_chopper", "microwave", "coffee_maker", "steam_iron", "steam_cleaner", "vacuum",
-        "hair_styler", "speaker", "soundbar",
+        "hair_styler", "speaker", "soundbar", "sandwich_maker", "electric_stove", "phone_cooler",
     ):
         m_w = re.search(r'(?<![A-Za-z0-9])(\d{1,4})\s*(?:وات|واط|W\b|Watt)', primary + " " + (en_slug or "").replace("-", " "), re.I)
         if m_w and 5 <= int(m_w.group(1)) <= 3500:
@@ -1519,6 +1637,11 @@ _DANGLING_AR_WORDS = {
 def _clean_natural_ar_fallback(title, brand_en=""):
     t = re.sub(r'[\(\[\{].*?[\)\]\}]', ' ', title or "")
     t = re.sub(r'[,،؛|]+', ' ', t)
+    if brand_en:
+        # إزالة التكرار العربي لاسم الماركة عندما نضيف الاسم الإنجليزي الرسمي للماركة
+        for ar_k, en_v in RAW_BRAND_EN_MAP.items():
+            if en_v.lower() == brand_en.lower() and re.search(r'[\u0600-\u06FF]', ar_k):
+                t = re.sub(rf'(?:\bمن\s+)?\b{re.escape(ar_k)}\b', ' ', t)
     words = [
         w for w in t.split()
         if len(w) > 1 and w.lower() not in ("أصلي", "اصلي", "جديد", "عرض", "خصم")
@@ -1548,7 +1671,11 @@ def _clean_en_slug_title(en_slug, brand_en=""):
     s = re.sub(r'[-_]+', ' ', s).strip()
     if not s or re.search(r'[\u0600-\u06FF]', s):
         return ""
-    words = s.split()[:9]
+    words = []
+    for raw_w in s.split():
+        if not words or words[-1].lower() != raw_w.lower():
+            words.append(raw_w)
+    words = words[:9]
     titled = []
     for w in words:
         if w.upper() in ("USB", "HDMI", "LED", "LCD", "QLED", "OLED", "UHD", "FHD", "HD", "ANC", "ENC", "TWS", "RGB", "SSD", "RAM", "5G", "4K", "3K", "2K", "PD", "GAN"):
@@ -1572,12 +1699,13 @@ def analyze_product(
     breadcrumbs=None,
     specs=None,
     image_url=None,
+    price=None,
     use_vision=True,
     allow_network_translate=True,
 ):
     """
     المحلل الذكي المتكامل للمنتج:
-    يجمع بين العنوان الكامل + الوصف والمواصفات + مسار الفئة + الرابط الإنجليزي + الرؤية الحاسوبية للصورة (CLIP Vision)
+    يجمع بين العنوان الكامل + الوصف والمواصفات + مسار الفئة + الرابط الإنجليزي + السعر + الرؤية الحاسوبية للصورة (CLIP Vision)
     لإنتاج:
       - brand_en: الماركة بالإنجليزية دائماً
       - cat_key: الفئة الدقيقة للمنتج
@@ -1596,9 +1724,9 @@ def analyze_product(
         brand, title=t_clean, extra_text=f"{en_slug or ''} {full_context_text}", allow_network=allow_network_translate
     )
 
-    # 2. التقييم النصي الشامل (العنوان + الوصف الكامل + مسار الفئة + الـ Slug الإنجليزي)
+    # 2. التقييم النصي الشامل (العنوان + الوصف الكامل + مسار الفئة + الـ Slug الإنجليزي + منطق الماركة والسعر)
     scores, head_matched = _score_text_categories(
-        t_clean, en_slug=en_slug or "", breadcrumbs=crumbs_str, features_text=full_context_text
+        t_clean, en_slug=en_slug or "", breadcrumbs=crumbs_str, features_text=full_context_text, brand_en=brand_en, price=price
     )
 
     ranked_text = sorted(scores.items(), key=lambda x: x[1], reverse=True)
@@ -1634,7 +1762,7 @@ def analyze_product(
                 scores[vc_k] = scores[vc_k] + (vc_p * 38.0)
 
         # قاعدة التصحيح البصري الصارم (Visual Sanity Override):
-        if v_cat in CATEGORY_BY_KEY and v_cat != best_text_cat:
+        if v_cat in CATEGORY_BY_KEY and v_cat != best_text_cat and not _is_cat_forbidden(v_cat, brand_en, price):
             if best_text_cat is None:
                 # إذا كان العنوان مفقوداً أو عاماً، أو كانت الصورة واضحة بثقة فائقة جداً (>88%)
                 if (is_placeholder_title and v_prob >= 0.48) or (v_prob >= 0.88 and v_cos >= 0.28):
@@ -1642,7 +1770,7 @@ def analyze_product(
             elif best_text_cat in _AMBIGUOUS_TEXT_CATS and v_prob >= 0.45:
                 # لا نلغي جراب الحماية أو الكابل لو مكتوب صراحةً كأول كلمة في العنوان
                 explicit_head_guard = (
-                    (best_text_cat == "protective_case" and re.match(r'^\s*(?:[\w\u0600-\u06FF]+\s+)?(?:جراب|كفر|حافظة)', t_clean))
+                    (best_text_cat in ("protective_case", "screen_protector") and re.match(r'^\s*(?:[\w\u0600-\u06FF]+\s+)?(?:جراب|كفر|حافظة|واقي|لاصقة|سكرين)', t_clean))
                     or (best_text_cat == "charging_cable" and re.match(r'^\s*(?:[\w\u0600-\u06FF]+\s+)?(?:كابل|سلك|وصلة)\s*(?:شحن|تايب|بيانات|usb|type)', t_clean, re.I))
                 )
                 if not explicit_head_guard:
