@@ -102,13 +102,12 @@
     "Al-otnya",
     "BaByliss",
     "Xiaomi",
-    "Lenovo"
+    "Lenovo",
+    "Limitless",
+    "Haier",
+    "Ayzd Kyr"
   ],
   "queries": [
-    "ترابيزة مكواة خشب جوهار",
-    "طقم مفكات ايه APT",
-    "زجاجة علكة بنكهة ترايدنت",
-    "Akla Hania All",
     "بولة سلطة رويال",
     "جهاز Amazon Kindle امازون",
     "HONOR Pad X9a اونر",
@@ -184,7 +183,11 @@
     "الوطنية برايم اورجانيزر",
     "مجفف شعر شاين بيبي ليس",
     "موبايل شاومي 17T",
-    "تابلت ريدمي باد شاومي"
+    "تابلت ريدمي باد شاومي",
+    "مغرفة مسحوق الفا ليميتليس",
+    "سماعات أذن لاسلكية ساوند كور",
+    "تلفزيون ذكي بوصة هاير",
+    "صابون لليدين ايزي ايزد كير"
   ],
   "channels": [
     "epichardware",
@@ -423,6 +426,14 @@
     "Sal7lyEgypt/39229",
     "epichardware/4487",
     "Sal7lyEgypt/39235",
-    "Sal7lyEgypt/39234"
+    "Sal7lyEgypt/39234",
+    "epichardware/4492",
+    "epichardware/4491",
+    "epichardware/4490",
+    "epichardware/4488",
+    "Sal7lyEgypt/39244",
+    "Sal7lyEgypt/39243",
+    "Sal7lyEgypt/39242",
+    "Sal7lyEgypt/39241"
   ]
 }
