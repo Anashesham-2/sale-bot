@@ -1043,7 +1043,8 @@ def build_message(store, title, price, list_price, discount, link,
                   stack_promos=None, stack_howto=None, section_note=None,
                   extra_pct=0.0, extra_egp=0.0, extra_label=None, promo_links=None,
                   brand=None, custom_insight=None,
-                  en_slug=None, breadcrumbs=None, specs=None, image_url=None):
+                  en_slug=None, breadcrumbs=None, specs=None, image_url=None,
+                  en_title=None, en_brand=None, en_breadcrumbs=None):
     store_ar = "أمازون" if store.lower() == "amazon" else ("نون" if store.lower() == "noon" else store)
     icon = "🔥" if store.lower() == "amazon" else "🟡"
 
@@ -1051,7 +1052,7 @@ def build_message(store, title, price, list_price, discount, link,
     if b_raw.lower() in _GENERIC_BRAND_NAMES:
         b_raw = ""
 
-    # التحليل الذكي متعدد الوسائط (العنوان الكامل + الوصف والمواصفات + مسار الفئة + السعر + الصورة بالرؤية الحاسوبية)
+    # التحليل الذكي متعدد الوسائط V2 (النسخة الإنجليزية الرسمية + العنوان والوصف العربي + الرؤية الحاسوبية لصورة المنتج)
     intel = pi.analyze_product(
         title,
         brand=b_raw,
@@ -1062,6 +1063,10 @@ def build_message(store, title, price, list_price, discount, link,
         image_url=image_url,
         price=price,
         use_vision=bool(image_url),
+        product_url=link,
+        en_title=en_title,
+        en_brand=en_brand,
+        en_breadcrumbs=en_breadcrumbs,
     )
     brand_en = intel["brand_en"]
     name_ar = intel["name_ar"]
@@ -1491,7 +1496,7 @@ async def amazon_product_details(context, link):
             return None, None, None, None, None, None, [], [], [], {}
         await page.evaluate("window.scrollTo(0, document.body.scrollHeight * 0.65)")
         await page.wait_for_timeout(1200)
-        data = await page.evaluate("""() => {
+        data = await page.evaluate("""async () => {
             const q = s => document.querySelector(s)?.innerText?.trim();
             const pdp_title = q('#productTitle') || q('#title') || '';
             const seller = q('#sellerProfileTriggerId')
@@ -1547,7 +1552,35 @@ async def amazon_product_details(context, link):
             )];
             const revs = [...document.querySelectorAll('[data-hook="reviewText"], [data-hook="review-collapsed"], .review-text-content')]
                 .map(e => e.innerText.trim()).filter(x => x.length > 15).slice(0, 3);
-            return {pdp_title, seller, brand, ratingTxt, reviewsTxt, feats, breadcrumbs, specs, en_slug, image, promos: promos.slice(0, 10), promo_links: promo_links.slice(0, 2), revs};
+            let en_title = '', en_brand = '', en_breadcrumbs = [];
+            if (location.pathname.includes('/-/en/')) {
+                en_title = pdp_title;
+                en_brand = brand || '';
+                en_breadcrumbs = breadcrumbs;
+            } else {
+                const am = location.pathname.match(/\\/(?:dp|gp\\/product)\\/([A-Z0-9]{10})/i);
+                if (am) {
+                    try {
+                        const ctrl = new AbortController();
+                        const tid = setTimeout(() => ctrl.abort(), 4000);
+                        const resp = await fetch(`https://www.amazon.eg/-/en/dp/${am[1].toUpperCase()}?th=1&psc=1`, { signal: ctrl.signal, credentials: 'omit' });
+                        clearTimeout(tid);
+                        if (resp.ok) {
+                            const htmlTxt = await resp.text();
+                            const ed = new DOMParser().parseFromString(htmlTxt, 'text/html');
+                            en_title = (ed.querySelector('#productTitle')?.textContent || ed.querySelector('#title')?.textContent || '').replace(/\\s+/g, ' ').trim();
+                            let eb = (ed.querySelector('tr.po-brand td.a-span9')?.textContent || ed.querySelector('#bylineInfo')?.textContent || '').replace(/\\s+/g, ' ').trim();
+                            if (eb) {
+                                eb = eb.replace(/^(Visit the|Brand:|العلامة التجارية:|قم بزيارة متجر)\\s*/i, '').replace(/\\s*Store$/i, '').trim();
+                            }
+                            en_brand = eb;
+                            en_breadcrumbs = [...ed.querySelectorAll('#wayfinding-breadcrumbs_feature_div li a, #wayfinding-breadcrumbs_container a')]
+                                .map(e => e.textContent.replace(/\\s+/g, ' ').trim()).filter(Boolean);
+                        }
+                    } catch (e) {}
+                }
+            }
+            return {pdp_title, seller, brand, ratingTxt, reviewsTxt, feats, breadcrumbs, specs, en_slug, en_title, en_brand, en_breadcrumbs, image, promos: promos.slice(0, 10), promo_links: promo_links.slice(0, 2), revs};
         }""")
         seller = data.get("seller")
         brand = data.get("brand")
@@ -1567,6 +1600,9 @@ async def amazon_product_details(context, link):
             "en_slug": data.get("en_slug") or "",
             "breadcrumbs": data.get("breadcrumbs") or [],
             "specs": data.get("specs") or [],
+            "en_title": data.get("en_title") or "",
+            "en_brand": data.get("en_brand") or "",
+            "en_breadcrumbs": data.get("en_breadcrumbs") or [],
         }
     except Exception as e:
         print(f"تعذر جلب تفاصيل المنتج: {e}")
@@ -1745,7 +1781,7 @@ async def scrape_amazon_eg(page):
                 full_title_amz = info["title"]
             rating = info["rating"] or pdp_rating
             reviews = info["reviews"] or pdp_reviews
-            if not is_trusted_product(full_title_amz, brand=brand, rating=rating, reviews=reviews):
+            if not is_trusted_product(full_title_amz, brand=extra_ctx.get("en_brand") or brand, rating=rating, reviews=reviews):
                 continue
 
             stack_promos, stack_howto, extra_pct, extra_egp, extra_label, promo_links = detect_stacking_promos(
@@ -1779,6 +1815,9 @@ async def scrape_amazon_eg(page):
                 breadcrumbs=extra_ctx.get("breadcrumbs"),
                 specs=extra_ctx.get("specs"),
                 image_url=chosen_img_amz,
+                en_title=extra_ctx.get("en_title"),
+                en_brand=extra_ctx.get("en_brand"),
+                en_breadcrumbs=extra_ctx.get("en_breadcrumbs"),
             )
             is_free_now = is_almost_free(eff_price, info["list_price"], discount)
             await pace_and_send(msg, image=chosen_img_amz, is_freebie=is_free_now)
@@ -1889,7 +1928,7 @@ async def noon_product_details(context, link):
             return None, None, None, None, None, [], [], {}
         await page.evaluate("window.scrollTo(0, document.body.scrollHeight * 0.5)")
         await page.wait_for_timeout(800)
-        data = await page.evaluate("""() => {
+        data = await page.evaluate("""async () => {
             const h1El = document.querySelector('[data-qa="pdp-product-name"]') || document.querySelector('h1');
             const full_title = h1El?.innerText?.trim();
             let brand = document.querySelector('[data-qa*="brand" i], a[class*="brand" i]')?.innerText;
@@ -1949,7 +1988,40 @@ async def noon_product_details(context, link):
                 .map(e => e.innerText.trim())
                 .filter(x => x.length > 15 && x.length < 220 && !x.includes('لو اشتريت منتج من نون') && !x.includes('تقديم التقييم'))
                 .slice(0, 2);
-            return {full_title, brand, seller, feats, breadcrumbs, specs, en_slug, image, promos: promos.slice(0, 5), revs};
+            let en_title = '', en_brand = '', en_breadcrumbs = [];
+            if (location.pathname.includes('/egypt-en/')) {
+                en_title = full_title || '';
+                en_brand = brand || '';
+                en_breadcrumbs = breadcrumbs;
+            } else {
+                const enUrl = en_slug || (location.href.includes('/egypt-ar/') ? location.href.replace('/egypt-ar/', '/egypt-en/') : '');
+                if (enUrl && enUrl.startsWith('http') && enUrl !== location.href) {
+                    try {
+                        const ctrl = new AbortController();
+                        const tid = setTimeout(() => ctrl.abort(), 4000);
+                        const resp = await fetch(enUrl, { signal: ctrl.signal });
+                        clearTimeout(tid);
+                        if (resp.ok) {
+                            const htmlTxt = await resp.text();
+                            const ed = new DOMParser().parseFromString(htmlTxt, 'text/html');
+                            en_title = (ed.querySelector('[data-qa="pdp-product-name"]')?.textContent || ed.querySelector('h1')?.textContent || ed.querySelector('meta[property="og:title"]')?.content || '').replace(/\\s+/g, ' ').trim();
+                            let eb = (ed.querySelector('[data-qa*="brand" i], a[class*="brand" i]')?.textContent || '').replace(/[>›]/g, '').split('\\n')[0].trim();
+                            if (!eb) {
+                                try {
+                                    const nj = JSON.parse(ed.querySelector('#__NEXT_DATA__')?.textContent || '{}');
+                                    const prod = nj?.props?.pageProps?.catalog?.product || nj?.props?.pageProps?.product;
+                                    if (prod?.brand) eb = String(prod.brand).trim();
+                                    if (!en_title && prod?.name) en_title = String(prod.name).trim();
+                                } catch (e) {}
+                            }
+                            en_brand = eb;
+                            en_breadcrumbs = [...ed.querySelectorAll('[data-qa*="breadcrumb" i] a, nav[aria-label*="breadcrumb" i] a, [class*="breadcrumb" i] a')]
+                                .map(e => e.textContent.replace(/\\s+/g, ' ').trim()).filter(Boolean);
+                        }
+                    } catch (e) {}
+                }
+            }
+            return {full_title, brand, seller, feats, breadcrumbs, specs, en_slug, en_title, en_brand, en_breadcrumbs, image, promos: promos.slice(0, 5), revs};
         }""")
         full_title = data.get("full_title")
         if is_blocked_title(full_title):
@@ -1964,6 +2036,9 @@ async def noon_product_details(context, link):
             "en_slug": data.get("en_slug") or "",
             "breadcrumbs": data.get("breadcrumbs") or [],
             "specs": data.get("specs") or [],
+            "en_title": data.get("en_title") or "",
+            "en_brand": data.get("en_brand") or "",
+            "en_breadcrumbs": data.get("en_breadcrumbs") or [],
         }
     except Exception as e:
         print(f"تعذر جلب تفاصيل منتج نون: {e}")
@@ -2120,7 +2195,7 @@ async def scrape_noon_eg(page):
             if not title or is_blocked_title(title):
                 continue
             brand = pdp_brand or card.get("brand")
-            if not is_trusted_product(title, brand=brand, rating=info["rating"], reviews=info["reviews"]):
+            if not is_trusted_product(title, brand=extra_ctx.get("en_brand") or brand, rating=info["rating"], reviews=info["reviews"]):
                 continue
             if not seller and card.get("express"):
                 seller = "نون (Express)"
@@ -2155,6 +2230,9 @@ async def scrape_noon_eg(page):
                 breadcrumbs=extra_ctx.get("breadcrumbs"),
                 specs=extra_ctx.get("specs"),
                 image_url=chosen_img_noon,
+                en_title=extra_ctx.get("en_title"),
+                en_brand=extra_ctx.get("en_brand"),
+                en_breadcrumbs=extra_ctx.get("en_breadcrumbs"),
             )
             is_free_now = is_almost_free(eff_price, info["list_price"], discount)
             await pace_and_send(msg, image=chosen_img_noon, is_freebie=is_free_now)
@@ -2435,7 +2513,7 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                 canonical_url = _strip_foreign_affiliate_params(page.url)
             await page.evaluate("window.scrollTo(0, document.body.scrollHeight * 0.55)")
             await page.wait_for_timeout(1000)
-            data = await page.evaluate("""() => {
+            data = await page.evaluate("""async () => {
                 const q = s => document.querySelector(s)?.innerText?.trim();
                 const title = q('#productTitle') || q('#title') || document.querySelector('meta[property="og:title"]')?.content || '';
                 const priceSelectors = [
@@ -2581,7 +2659,35 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                 } else if (outOfStockBox || (isExplicitlyUnavailable && !isShippingRestrictionOnly)) {
                     isOutOfStock = true;
                 }
-                return {title, priceTxt, listTxt, savingsTxt, bought, seller, brand, ratingTxt, reviewsTxt, feats, breadcrumbs, specs, en_slug, image, promos: promos.slice(0, 10), promo_links: promo_links.slice(0, 2), revs, isOutOfStock, hasAddToCart};
+                let en_title = '', en_brand = '', en_breadcrumbs = [];
+                if (location.pathname.includes('/-/en/')) {
+                    en_title = title;
+                    en_brand = brand || '';
+                    en_breadcrumbs = breadcrumbs;
+                } else {
+                    const am = location.pathname.match(/\\/(?:dp|gp\\/product)\\/([A-Z0-9]{10})/i);
+                    if (am) {
+                        try {
+                            const ctrl = new AbortController();
+                            const tid = setTimeout(() => ctrl.abort(), 4000);
+                            const resp = await fetch(`https://www.amazon.eg/-/en/dp/${am[1].toUpperCase()}?th=1&psc=1`, { signal: ctrl.signal, credentials: 'omit' });
+                            clearTimeout(tid);
+                            if (resp.ok) {
+                                const htmlTxt = await resp.text();
+                                const ed = new DOMParser().parseFromString(htmlTxt, 'text/html');
+                                en_title = (ed.querySelector('#productTitle')?.textContent || ed.querySelector('#title')?.textContent || '').replace(/\\s+/g, ' ').trim();
+                                let eb = (ed.querySelector('tr.po-brand td.a-span9')?.textContent || ed.querySelector('#bylineInfo')?.textContent || '').replace(/\\s+/g, ' ').trim();
+                                if (eb) {
+                                    eb = eb.replace(/^(Visit the|Brand:|العلامة التجارية:|قم بزيارة متجر)\\s*/i, '').replace(/\\s*Store$/i, '').trim();
+                                }
+                                en_brand = eb;
+                                en_breadcrumbs = [...ed.querySelectorAll('#wayfinding-breadcrumbs_feature_div li a, #wayfinding-breadcrumbs_container a')]
+                                    .map(e => e.textContent.replace(/\\s+/g, ' ').trim()).filter(Boolean);
+                            }
+                        } catch (e) {}
+                    }
+                }
+                return {title, priceTxt, listTxt, savingsTxt, bought, seller, brand, ratingTxt, reviewsTxt, feats, breadcrumbs, specs, en_slug, en_title, en_brand, en_breadcrumbs, image, promos: promos.slice(0, 10), promo_links: promo_links.slice(0, 2), revs, isOutOfStock, hasAddToCart};
             }""")
         finally:
             await page.close()
@@ -2721,8 +2827,13 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
             breadcrumbs=data.get("breadcrumbs"),
             specs=data.get("specs"),
             image_url=image,
+            en_title=data.get("en_title"),
+            en_brand=data.get("en_brand"),
+            en_breadcrumbs=data.get("en_breadcrumbs"),
         )
-        brand_en_out = pi.normalize_brand_english(brand, title=title, allow_network=False) or brand
+        brand_en_out = pi.normalize_brand_english(
+            brand, title=title, en_brand=data.get("en_brand") or "", en_title=data.get("en_title") or "", allow_network=False
+        ) or brand
         return msg, image, canonical_url, branded_url(canonical_url), title, eff_price, "|".join(stack_promos), is_active, active_reason, brand_en_out
 
     if "noon.com" in ul:
@@ -2737,9 +2848,9 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                 canonical_url = _strip_foreign_affiliate_params(page.url)
             await page.evaluate("window.scrollTo(0, document.body.scrollHeight * 0.5)")
             await page.wait_for_timeout(900)
-            data = await page.evaluate("""() => {
+            data = await page.evaluate("""async () => {
                 const h1El = document.querySelector('[data-qa="pdp-product-name"]') || document.querySelector('h1');
-                const full_title = h1El?.innerText?.trim() || document.querySelector('meta[property="og:title"]')?.content || '';
+                let full_title = h1El?.innerText?.trim() || document.querySelector('meta[property="og:title"]')?.content || '';
                 let brand = document.querySelector('[data-qa*="brand" i], a[class*="brand" i]')?.innerText;
                 if (!brand && h1El?.previousElementSibling) {
                     const prevTxt = (h1El.previousElementSibling.innerText || '').replace(/[>›]/g, '').trim();
@@ -2858,7 +2969,40 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                 } else if (unavailEl || isExplicitlyUnavailable) {
                     isOutOfStock = true;
                 }
-                return {full_title, brand, seller, priceNow, priceWas, savingTxt, ratingTxt, reviewsTxt, feats, breadcrumbs, specs, en_slug, image, promos: promos.slice(0, 5), revs, isOutOfStock, hasAddToCart};
+                let en_title = '', en_brand = '', en_breadcrumbs = [];
+                if (location.pathname.includes('/egypt-en/')) {
+                    en_title = full_title || '';
+                    en_brand = brand || '';
+                    en_breadcrumbs = breadcrumbs;
+                } else {
+                    const enUrl = en_slug || (location.href.includes('/egypt-ar/') ? location.href.replace('/egypt-ar/', '/egypt-en/') : '');
+                    if (enUrl && enUrl.startsWith('http') && enUrl !== location.href) {
+                        try {
+                            const ctrl = new AbortController();
+                            const tid = setTimeout(() => ctrl.abort(), 4000);
+                            const resp = await fetch(enUrl, { signal: ctrl.signal });
+                            clearTimeout(tid);
+                            if (resp.ok) {
+                                const htmlTxt = await resp.text();
+                                const ed = new DOMParser().parseFromString(htmlTxt, 'text/html');
+                                en_title = (ed.querySelector('[data-qa="pdp-product-name"]')?.textContent || ed.querySelector('h1')?.textContent || ed.querySelector('meta[property="og:title"]')?.content || '').replace(/\\s+/g, ' ').trim();
+                                let eb = (ed.querySelector('[data-qa*="brand" i], a[class*="brand" i]')?.textContent || '').replace(/[>›]/g, '').split('\\n')[0].trim();
+                                if (!eb) {
+                                    try {
+                                        const nj = JSON.parse(ed.querySelector('#__NEXT_DATA__')?.textContent || '{}');
+                                        const prod = nj?.props?.pageProps?.catalog?.product || nj?.props?.pageProps?.product;
+                                        if (prod?.brand) eb = String(prod.brand).trim();
+                                        if (!en_title && prod?.name) en_title = String(prod.name).trim();
+                                    } catch (e) {}
+                                }
+                                en_brand = eb;
+                                en_breadcrumbs = [...ed.querySelectorAll('[data-qa*="breadcrumb" i] a, nav[aria-label*="breadcrumb" i] a, [class*="breadcrumb" i] a')]
+                                    .map(e => e.textContent.replace(/\\s+/g, ' ').trim()).filter(Boolean);
+                            }
+                        } catch (e) {}
+                    }
+                }
+                return {full_title, brand, seller, priceNow, priceWas, savingTxt, ratingTxt, reviewsTxt, feats, breadcrumbs, specs, en_slug, en_title, en_brand, en_breadcrumbs, image, promos: promos.slice(0, 5), revs, isOutOfStock, hasAddToCart};
             }""")
         finally:
             await page.close()
@@ -2937,8 +3081,13 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
             breadcrumbs=data.get("breadcrumbs"),
             specs=data.get("specs"),
             image_url=image,
+            en_title=data.get("en_title"),
+            en_brand=data.get("en_brand"),
+            en_breadcrumbs=data.get("en_breadcrumbs"),
         )
-        brand_en_out = pi.normalize_brand_english(brand, title=title, allow_network=False) or brand
+        brand_en_out = pi.normalize_brand_english(
+            brand, title=title, en_brand=data.get("en_brand") or "", en_title=data.get("en_title") or "", allow_network=False
+        ) or brand
         return msg, image, canonical_url, branded_url(canonical_url), title, eff_price, "|".join(stack_promos), is_active, active_reason, brand_en_out
 
     return None, None, canonical_url, branded_url(canonical_url), None, None, "", False, "رابط غير مدعوم", None
@@ -3664,6 +3813,10 @@ async def run_cycle(p, listen_only_seconds=0):
                 await listener_task
             except Exception:
                 pass
+        try:
+            pi.save_tr_cache()
+        except Exception:
+            pass
         await browser.close()
 
 async def main():

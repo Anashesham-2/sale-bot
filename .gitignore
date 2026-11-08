@@ -3,3 +3,4 @@ __pycache__/
 bot.log
 .env
 .en_tr_cache.json
+.en_meta_cache.json
