@@ -10,17 +10,18 @@ on:
       - 'requirements.txt'
       - '.github/workflows/**'
   schedule:
-    # كل 30 دقيقة بيتأكد إن فيه تشغيلة شغالة؛ لو التشغيلة الحالية شغالة،
-    # الجديدة بتستنى وتبدأ أول ما القديمة تخلص (فالبوت ما بيقفش)
-    - cron: '*/30 * * * *'
-  workflow_dispatch: # تشغيل يدوي بزر Run workflow
+    # شبكة أمان احتياطية فقط لو تعثرت التشغيلة التلقائية المتسلسلة
+    - cron: '*/20 * * * *'
+  workflow_dispatch: # تشغيل فوري تلقائي عند انتهاء كل جلسة أو تشغيل يدوي
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: deals-bot
-  cancel-in-progress: true
+  # إلغاء الجلسة الشغالة فقط عند رفع تعديل كود جديد (push)، وعدم قطع البوت أبداً أثناء الفحص في الجدولة!
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
   scrape-deals:
@@ -85,3 +86,11 @@ jobs:
               git push origin HEAD:main || echo "Push failed"
             fi
           done
+
+      - name: Trigger next continuous session immediately (Zero-Downtime Self-Chain)
+        if: always() && !cancelled()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Triggering next 6-hour bot session immediately via workflow_dispatch..."
+          gh workflow run bot.yml --ref main || true
