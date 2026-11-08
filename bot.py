@@ -1211,16 +1211,16 @@ def build_message(store, title, price, list_price, discount, link,
     is_bundle = (tier == "bundle")
 
     if freebie:
-        header = f"🚨🔥 ببلاش حرفياً على {store_ar}! (خصم {eff_disc:.0f}% — نزل من {fmt(list_price)} لـ {fmt(effective_price)} ج.م)"
+        header = f"🚨{icon} ببلاش حرفياً على {store_ar}! (خصم {eff_disc:.0f}% — نزل من {fmt(list_price)} لـ {fmt(effective_price)} ج.م)"
         deal_hashtags = "#عروض_ببلاش #عروض_لقطة"
     elif is_half:
-        header = f"🏷️🔥 خصم نص السعر على {store_ar}! (خصم {eff_disc:.0f}%)"
+        header = f"🏷️{icon} خصم نص السعر على {store_ar}! (خصم {eff_disc:.0f}%)"
         deal_hashtags = "#عروض_نص_السعر #عروض_لقطة"
     elif is_big_cash:
-        header = f"💰🔥 توفير كاش ضخم على {store_ar}! (وفرت {fmt(saving_egp)} ج.م كاش)"
+        header = f"💰{icon} توفير كاش ضخم على {store_ar}! (وفرت {fmt(saving_egp)} ج.م كاش)"
         deal_hashtags = "#توفير_كاش #عروض_لقطة"
     elif is_bundle:
-        header = f"🎁🔥 لقطة توفير بالكمية على {store_ar}!"
+        header = f"🎁{icon} لقطة توفير بالكمية على {store_ar}!"
         deal_hashtags = "#عروض_توفير #عروض_لقطة"
     elif section_note:
         header = f"{icon} على {store_ar} — {section_note}"
