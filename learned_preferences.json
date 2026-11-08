@@ -121,10 +121,10 @@
     "Adidas",
     "Babyjoy",
     "Choetech",
-    "Tank"
+    "Tank",
+    "Gigabyte"
   ],
   "queries": [
-    "شامبو بيوكسين للجنسين",
     "أكياس فرن كوبيتي، Eco Pack",
     "طقم لوحة مفاتيح",
     "موزع HDMI USB يوجرين",
@@ -203,7 +203,8 @@
     "حذاء رياضي للبالغين اديداس",
     "حفاضات أطفال بيبي بيبي جوي",
     "سماعات أذن لاسلكية تشويتك",
-    "غلاية سيف تاتش تانك"
+    "غلاية سيف تاتش تانك",
+    "تلفزيون ايه برو شاومي"
   ],
   "channels": [
     "epichardware",
@@ -495,6 +496,12 @@
     "Sal7lyEgypt/39272",
     "epichardware/4503",
     "Sal7lyEgypt/39275",
-    "Sal7lyEgypt/39274"
+    "Sal7lyEgypt/39274",
+    "epichardware/4504",
+    "Sal7lyEgypt/39280",
+    "Sal7lyEgypt/39279",
+    "Sal7lyEgypt/39278",
+    "Sal7lyEgypt/39277",
+    "Sal7lyEgypt/39276"
   ]
 }
