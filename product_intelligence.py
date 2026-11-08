@@ -857,7 +857,7 @@ SMART_CATEGORIES = [
      "كابل شحن ونقل بيانات", "Fast Charging & Data Cable",
      "كابل شحن ونقل بيانات متين ومضفر يدعم الشحن السريع ومقاوم للثني والقطع للاستخدام اليومي المكثف."),
 
-    ("stand_holder", r'(?:حامل\s*(?:موبايل|هاتف|لابتوب|تابلت|شاشة|سيارة|مكتب|ثلاثي|ترايبود)|ستاند\s*(?:موبايل|هاتف|لابتوب|تابلت|مكتب|تصوير)|laptop\s*stand|phone\s*(?:stand|holder|mount)|car\s*(?:mount|holder)|tablet\s*stand|\btripod\b)',
+    ("stand_holder", r'(?:حامل\s*(?:موبايل|هاتف|جوال|لابتوب|تابلت|شاشة|سيارة|مكتب|ثلاثي|ترايبود)|ستاند\s*(?:موبايل|هاتف|جوال|لابتوب|تابلت|مكتب|تصوير)|laptop\s*stand|phone\s*(?:stand|holder|mount)|car\s*(?:mount|holder)|tablet\s*stand|\btripod\b)',
      "حامل وستاند تثبيت", "Adjustable Stand Holder",
      "حامل تثبيت متين وقابل للتعديل بزوايا مريحة وثبات عالي لوضع الموبايل أو اللابتوب في مستوى النظر المريح."),
 
@@ -1170,6 +1170,8 @@ def _is_cat_forbidden(cat_key, brand_en="", price=None):
         if price < 4500 and cat_key == "laptop":
             return True
         if price < 2500 and cat_key in ("smart_tv", "refrigerator", "washing_machine", "air_conditioner"):
+            return True
+        if price >= 2500 and cat_key in ("protective_case", "screen_protector", "charging_cable", "audio_cable", "hdmi_cable", "watch_strap", "stand_holder", "phone_cooler"):
             return True
     return False
 
