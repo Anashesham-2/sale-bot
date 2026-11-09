@@ -139,12 +139,10 @@
     "Raid",
     "Philips",
     "LG",
-    "Imtenan"
+    "Imtenan",
+    "Nyoflam"
   ],
   "queries": [
-    "لاب توب تاف اسس",
-    "فريش تكييف سبليت",
-    "تكييف سبليت حصان فريش",
     "تلفزيون هاير بوصة",
     "شاحن UC25 عالي هافيت",
     "سماعات أذن مفتوحة ساوند كور",
@@ -221,7 +219,10 @@
     "تكييف سبليت سبليت LG",
     "راوتر لاسلكي محمول TP-Link",
     "ليمتليس باور ماكس ليميتليس",
-    "امتنان عسل الزهور"
+    "امتنان عسل الزهور",
+    "محول واط USB سامسونج",
+    "نيوفلام طقم اواني",
+    "علي باور بنك"
   ],
   "channels": [
     "epichardware",
@@ -572,6 +573,14 @@
     "epichardware/4524",
     "epichardware/4523",
     "epichardware/4522",
-    "epichardware/4521"
+    "epichardware/4521",
+    "epichardware/4527",
+    "epichardware/4526",
+    "epichardware/4525",
+    "epichardware/4520",
+    "Sal7lyEgypt/39368",
+    "Sal7lyEgypt/39367",
+    "Sal7lyEgypt/39365",
+    "Sal7lyEgypt/39364"
   ]
 }
