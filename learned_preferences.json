@@ -135,14 +135,12 @@
     "Starville",
     "Fresh",
     "Dice",
-    "Top Chef"
+    "Top Chef",
+    "Raid",
+    "Philips",
+    "LG"
   ],
   "queries": [
-    "مروحة مكتب تورنيدو",
-    "ماكينة حلاقة مزدوجة دوركو",
-    "تخفيضات تسوق العروض،",
-    "طقم مفك مسامير توكزر",
-    "مضخة هواء محمولة Home Care",
     "تاتش الزنوكي عصاره Touch Elzenouki",
     "فرن غاز بيلت وايت لاين",
     "لاب توب تاف اسس",
@@ -217,7 +215,12 @@
     "فريش موزع مياه،",
     "مشروب الطاقة التيميت",
     "طقم جرانيت مكون توب شيف",
-    "adidas mens ULTIMASHOW اديداس"
+    "adidas mens ULTIMASHOW اديداس",
+    "مكمل بروتين ايزوليت ريد ريكس",
+    "كابل شاحن طراز تشويتك",
+    "شاشة بوصة طراز كتاب فيليب",
+    "تكييف سبليت سبليت LG",
+    "راوتر لاسلكي محمول TP-Link"
   ],
   "channels": [
     "epichardware",
@@ -558,6 +561,12 @@
     "Sal7lyEgypt/39315",
     "Sal7lyEgypt/39314",
     "Sal7lyEgypt/39313",
-    "Sal7lyEgypt/39312"
+    "Sal7lyEgypt/39312",
+    "epichardware/4519",
+    "epichardware/4518",
+    "epichardware/4517",
+    "epichardware/4516",
+    "epichardware/4515",
+    "epichardware/4514"
   ]
 }
