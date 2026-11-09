@@ -138,11 +138,10 @@
     "Top Chef",
     "Raid",
     "Philips",
-    "LG"
+    "LG",
+    "Imtenan"
   ],
   "queries": [
-    "تاتش الزنوكي عصاره Touch Elzenouki",
-    "فرن غاز بيلت وايت لاين",
     "لاب توب تاف اسس",
     "فريش تكييف سبليت",
     "تكييف سبليت حصان فريش",
@@ -220,7 +219,9 @@
     "كابل شاحن طراز تشويتك",
     "شاشة بوصة طراز كتاب فيليب",
     "تكييف سبليت سبليت LG",
-    "راوتر لاسلكي محمول TP-Link"
+    "راوتر لاسلكي محمول TP-Link",
+    "ليمتليس باور ماكس ليميتليس",
+    "امتنان عسل الزهور"
   ],
   "channels": [
     "epichardware",
@@ -567,6 +568,10 @@
     "epichardware/4517",
     "epichardware/4516",
     "epichardware/4515",
-    "epichardware/4514"
+    "epichardware/4514",
+    "epichardware/4524",
+    "epichardware/4523",
+    "epichardware/4522",
+    "epichardware/4521"
   ]
 }
