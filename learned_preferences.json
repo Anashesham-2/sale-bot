@@ -129,10 +129,10 @@
     "Aly Kafyh",
     "On Layf",
     "Beko",
-    "HIKSEMI"
+    "HIKSEMI",
+    "Mienta"
   ],
   "queries": [
-    "ماكينة تنظيف السجاد بيسيل",
     "قطاعة لامولينيت خلاط مولينكس",
     "ابل ايباد برو",
     "Diafa Plain Cheddar ضيافة",
@@ -211,7 +211,8 @@
     "تكييف هواء بارد بيكو",
     "لابتوب ألعاب LOQ لينوفو",
     "لابتوب ليجن 16IRX10 لينوفو",
-    "هارد SSD خارجي HIKSEMI"
+    "هارد SSD خارجي HIKSEMI",
+    "مروحة مزودة سرعات مينتا"
   ],
   "channels": [
     "epichardware",
@@ -528,6 +529,7 @@
     "epichardware/4506",
     "Sal7lyEgypt/39294",
     "Sal7lyEgypt/39295",
-    "Sal7lyEgypt/39296"
+    "Sal7lyEgypt/39296",
+    "Sal7lyEgypt/39297"
   ]
 }
