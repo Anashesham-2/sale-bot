@@ -797,6 +797,7 @@ VISION_PROMPTS = [
     ("car_charger", "a product photo of a car cigarette lighter USB charger adapter"),
     ("wireless_charger", "a product photo of a magnetic wireless charging pad or stand"),
     ("power_bank", "a product photo of a portable power bank battery pack"),
+    ("router", "a product photo of a wireless WiFi internet router access point or range extender with antennas or ports"),
     ("storage_drive", "a product photo of an external portable SSD drive, hard drive or flash drive"),
     ("water_heater", "a product photo of a domestic water heater mounted on the wall"),
     ("power_strip", "a product photo of an electrical power strip extension socket outlets"),
@@ -854,7 +855,7 @@ VISION_PROMPTS = [
 
 # فئات ذات شكل بصري هندسي مميز جداً يمكن لـ CLIP حسْمها حتى لو كان النص العربي تالفاً أو عاماً
 _HIGH_PRECISION_VISION_CATS = {
-    "kettle", "water_heater", "storage_drive", "stand_fan", "pc_cooler", "tv_stick", "smart_tv", "security_camera",
+    "kettle", "water_heater", "storage_drive", "router", "stand_fan", "pc_cooler", "tv_stick", "smart_tv", "security_camera",
     "charging_cable", "wall_charger", "car_charger", "power_bank", "power_strip",
     "stand_mixer", "blender", "food_chopper", "air_fryer", "microwave", "coffee_maker",
     "steam_iron", "ironing_board", "drying_rack", "vacuum", "washing_machine",
@@ -1006,6 +1007,12 @@ SMART_CATEGORIES = [
     ("security_camera", r'(?:كاميرا\s*(?:أمان|امان|مراقبة|داخلية|خارجية|واي\s*فاي|ذكية|لاسلكية|امنية|أمنية)|كاميرات\s*مراقبة|security\s*camera|surveillance\s*camera|ip\s*camera|\btapo\s*c\d+|\bc\d{3}ws\b|\btc\d{2}\b)',
      "كاميرا مراقبة ذكية", "Smart Security Camera",
      "كاميرا مراقبة ذكية بدقة تصوير عالية ورؤية ليلية واضحة، مع كشف ذكي للحركة وتنبيهات فورية على الموبايل لحماية المنزل والمكتب."),
+
+    ("router", r'(?:\b(?:راوتر|رواتر|مودم|ماي\s*فاي|أكسس\s*بوينت|اكسس\s*بوينت|سويتش\s*شبكة|موزع\s*(?:شبكة|واي\s*فاي|وايرلس)|مقوي\s*(?:شبكة|إشارة|واي\s*فاي)|موسع\s*نطاق)\b|'
+               r'(?:wifi\s*|wireless\s*|portable\s*|travel\s*|4g\s*|5g\s*|lte\s*|mesh\s*|gigabit\s*)router\b|\brouters?\b|'
+               r'\b(?:range\s*extender|wifi\s*extender|wifi\s*repeater|wifi\s*booster|access\s*point|mesh\s*wifi|mifi|vdsl\s*modem|network\s*switch)\b)',
+     "راوتر وموزع واي فاي", "Wireless WiFi Router & Extender",
+     "راوتر وموزع شبكة لاسلكي عالي السرعة بتغطية قوية وإشارة مستقرة لتوصيل جميع أجهزتك بالإنترنت بسلاسة وبدون تقطيع."),
 
     ("camera_photo", r'(?:كاميرا\s*(?:فورية|رقمية|تصوير|فوتوغرافية)|instax\s*mini|digital\s*camera|action\s*camera)',
      "كاميرا تصوير", "Instant & Digital Camera",
@@ -1444,6 +1451,9 @@ _EN_BREADCRUMB_CAT_MAP = [
     (r'\bcar\s*chargers?\b', "car_charger"),
     (r'\bwireless\s*chargers?\b', "wireless_charger"),
     (r'\bportable\s*power\s*banks?\b|\bpower\s*banks?\b', "power_bank"),
+    (r'\brouters?\b|\bwireless\s*routers?\b|\bnetworking\s*devices?\b', "router"),
+    (r'\baccess\s*points?\b|\brange\s*extenders?\b|\brepeaters?\b', "router"),
+    (r'\bmodems?\b|\bnetwork\s*switches?\b', "router"),
     (r'\bexternal\s*hard\s*drives?\b|\bexternal\s*solid\s*state\s*drives?\b|\bdata\s*storage\b|\bsolid\s*state\s*drives?\b|\binternal\s*solid\s*state\s*drives?\b|\busb\s*flash\s*drives?\b|\bflash\s*drives?\b|\bmemory\s*cards?\b|\bmicro\s*sd\s*cards?\b', "storage_drive"),
     (r'\bwater\s*heaters?(?:\s*&\s*parts)?\b|\bgas\s*water\s*heaters?\b|\belectric\s*water\s*heaters?\b', "water_heater"),
     (r'\bpower\s*strips?\b|\bsurge\s*protectors?\b|\bextension\s*cords?\b', "power_strip"),
@@ -1544,16 +1554,16 @@ def _is_cat_forbidden(cat_key, brand_en="", price=None, breadcrumbs_str="", titl
     """يتحقق مما إذا كانت الفئة مستحيلة منطقياً للماركة أو السعر أو مسار قسم الإكسسوارات."""
     t_low = f"{title_str or ''} {breadcrumbs_str or ''}".lower()
 
-    # حماية سخانات المياه والأجهزة الكبيرة من التصنيف الخاطئ كباور بانك أو كابل أو حامل
+    # حماية سخانات المياه والأجهزة الكبيرة وأجهزة الشبكات من التصنيف الخاطئ كباور بانك أو كابل أو حامل
     if cat_key == "power_bank":
-        if re.search(r'سخان|heater|غلاية|kettle|بوتاجاز|stove|فرن|oven|غسالة|washing|ثلاجة|fridge|refrigerator|مروحة|pedestal\s*fan', t_low):
+        if re.search(r'سخان|heater|غلاية|kettle|بوتاجاز|stove|فرن|oven|غسالة|washing|ثلاجة|fridge|refrigerator|مروحة|pedestal\s*fan|راوتر|رواتر|router|مودم|modem|أكسس\s*بوينت|اكسس\s*بوينت|موزع\s*واي\s*فاي|موسع\s*نطاق|extender', t_low):
             return True
         if price is not None and price >= 3500:
             return True
 
-    # حماية وسائط التخزين والهاردات من التصنيف الخاطئ كأجهزة تابلت
+    # حماية وسائط التخزين والهاردات والشبكات من التصنيف الخاطئ كأجهزة تابلت
     if cat_key == "tablet":
-        if re.search(r'\bssd\b|\bhdd\b|\bnvme\b|هارد|ذاكرة\s*فلاشية|solid\s*state|hard\s*drive|flash\s*drive|flash\s*disk', t_low):
+        if re.search(r'\bssd\b|\bhdd\b|\bnvme\b|هارد|ذاكرة\s*فلاشية|solid\s*state|hard\s*drive|flash\s*drive|flash\s*disk|راوتر|رواتر|router|مودم|modem', t_low):
             return True
 
     # حماية الكابلات والحوامل من التصنيف الخاطئ للأجهزة المنزلية
@@ -2209,6 +2219,37 @@ def _extract_rich_specs(title, en_slug="", specs_text="", cat_key="", brand_en="
         elif re.search(r'ديجيتال|digital', combined, re.I):
             spec_ar.append("ديجيتال")
             spec_en.append("Digital")
+
+    # أجهزة الراوتر والشبكات وموزعات الواي فاي والمقويات
+    if cat_key == "router":
+        m_rmodel = re.search(r'\b(TL-MR\d+|TL-WR\d+|Archer\s*[A-Z]?\d+|Deco\s*[A-Z]?\d+|MW\d+|RE\d+|Halo\s*[HS]\d+)\b', combined, re.I)
+        if m_rmodel:
+            rmod = m_rmodel.group(1).upper()
+            spec_ar.append(rmod)
+            spec_en.append(rmod)
+
+        if re.search(r'متنقل|محمول|portable|travel|pocket|mifi', combined, re.I):
+            spec_ar.append("متنقل")
+            spec_en.append("Portable")
+
+        if re.search(r'\b5G\b', combined, re.I):
+            spec_ar.append("5G")
+            spec_en.append("5G")
+        elif re.search(r'\b4G(?:\s*LTE)?\b|lte', combined, re.I):
+            spec_ar.append("4G LTE")
+            spec_en.append("4G LTE")
+
+        if re.search(r'wifi\s*6|واي\s*فاي\s*6', combined, re.I):
+            spec_ar.append("WiFi 6")
+            spec_en.append("WiFi 6")
+        elif re.search(r'dual\s*band|ثنائي\s*النطاق', combined, re.I):
+            spec_ar.append("Dual Band")
+            spec_en.append("Dual Band")
+
+        m_mbps = re.search(r'\b(300|600|750|1200|1800|3000)\s*(?:Mbps|ميجابت|ميجابايت)\b', combined, re.I)
+        if m_mbps:
+            spec_ar.append(f"سرعة {m_mbps.group(1)}Mbps")
+            spec_en.append(f"{m_mbps.group(1)}Mbps")
 
     # إضافة الهدف المتوافق معه باختصار أنيق للجرابات ولاصقات الشاشة والأساور فقط
     if cat_key in ("protective_case", "screen_protector", "watch_strap"):

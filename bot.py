@@ -2625,9 +2625,9 @@ def _parse_fallback_message_info(text):
         "موبايل", "هاتف", "جوال", "لابتوب", "تابلت", "شاشة", "سماعة", "ساعة", "كاميرا",
         "شاحن", "كابل", "باور بانك", "غسالة", "ثلاجة", "بوتاجاز", "سخان", "غلاية", "خلاط",
         "كبة", "قلاية", "مكواة", "مكنسة", "عطر", "شامبو", "كريم", "حذاء", "مكمل", "فيتامين",
-        "أوميجا", "اوميجا", "زيت", "منظف", "مسحوق", "مشترك", "ماوس", "كيبورد", "راوتر",
+        "أوميجا", "اوميجا", "زيت", "منظف", "مسحوق", "مشترك", "ماوس", "كيبورد", "راوتر", "رواتر", "مودم",
         "iphone", "samsung", "apple", "xiaomi", "lenovo", "dell", "hp", "tornado",
-        "fresh", "philips", "ugreen", "anker", "asus", "acer", "oppo", "realme", "redmi"
+        "fresh", "philips", "ugreen", "anker", "asus", "acer", "oppo", "realme", "redmi", "router", "tplink", "tp-link"
     )
 
     all_lines = [l.strip() for l in t.split('\n') if l.strip()]
