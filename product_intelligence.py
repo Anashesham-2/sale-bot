@@ -4,6 +4,7 @@ import json
 import os
 import re
 import threading
+import time
 import requests
 
 # ---------------------------------------------------------------------------
@@ -1437,6 +1438,215 @@ SMART_CATEGORIES = [
 
 CATEGORY_BY_KEY = {row[0]: row for row in SMART_CATEGORIES}
 
+# ---------------------------------------------------------------------------
+# سجل الفئات الذكية المكتشفة ديناميكياً (Autonomous Open-World Dynamic Categories)
+# يتعلم البوت تلقائياً أي منتج جديد في المتجر ويحفظه ذاتياً في dynamic_categories.json
+# ---------------------------------------------------------------------------
+_DYNAMIC_CATEGORIES_FILE = os.path.join(os.path.dirname(__file__), "dynamic_categories.json")
+_DYNAMIC_CATEGORIES = {}
+_dynamic_lock = threading.Lock()
+
+def _load_dynamic_categories():
+    global _DYNAMIC_CATEGORIES
+    if os.path.exists(_DYNAMIC_CATEGORIES_FILE):
+        try:
+            with open(_DYNAMIC_CATEGORIES_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    for k, row in data.items():
+                        _DYNAMIC_CATEGORIES[k] = row
+                        if k not in CATEGORY_BY_KEY:
+                            pat = row.get("regex") or rf'\b{re.escape(row.get("cat_ar", ""))}\b'
+                            CATEGORY_BY_KEY[k] = (
+                                k,
+                                pat,
+                                row.get("cat_ar", ""),
+                                row.get("cat_en", ""),
+                                row.get("desc", ""),
+                            )
+        except Exception as e:
+            print(f"ℹ️ Could not load dynamic categories: {e}")
+
+_load_dynamic_categories()
+
+def register_dynamic_category(cat_key, cat_ar, cat_en, desc=None, regex=None):
+    """يسجل فئة ذكية جديدة تم اكتشافها تلقائياً ويحفظها في dynamic_categories.json."""
+    with _dynamic_lock:
+        if not cat_key or not cat_ar:
+            return
+        pat = regex or rf'\b(?:{re.escape(cat_ar)}|{re.escape(cat_en)})\b'
+        row = {
+            "cat_key": cat_key,
+            "regex": pat,
+            "cat_ar": cat_ar,
+            "cat_en": cat_en,
+            "desc": desc or f"{cat_ar} عالي الجودة والعملية بتصميم متين وأداء موثوق ومواصفات متميزة.",
+            "learned_at": time.time(),
+        }
+        _DYNAMIC_CATEGORIES[cat_key] = row
+        CATEGORY_BY_KEY[cat_key] = (cat_key, pat, cat_ar, cat_en, row["desc"])
+        try:
+            with open(_DYNAMIC_CATEGORIES_FILE, "w", encoding="utf-8") as f:
+                json.dump(_DYNAMIC_CATEGORIES, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+
+_VISION_SUPPORT_KEYWORDS = {
+    "kettle": r'غلاية|كوليكشن|kettle|boiler',
+    "stand_fan": r'مروحة|fan\b|cooling',
+    "pc_cooler": r'مروحة\s*تبريد|كولر|تبريد\s*مائي|cooler|heatsink',
+    "tv_stick": r'ستيك|تي\s*في|بث|stick|streaming|media\s*player',
+    "smart_tv": r'تلفزيون|شاشة|تلفاز|tv\b|smart\s*tv|television',
+    "security_camera": r'كاميرا\s*(?:أمان|مراقبة|واي\s*فاي)|security\s*camera|surveillance|ip\s*camera',
+    "charging_cable": r'كابل|سلك|وصلة|cable\b|cord\b',
+    "wall_charger": r'شاحن\s*(?:حائط|سريع|جداري)|رأس\s*شاحن|wall\s*charger|mains\s*charger|power\s*adapter',
+    "power_bank": r'باور\s*بانك|شاحن\s*متنقل|بطارية\s*(?:خارجية|محمولة)|power\s*bank|battery\s*pack|portable\s*battery|mah\b',
+    "storage_drive": r'هارد|ssd|hdd|فلاشة|ميموري|solid\s*state|hard\s*drive|flash\s*drive|storage',
+    "water_heater": r'سخان|heater\b|geyser\b',
+    "power_strip": r'مشترك|توصيلة|power\s*strip|extension\s*cord',
+    "usb_hub": r'هاب|يو\s*اس\s*بي\s*هاب|محطة\s*إرساء|usb\s*hub|docking',
+    "stand_holder": r'حامل|ستاند|قاعدة\s*تثبيت|holder|stand|mount',
+    "stand_mixer": r'عجان|ستاند\s*مكسر|stand\s*mixer',
+    "blender": r'خلاط|بلندر|blender',
+    "food_chopper": r'كبة|مفرمة|chopper|food\s*processor',
+    "air_fryer": r'قلاية|اير\s*فراير|air\s*fryer',
+    "microwave": r'مايكروويف|ميكروويف|فرن|microwave|toaster\s*oven',
+    "coffee_maker": r'قهوة|اسبريسو|coffee\s*maker|espresso',
+    "steam_iron": r'مكواة|مكواه|كواية|steam\s*iron|garment\s*steamer',
+    "vacuum": r'مكنسة|فراغية|vacuum',
+    "washing_machine": r'غسالة|washing\s*machine',
+    "earbuds": r'سماعة\s*(?:أذن|لاسلكية)|ايربودز|بودز|earbuds|in-ear',
+    "headphones": r'سماعة\s*(?:رأس|محيطية)|headphones|headset',
+    "speaker": r'سماعة\s*(?:بلوتوث|مكبر)|سبيكر|speaker',
+    "soundbar": r'ساوند\s*بار|soundbar',
+    "smartphone": r'موبايل|هاتف|جوال|smartphone|mobile\s*phone',
+    "tablet": r'تابلت|جهاز\s*لوحي|آيباد|ايباد|tablet|ipad',
+    "laptop": r'لابتوب|كمبيوتر\s*محمول|نوت\s*بوك|laptop|notebook',
+    "smartwatch": r'ساعة\s*(?:ذكية|سمارت)|سمارت\s*ووتش|smartwatch|smart\s*watch',
+    "router": r'راوتر|رواتر|مودم|ماي\s*فاي|أكسس\s*بوينت|موزع\s*واي\s*فاي|router|access\s*point|extender|modem',
+}
+
+def _vision_is_semantically_supported(v_cat, title_str="", breadcrumbs_str=""):
+    """يتحقق مما إذا كان العنوان أو المسار يحتوي على أي دليل دلالي يؤيد فئة الرؤية الحاسوبية لمنع الهلوسة."""
+    if not v_cat:
+        return False
+    pat = _VISION_SUPPORT_KEYWORDS.get(v_cat)
+    if not pat:
+        return True
+    combined_text = f"{title_str or ''} {breadcrumbs_str or ''}"
+    return bool(re.search(pat, combined_text, re.IGNORECASE))
+
+_OPEN_WORLD_GENERIC_CRUMBS = {
+    "electronics", "home & kitchen", "kitchen & dining", "tools & home improvement",
+    "sports & outdoors", "health & household", "beauty & personal care", "automotive",
+    "baby products", "office products", "toys & games", "musical instruments",
+    "industrial & scientific", "cell phones & accessories", "computers & accessories",
+    "all products", "categories", "featured deals", "general", "accessories",
+    "الإلكترونيات", "المنزل والمطبخ", "المطبخ", "العدد والأدوات", "الرياضة والأنشطة الخارجية",
+    "الصحة والمنزل", "الجمال والعناية الشخصية", "السيارات", "منتجات الأطفال", "مستلزمات المكتب",
+    "ألعاب وأدوات ترفيهية", "أدوات موسيقية", "الصناعة والعلوم", "الجوالات والموبايلات ومستلزماتها",
+    "الكمبيوتر ومكوناته", "كل المنتجات", "الأقسام", "عروض مميزة", "عام", "ملحقات", "إكسسوارات", "اكسسوارات"
+}
+
+_OPEN_WORLD_DANGLING_AR = {
+    "من", "مع", "في", "على", "إلى", "الى", "عن", "بـ", "لـ", "او", "أو", "و",
+    "ماركة", "براند", "نوع", "طراز", "موديل", "سلسلة", "أصلي", "اصلي", "جديد", "بخصم", "عرض",
+    "الحق", "نار", "جبار", "لقطة", "مميز", "افضل", "أفضل"
+}
+
+def _extract_ar_head_noun(title, brand_en=""):
+    t = re.sub(r'[\(\[\{].*?[\)\]\}]', ' ', title or '')
+    t = re.sub(r'[,،؛|–—:\.]+', ' ', t)
+    t = re.sub(r'^(?:الحق العرض|عرض نار|خصم جبار|سعر لقطة|عرض لقطة|ببلاش|فرصة|عاجل|تنبيه|وصل حديثاً|وصل من جديد|عرض خاص|بأفضل سعر|تخفيضات?|لقطة)\s*', '', t).strip()
+    t = re.split(r'\b(?:\d+|سعة|مقاس|حجم|بقوة|بقدرة|بسرعة|بدقة|لون|موديل|طراز|إصدار|اصدار|الجيل|سلسلة|بشاشة|بكاميرا|مع|مزود|تعمل|يعمل|متوافق|مناسب)\b', t, flags=re.I)[0]
+    words = [w for w in t.split() if w.lower() not in _OPEN_WORLD_DANGLING_AR and len(w) > 1]
+    if brand_en:
+        words = [w for w in words if w.lower() != brand_en.lower()]
+    res = " ".join(words[:3]).strip()
+    return res if len(res) >= 3 else ""
+
+def _extract_en_head_noun(en_title, brand_en=""):
+    s = re.sub(r'[\u0600-\u06FF]+', ' ', str(en_title or ''))
+    s = re.sub(r'[\(\[\{].*?[\)\]\}]', ' ', s)
+    s = re.sub(r'[,،؛|–—:\.]+', ' ', s)
+    s = re.split(r'\b(?:\d+|with|for|featuring|includes?|comes with|color|black|white|grey|gray)\b', s, flags=re.I)[0]
+    words = [w for w in s.split() if w.lower() not in ("the", "a", "an", "and", "or", "new", "pro", "max", "mini", "official", "original", "selected") and len(w) > 1]
+    if brand_en:
+        words = [w for w in words if w.lower() != brand_en.lower()]
+    res = " ".join(words[:3]).strip()
+    return res if len(res) >= 3 else ""
+
+def discover_open_world_category(title, en_title="", breadcrumbs=None, en_breadcrumbs=None, brand_en="", features_text="", price=None):
+    """
+    محرك الذكاء المفتوح (Open-World Dynamic Category Discovery):
+    يتعرف تلقائياً على أي منتج جديد تماماً في العالم غير مسجل مسبقاً،
+    يستخرج اسمه وتصنيفه الدقيق من مسار القسم الرسمي بالمتجر أو رأس العنوان،
+    وينشئ له فئة ذكية جديدة متكاملة ومحفوظة ذاتياً للمستقبل.
+    """
+    leaf_en = None
+    if en_breadcrumbs:
+        for c in reversed(en_breadcrumbs):
+            c_clean = str(c).strip()
+            if c_clean.lower() not in _OPEN_WORLD_GENERIC_CRUMBS and len(c_clean) >= 3:
+                leaf_en = c_clean
+                break
+
+    leaf_ar = None
+    if breadcrumbs:
+        crumbs_list = breadcrumbs if isinstance(breadcrumbs, (list, tuple)) else str(breadcrumbs).split(">")
+        for c in reversed(crumbs_list):
+            c_clean = str(c).strip()
+            if c_clean.lower() not in _OPEN_WORLD_GENERIC_CRUMBS and len(c_clean) >= 3:
+                leaf_ar = c_clean
+                break
+
+    ar_noun = _extract_ar_head_noun(title, brand_en=brand_en)
+    en_noun = _extract_en_head_noun(en_title, brand_en=brand_en)
+
+    cat_ar = ar_noun or leaf_ar
+    cat_en = leaf_en or en_noun
+
+    if not cat_ar and not cat_en:
+        return None
+
+    if not cat_en and cat_ar:
+        tr_en = translate_ar_to_en_fast(cat_ar, timeout=2.5)
+        cat_en = tr_en if tr_en and len(tr_en) >= 3 else (f"{brand_en} Product" if brand_en else "Selected Deal")
+
+    if not cat_ar and cat_en:
+        try:
+            r_ar = requests.get(
+                "https://translate.googleapis.com/translate_a/single",
+                params={"client": "gtx", "sl": "en", "tl": "ar", "dt": "t", "q": cat_en[:60]},
+                timeout=2.5,
+            )
+            if r_ar.ok:
+                cat_ar = "".join(seg[0] for seg in (r_ar.json()[0] or []) if seg and seg[0]).strip()
+        except Exception:
+            pass
+        if not cat_ar:
+            cat_ar = "منتج مميز"
+
+    if cat_en.endswith("s") and not cat_en.endswith("ss") and len(cat_en.split()) == 1 and len(cat_en) > 4:
+        cat_en = cat_en[:-1]
+
+    slug = re.sub(r'[^a-zA-Z0-9]+', '_', cat_en).strip('_').lower()
+    cat_key = f"dyn_{slug[:25]}" if slug else f"dyn_{re.sub(r'[^0-9a-zA-Z]+', '', transliterate_ar_to_en(cat_ar))[:20]}"
+
+    desc = f"{cat_ar} عالي الجودة والعملية بتصميم متين وأداء موثوق ومواصفات ممتازة ({brand_en})." if brand_en else f"{cat_ar} عالي الجودة والعملية بتصميم متين وأداء موثوق."
+
+    kws = [re.escape(k) for k in filter(None, [cat_ar, leaf_ar, ar_noun, cat_en, leaf_en, en_noun])]
+    reg = rf'\b(?:{"|".join(set(kws))})\b'
+
+    register_dynamic_category(cat_key, cat_ar, cat_en, desc=desc, regex=reg)
+
+    return {
+        "cat_key": cat_key,
+        "cat_ar": cat_ar,
+        "cat_en": cat_en,
+        "desc": desc,
+    }
+
 # الفئات المعرضة للالتباس النصي أو للترجمات العربية الآلية الخاطئة (تراجعها النسخة الإنجليزية والرؤية الحاسوبية بقوة)
 _AMBIGUOUS_TEXT_CATS = {
     "charging_cable", "wall_charger", "stand_holder", "smart_tv",
@@ -1680,6 +1890,25 @@ def _score_text_categories(title, en_slug="", breadcrumbs="", features_text="", 
 
         if sc > 0:
             scores[cat_key] = sc
+
+    # تقييم الفئات المكتشفة ديناميكياً التي تعلمها البوت ذاتياً
+    for ckey, data in _DYNAMIC_CATEGORIES.items():
+        pat = data.get("regex")
+        if not pat:
+            continue
+        sc = 0.0
+        if c_head and re.search(pat, c_head, re.I):
+            sc += 55.0
+            head_matched_cats.add(ckey)
+        elif c_en_head and re.search(pat, c_en_head, re.I):
+            sc += 50.0
+            head_matched_cats.add(ckey)
+        elif c_crumbs and re.search(pat, c_crumbs, re.I):
+            sc += 25.0
+        elif c_body and re.search(pat, c_body, re.I):
+            sc += 20.0
+        if sc > 0:
+            scores[ckey] = sc
 
     # قواعد حسم التضارب المنطقي السياقي:
     # 0) قواعد منطق الماركة والسعر وقسم الإكسسوارات
@@ -2498,11 +2727,14 @@ def analyze_product(
         if v_cat in CATEGORY_BY_KEY and not _is_cat_forbidden(v_cat, brand_en, price, all_crumbs_str, title_str=t_clean):
             if chosen_cat is None:
                 non_device_ar_hint = bool(re.search(r'كتاب|رواية|قلم|أقلام|شامبو|كريم|غسول|صابون|عطر|شاي|قهوة|زيت|مكرونة|بسكويت', t_clean))
+                # شرط صارم: الرؤية الحاسوبية لا تفرض فئة وتلغي النص أبداً إلا لو كان العنوان شكلياً (placeholder) أو النص يؤيد فئة الرؤية
+                has_semantic_support = _vision_is_semantically_supported(v_cat, t_clean, all_crumbs_str)
                 if (is_placeholder_title and v_prob >= 0.45) or (
                     not non_device_ar_hint
+                    and has_semantic_support
                     and v_cat in _HIGH_PRECISION_VISION_CATS
                     and v_prob >= 0.50
-                    and v_cos >= 0.275
+                    and v_cos >= 0.28
                     and v_prob >= max(0.50, v_sec_prob * 2.0)
                 ):
                     chosen_cat = v_cat
@@ -2519,6 +2751,22 @@ def analyze_product(
                     chosen_cat = v_cat
                     ar_title_corrupted = True
 
+    # 3.5. محرك الاكتشاف التلقائي للفئات الجديدة (Open-World Dynamic Category Discovery):
+    # إذا لم يكن المنتج ضمن الفئات الثابتة (منتج جديد بالكامل مثل: درون، بروجكتور، منفاخ إطارات، دراجة رياضية...)
+    # يتعرف البوت على نوعه من مسار القسم الرسمي في المتجر أو من رأس العنوان وينشئ له فئة ذكية جديدة فوراً!
+    if chosen_cat is None and not is_placeholder_title:
+        dyn_cat = discover_open_world_category(
+            title=t_clean,
+            en_title=en_official_clean or slug_en_title,
+            breadcrumbs=breadcrumbs,
+            en_breadcrumbs=en_bc_list,
+            brand_en=brand_en,
+            features_text=full_context_text,
+            price=price,
+        )
+        if dyn_cat:
+            chosen_cat = dyn_cat["cat_key"]
+
     # 4. بناء الاسم العربي والاسم الإنجليزي بذكاء ودقة (مع استبعاد العنوان العربي التالف من استخراج المواصفات!)
     title_for_specs = "" if ar_title_corrupted else t_clean
     specs_ar_list, specs_en_list = _extract_rich_specs(
@@ -2534,6 +2782,19 @@ def analyze_product(
 
     if chosen_cat and chosen_cat in CATEGORY_BY_KEY:
         _, _, cat_ar, cat_en, cat_fallback_desc = CATEGORY_BY_KEY[chosen_cat]
+
+        # للفئات الديناميكية المكتشفة تلقائياً: لو لم تتوفر مواصفات محددة، نضيف الكلمات المميزة من العنوان
+        if chosen_cat.startswith("dyn_") and not spec_ar_str:
+            t_rem = re.sub(r'[\(\[\{].*?[\)\]\}]', ' ', title_for_specs)
+            norm_cat_tokens = {norm_ar_token(w) for w in cat_ar.split()}
+            dyn_words = []
+            for raw_w in t_rem.split():
+                w_norm = norm_ar_token(raw_w)
+                if len(raw_w) > 1 and w_norm not in norm_cat_tokens and raw_w.lower() not in _OPEN_WORLD_DANGLING_AR:
+                    if not brand_en or raw_w.lower() != brand_en.lower():
+                        dyn_words.append(raw_w)
+            if dyn_words:
+                spec_ar_str = " ".join(dyn_words[:3]).strip()
 
         if brand_en and brand_en.lower() not in spec_ar_str.lower() and brand_en.lower() not in cat_ar.lower():
             name_ar = f"{cat_ar} {brand_en} {spec_ar_str}".strip()

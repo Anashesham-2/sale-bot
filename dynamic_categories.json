@@ -1,0 +1,26 @@
+{
+  "dyn_drone": {
+    "cat_key": "dyn_drone",
+    "regex": "\\b(?:Drone|Drones|4K\\ Drone|طائرات\\ الدرون|طائرة\\ درون\\ ميني)\\b",
+    "cat_ar": "طائرة درون ميني",
+    "cat_en": "Drone",
+    "desc": "طائرة درون ميني عالي الجودة والعملية بتصميم متين وأداء موثوق ومواصفات ممتازة (DJI).",
+    "learned_at": 1794253704.547567
+  },
+  "dyn_video_projectors": {
+    "cat_key": "dyn_video_projectors",
+    "regex": "\\b(?:جهاز\\ بروجكتور\\ منزلي|أجهزة\\ العرض|Video\\ Projectors|T2\\ Smart\\ Home)\\b",
+    "cat_ar": "جهاز بروجكتور منزلي",
+    "cat_en": "Video Projectors",
+    "desc": "جهاز بروجكتور منزلي عالي الجودة والعملية بتصميم متين وأداء موثوق ومواصفات ممتازة (Wanbo).",
+    "learned_at": 1794253704.5530238
+  },
+  "dyn_exercise_bike": {
+    "cat_key": "dyn_exercise_bike",
+    "regex": "\\b(?:Exercise\\ bike|دراجة\\ تمارين\\ رياضية)\\b",
+    "cat_ar": "دراجة تمارين رياضية",
+    "cat_en": "Exercise bike",
+    "desc": "دراجة تمارين رياضية عالي الجودة والعملية بتصميم متين وأداء موثوق.",
+    "learned_at": 1794253707.4290445
+  }
+}
