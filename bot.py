@@ -482,15 +482,19 @@ def classify_deal_tier(price, list_price, discount=None, deal_highlight=None, st
     eff_list = list_price or 0
     saving_egp = (eff_list - eff_price) if (eff_list > eff_price) else 0
     calc_disc = ((eff_list - eff_price) / eff_list * 100) if (eff_list > eff_price and eff_list > 0) else 0
-    total_disc = max(calc_disc, float(discount or 0))
 
-    if eff_list >= 40 and total_disc >= 70.0:
+    raw_disc = float(discount or 0)
+    # لا نعتمد الخصم المئوي إذا كان وهمياً (>= 90%) أو لو لم يكن هناك سعر قديم حقيقي أكبر من السعر الحالي
+    valid_disc = raw_disc if (1.0 <= raw_disc <= 89.0 and eff_list > eff_price) else 0.0
+    total_disc = max(calc_disc, valid_disc)
+
+    if eff_list >= 40 and eff_list > eff_price and 70.0 <= total_disc < 95.0:
         return "freebie", total_disc, saving_egp
 
-    if eff_list >= 30 and 50.0 <= total_disc < 70.0:
+    if eff_list >= 30 and eff_list > eff_price and 50.0 <= total_disc < 70.0:
         return "half_price", total_disc, saving_egp
 
-    if saving_egp >= 1000 and eff_price >= 500:
+    if saving_egp >= 1000 and eff_price >= 500 and eff_list > eff_price:
         return "big_cash", total_disc, saving_egp
 
     has_bundle = bool(deal_highlight and any(w in deal_highlight for w in ("قطع", "قطعة", "سبسكرايب", "كمية")))
@@ -777,76 +781,6 @@ for _k, _v in BILINGUAL_BRANDS.items():
     _NORM_BILINGUAL_BRANDS[_norm_ar_brand(_k)] = _v
     _NORM_BILINGUAL_BRANDS[_k.lower().strip()] = _v
 
-BILINGUAL_CATEGORIES = [
-    # 1. كروت التسجيل والكابتشر كارد
-    (r'كابتشر\s*كارد|كرت\s*تسجيل|video\s*capture|capture\s*card', 'كابتشر كارد', 'Video Capture Card'),
-
-    # 2. الطابعات الحرارية والمحمولة
-    (r'طابعة\s*(?:حرارية|صغيرة|ملصقات|محمولة|جيب)?|mini\s*printer|thermal\s*printer|label\s*(?:maker|printer)|printer\b', 'طابعة حرارية محمولة', 'Mini Thermal Portable Printer'),
-
-    # 3. إكسسوارات الكمبيوتر واللابتوب (يجب فحصها قبل أجهزة اللابتوب والكمبيوتر حتى لا يُصنف الماوس أو الشنطة كلابتوب)
-    (r'ماوس\s*باد|بساط\s*(?:ماوس|فأرة)|mouse\s*pad', 'ماوس باد', 'Mouse Pad'),
-    (r'ماوس\s*(?:ألعاب|العاب|جيمنج)|فأرة\s*(?:ألعاب|العاب)|gaming\s*mouse', 'ماوس ألعاب', 'Gaming Mouse'),
-    (r'ماوس|فأرة|mouse\b', 'ماوس كمبيوتر', 'Computer Mouse'),
-    (r'كيبورد\s*(?:ألعاب|العاب|جيمنج|ميكانيك|ميكانيكي)|لوحة\s*مفاتيح\s*(?:ألعاب|العاب)|gaming\s*keyboard|mechanical\s*keyboard', 'كيبورد ألعاب ميكانيكي', 'Gaming Keyboard'),
-    (r'كيبورد|لوحة\s*مفاتيح|keyboard\b', 'لوحة مفاتيح', 'Keyboard'),
-    (r'شنطة\s*لابتوب|حقيبة\s*لابتوب|جراب\s*لابتوب|laptop\s*(?:bag|backpack|sleeve|case)', 'حقيبة لابتوب', 'Laptop Backpack & Bag'),
-    (r'قاعدة\s*تبريد\s*لابتوب|مروحة\s*تبريد\s*لابتوب|cooling\s*pad|laptop\s*cooler', 'قاعدة تبريد لابتوب', 'Laptop Cooling Pad'),
-    (r'حامل\s*لابتوب|ستاند\s*لابتوب|laptop\s*stand', 'حامل لابتوب مريح', 'Laptop Stand Holder'),
-
-    # 4. إكسسوارات وملحقات الموبايل والتابلت (يجب فحصها قبل الهواتف والتابلت حتى لا يُصنف الشاحن أو الكابل كجهاز موبايل أو تابلت)
-    (r'باور\s*بانك|شاحن\s*متنقل|بطارية\s*متنقلة|شاحن\s*محمول|power\s*bank|portable\s*charger', 'باور بانك', 'Power Bank'),
-    (r'لاصقة\s*حماية|سكرين\s*بروتكتور|شاشة\s*حماية|حامي\s*شاشة|screen\s*protector|tempered\s*glass', 'لاصقة حماية شاشة', 'Screen Protector Glass'),
-    (r'جراب|كفر|غطاء\s*حماية|حافظة|phone\s*case|tablet\s*case|protective\s*case|case\s*cover', 'جراب حماية', 'Protective Case'),
-    (r'شاحن\s*سيارة|car\s*charger', 'شاحن سيارة سريع', 'Fast Car Charger'),
-    (r'شاحن\s*لاسلكي|wireless\s*charger', 'شاحن لاسلكي', 'Wireless Charger'),
-    (r'شاحن\s*(?:حائط|جداري|سريع|منزلي|مكتبي|راس|رأس)?|راس\s*شاحن|رأس\s*شاحن|مهايئ\s*شحن|wall\s*charger|fast\s*charger|charger\b|adapter\b', 'شاحن سريع', 'Fast Charger'),
-    (r'كابل\s*شحن|سلك\s*شحن|وصلة\s*شحن|charging\s*cable|usb\s*cable|كابل\b|سلك\b|cable\b', 'كابل شحن سريع', 'Fast Charging Cable'),
-    (r'مشترك\s*كهربائ?ي?|مشترك|power\s*strip', 'مشترك كهربائي', 'Power Strip'),
-    (r'ستاند|حامل\s*(?:موبايل|هاتف|شاشة|تابلت)|stand\b|holder\b', 'حامل ستاند مريح', 'Adjustable Stand Holder'),
-
-    # 5. أجهزة اللابتوب والكمبيوتر المحمول
-    (r'لابتوب|حاسوب\s*محمول|كمبيوتر\s*محمول|laptop\b|notebook\b|vivobook\b|zenbook\b|ideapad\b|thinkpad\b|legion\b|macbook\b', 'لابتوب', 'Laptop'),
-
-    # 6. أجهزة التابلت واللوحي
-    (r'\b(?:تابلت|جهاز\s*لوحي|ipad|tablet|galaxy\s*tab)\b', 'تابلت ذكي', 'Smart Tablet'),
-
-    # 7. الشاشات والتلفزيونات
-    (r'(?:^|[^\w])(?:شاشة\s*(?:كمبيوتر|ألعاب|تلفزيون|عرض|سمارت|ذكية)|تلفزيون|تلفاز|smart\s*tv|tv\b|monitor\b)', 'شاشة ذكية', 'Smart TV & Monitor'),
-
-    # 8. الهواتف الذكية والموبايل
-    (r'موبايل|هاتف\s*(?:ذكي|محمول)?|smartphone\b|iphone\b|آيفون|ايفون|جالكسي|جالاكسي|galaxy\b|ريدمي|redmi\b|poco\b|بوكو\b|realme\b|ريلمي\b|infinix\b|إنفينيكس\b|انفينكس\b', 'موبايل', 'Smartphone'),
-
-    # 9. السماعات والصوتيات
-    (r'سماعة\s*(?:اذن|أذن|بلوتوث|لاسلكية|ايربودز?|داخل\s*الأذن)?|earbuds|airpods|true\s*wireless|tws\b', 'سماعة أذن لاسلكية', 'True Wireless Earbuds'),
-    (r'سماعة\s*(?:راس|رأس|العاب|ألعاب|محيطية)|gaming\s*headset|headphones|headset\b', 'سماعة رأس', 'Gaming Headset'),
-    (r'مكبر\s*صوت|ساوند\s*بار|سبيكر|speaker\b|soundbar\b', 'مكبر صوت ساوند بار', 'Bluetooth Speaker'),
-
-    # 10. الساعات الذكية
-    (r'ساعة\s*(?:ذكية|سمارت)|smart\s*watch|smartwatch', 'ساعة ذكية', 'Smartwatch'),
-
-    # 11. مراوح التبريد
-    (r'مروحة\s*(?:تبريد|مكتب|عمود)?|cooling\s*fan|fan\b', 'مروحة تبريد', 'Cooling Fan'),
-
-    # 12. الأجهزة المنزلية وأجهزة المطبخ
-    (r'ماكينة\s*(?:تحضير\s*)?ال?قهوة|صانعة\s*ال?قهوة|coffee\s*maker', 'ماكينة تحضير قهوة', 'Coffee Maker'),
-    (r'ماكينة\s*حلاقة|shaver\b|clipper\b|trimmer\b', 'ماكينة حلاقة', 'Hair Clipper & Shaver'),
-    (r'قلاية\s*(?:هوائية|بدون\s*زيت)|اير\s*فراير|air\s*fryer', 'قلاية هوائية', 'Air Fryer'),
-    (r'خلاط\s*(?:كهربائي|يدوي)?|هاند\s*بلندر|blender\b', 'خلاط كهربائي', 'Blender'),
-    (r'مكواة\s*بخار|steam\s*iron', 'مكواة بخار', 'Steam Iron'),
-    (r'سخان|غلاية|kettle\b', 'غلاية مياه كهربائية', 'Electric Water Kettle'),
-    (r'مفرمة|كبة|chopper\b|food\s*processor', 'كبة ومفرمة كهربائية', 'Electric Food Chopper'),
-    (r'مكنسة\s*(?:كهربائية|روبوت|لاسلكية)?|vacuum\s*cleaner', 'مكنسة كهربائية', 'Vacuum Cleaner'),
-
-    # 13. الأدوات والأزياء والعناية الشخصية
-    (r'كرسي\s*(?:بوسادة|طبي|مريح)?|مسند\s*(?:ظهر|طبي)|وسادة\s*(?:ظهر|جلوس)|cushion\b', 'كرسي ومسند ظهر مريح', 'Back Support Cushion Chair'),
-    (r'حذاء\s*رياضي|كوتشي|running\s*shoes|sneakers\b', 'حذاء رياضي', 'Running Shoes'),
-    (r'طقم\s*مفكات|screwdriver\s*set', 'طقم مفكات براغي', 'Screwdriver Set'),
-    (r'جل\s*استحمام|شاور\s*جل|shower\s*gel', 'جل استحمام', 'Shower Gel'),
-    (r'غسول\s*(?:للوجه|وجه)|cleanser\b|face\s*wash', 'غسول للوجه', 'Face Cleanser'),
-    (r'كريم\s*(?:مرطب|للوجه)|سيروم|moisturizer|serum\b', 'كريم مرطب للعناية بالبشرة', 'Moisturizing Cream'),
-    (r'شامبو|بلسم|shampoo|conditioner', 'شامبو للعناية بالشعر', 'Hair Care Shampoo'),
-]
 
 def extract_bilingual_product_names(title, brand=None, features=None, en_slug=None, breadcrumbs=None, specs=None, image_url=None):
     """
@@ -1264,9 +1198,10 @@ def build_message(store, title, price, list_price, discount, link,
         lines.append(f"🎟️ <b>كود خصم نون الإضافي (10%):</b> <code>{html.escape(NOON_COUPON)}</code> <i>(اضغط على الكود لنسخه)</i>")
     if effective_price is not None and list_price and list_price > effective_price:
         eff_disc = (1 - effective_price / list_price) * 100
-        lines.append(f"📉 إجمالي الخصم: <b>{eff_disc:.0f}%</b> (وفّرت {fmt(list_price - effective_price)} ج.م)")
-    elif discount and discount > 0:
-        lines.append(f"📉 الخصم: <b>{discount:.0f}%</b>")
+        if 1.0 <= eff_disc < 90.0:
+            lines.append(f"📉 إجمالي الخصم: <b>{eff_disc:.0f}%</b> (وفّرت {fmt(list_price - effective_price)} ج.م)")
+    elif discount and 1.0 <= float(discount) < 90.0 and list_price and list_price > (effective_price or 0):
+        lines.append(f"📉 الخصم: <b>{float(discount):.0f}%</b>")
 
     if brand_en:
         lines.append(f"🏷️ الماركة: <b>{html.escape(brand_en[:40])}</b>")
@@ -1873,11 +1808,16 @@ async def scrape_amazon_eg(page):
             info = parse_amazon_card(text_content)
             if not info["price"] or info["price"] < 5 or is_blocked_title(info["title"]):
                 continue
-            match = re.search(r'(\d+)\s*%', text_content)
-            badge_disc = int(match.group(1)) if match else None
+            match = re.search(r'(?:خصم\s*(\d{1,2})%|(\d{1,2})%\s*(?:خصم|توفير|وفر|OFF|-\s*)|-\s*(\d{1,2})%)', clean(text_content), re.IGNORECASE)
+            badge_disc = None
+            if match:
+                raw_d = int(match.group(1) or match.group(2) or match.group(3))
+                if 1 <= raw_d <= 89:
+                    badge_disc = raw_d
             discount = float(badge_disc or 0)
             if info["list_price"] and info["list_price"] > info["price"]:
-                discount = (1 - info["price"] / info["list_price"]) * 100
+                calc_disc = (1 - info["price"] / info["list_price"]) * 100
+                discount = calc_disc if (1.0 <= calc_disc <= 89.0) else 0.0
 
             has_card_promo = any(w in text_content for w in ("متاح عرض ترويجي", "مع الكوبون", "كوبون خصم", "وفر ", "عند الدفع", "اشترِ", "اشتري", "صفقة", "deal"))
             if discount <= 0 and has_card_promo:
@@ -2667,33 +2607,57 @@ def _parse_fallback_message_info(text):
             if prices:
                 new_price = min(prices)
 
-    disc_m = re.search(r'(\d+)\s*%', t)
+    disc_m = re.search(r'(?:خصم\s*(\d{1,2})%|(\d{1,2})%\s*(?:خصم|توفير|وفر|OFF|-\s*)|-\s*(\d{1,2})%)', t, re.IGNORECASE)
+    parsed_disc = 0.0
+    if disc_m:
+        raw_disc = float(disc_m.group(1) or disc_m.group(2) or disc_m.group(3))
+        if 1.0 <= raw_disc <= 89.0:
+            parsed_disc = raw_disc
+
     title_cand = None
     HYPE_PREFIXES = (
         "اتوفر من تاني", "اتوفّر من تاني", "رجع توفر", "رجع من تاني", "توفر من تاني",
         "الحق العرض", "عرض نار", "خصم جبار", "سعر لقطة", "عرض لقطة", "ببلاش",
-        "فرصة لا تعوض", "عاجل", "تنبيه", "كود خصم", "كوبون خصم", "وصل حديثاً"
+        "فرصة لا تعوض", "عاجل", "تنبيه", "كود خصم", "كوبون خصم", "وصل حديثاً",
+        "وصل من جديد", "عرض خاص", "بأفضل سعر", "تخفيض", "تخفيضات", "فرصة", "لقطة", "خصومات"
     )
-    for line in [l.strip() for l in t.split('\n') if l.strip()]:
+    PRODUCT_DEVICE_HINTS = (
+        "موبايل", "هاتف", "جوال", "لابتوب", "تابلت", "شاشة", "سماعة", "ساعة", "كاميرا",
+        "شاحن", "كابل", "باور بانك", "غسالة", "ثلاجة", "بوتاجاز", "سخان", "غلاية", "خلاط",
+        "كبة", "قلاية", "مكواة", "مكنسة", "عطر", "شامبو", "كريم", "حذاء", "مكمل", "فيتامين",
+        "أوميجا", "اوميجا", "زيت", "منظف", "مسحوق", "مشترك", "ماوس", "كيبورد", "راوتر",
+        "iphone", "samsung", "apple", "xiaomi", "lenovo", "dell", "hp", "tornado",
+        "fresh", "philips", "ugreen", "anker", "asus", "acer", "oppo", "realme", "redmi"
+    )
+
+    all_lines = [l.strip() for l in t.split('\n') if l.strip()]
+    candidate_lines = []
+    for line in all_lines:
         clean_l = re.sub(r'^[📦🔥🟡🚨🏷️✨•\-🏃‍♂️🏃‍♀️🏃]+\s*', '', line).strip()
-        # تجاهل الأسطر التي تمثل مجرد عبارات ترويجية/حماسية ولا تصف منتج
-        if any(hp in clean_l for hp in HYPE_PREFIXES) and not any(dev in clean_l.lower() for dev in ("موبايل", "سماعة", "شاحن", "لابتوب", "شاشة", "ساعة", "phone", "iphone", "samsung")):
+        # استبعاد الروابط
+        if clean_l.startswith("http") or any(dm in clean_l.lower() for dm in ("amzlinks", "amazon.", "noon.", "sal7.ly", "is.gd", "t.me")):
+            continue
+        # استبعاد بيانات الحساب والسعر
+        if any(w in clean_l for w in ("السعر", "سعره", "إجمالي الخصم", "الخصم:", "البائع:", "التقييم:", "على أمازون", "على نون", "رابط العرض", "ملحوظة:", "لينك الشراء", "هنا:")):
             continue
         # حذف السعر لو كان ملحقاً في نفس السطر (مثل: موبايل iPhone 17 بسعر 66949 جنيه)
-        clean_l = re.sub(r'(?:بسعر|بـ|سعر)\s*:?\s*[\d,]+(?:\.\d+)?\s*(?:ج\.م|جنيه|جنية|ج|EGP|LE)?', '', clean_l).strip()
-        clean_l = clean_l.rstrip(":-• ")
-        if (
-            len(clean_l) >= 4
-            and not clean_l.startswith("http")
-            and not any(w in clean_l for w in ("السعر", "سعره", "إجمالي الخصم", "الخصم:", "البائع:", "التقييم:", "على أمازون", "على نون", "رابط العرض", "ملحوظة:", "لينك الشراء", "هنا:"))
-        ):
-            title_cand = clean_l[:140]
-            break
+        clean_no_p = re.sub(r'(?:بسعر|بـ|سعر)\s*:?\s*[\d,]+(?:\.\d+)?\s*(?:ج\.م|جنيه|جنية|ج|EGP|LE)?', '', clean_l).strip()
+        clean_no_p = clean_no_p.rstrip(":-• ")
+        if len(clean_no_p) >= 4:
+            is_hype = any(hp in clean_no_p for hp in HYPE_PREFIXES)
+            has_prod = any(dev in clean_no_p.lower() for dev in PRODUCT_DEVICE_HINTS)
+            candidate_lines.append((1 if has_prod else 0, 0 if is_hype else 1, len(clean_no_p), clean_no_p[:140]))
+
+    if candidate_lines:
+        # نرتب الأسطر بحيث يكون السطر المحتوي على اسم/ماركة منتج حقيقي في المقدمة ثم الأقل إثارة
+        candidate_lines.sort(key=lambda x: (x[0], x[1], x[2]), reverse=True)
+        title_cand = candidate_lines[0][3]
+
     return {
         "title": title_cand,
         "price": new_price,
         "list_price": to_float(old_m.group(1)) if old_m else None,
-        "discount": float(disc_m.group(1)) if disc_m else 0.0,
+        "discount": parsed_disc,
     }
 
 async def scrape_single_product(context, raw_url, fallback_text="", fallback_image=None,
@@ -2973,12 +2937,16 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
         price = price or fb["price"]
         list_price = list_price or fb["list_price"]
         image = image or fallback_image
-        s_m = re.search(r'(\d+)\s*%', clean(data.get("savingsTxt") or ""))
-        discount = float(s_m.group(1)) if s_m else (fb["discount"] or 0.0)
+        s_m = re.search(r'(\d{1,2})\s*%', clean(data.get("savingsTxt") or ""))
+        raw_disc = float(s_m.group(1)) if s_m else (fb.get("discount") or 0.0)
+        discount = raw_disc if (1.0 <= raw_disc <= 89.0) else 0.0
         if price and list_price and list_price > price:
-            discount = (1 - price / list_price) * 100
-        elif price and discount > 0 and not list_price:
+            calc_disc = (1 - price / list_price) * 100
+            discount = calc_disc if (1.0 <= calc_disc <= 89.0) else 0.0
+        elif price and 5.0 <= discount <= 75.0 and not list_price:
             list_price = round(price / (1 - discount / 100.0), 2)
+        else:
+            discount = 0.0
 
         prev_min, max_p, min_p = record_price(canonical_url, price) if price else (None, None, None)
         clean_fb_text = "\n".join(

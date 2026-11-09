@@ -797,6 +797,8 @@ VISION_PROMPTS = [
     ("car_charger", "a product photo of a car cigarette lighter USB charger adapter"),
     ("wireless_charger", "a product photo of a magnetic wireless charging pad or stand"),
     ("power_bank", "a product photo of a portable power bank battery pack"),
+    ("storage_drive", "a product photo of an external portable SSD drive, hard drive or flash drive"),
+    ("water_heater", "a product photo of a domestic water heater mounted on the wall"),
     ("power_strip", "a product photo of an electrical power strip extension socket outlets"),
     ("usb_hub", "a product photo of a multi-port USB-C hub docking station adapter"),
     ("stand_holder", "a product photo of an empty desk phone stand or laptop holder mount"),
@@ -852,7 +854,7 @@ VISION_PROMPTS = [
 
 # فئات ذات شكل بصري هندسي مميز جداً يمكن لـ CLIP حسْمها حتى لو كان النص العربي تالفاً أو عاماً
 _HIGH_PRECISION_VISION_CATS = {
-    "kettle", "stand_fan", "pc_cooler", "tv_stick", "smart_tv", "security_camera",
+    "kettle", "water_heater", "storage_drive", "stand_fan", "pc_cooler", "tv_stick", "smart_tv", "security_camera",
     "charging_cable", "wall_charger", "car_charger", "power_bank", "power_strip",
     "stand_mixer", "blender", "food_chopper", "air_fryer", "microwave", "coffee_maker",
     "steam_iron", "ironing_board", "drying_rack", "vacuum", "washing_machine",
@@ -1121,6 +1123,10 @@ SMART_CATEGORIES = [
      "حامل وستاند تثبيت", "Adjustable Stand Holder",
      "حامل تثبيت متين وقابل للتعديل بزوايا مريحة وثبات عالي لوضع الموبايل أو اللابتوب في مستوى النظر المريح."),
 
+    ("storage_drive", r'(?:\bهارد\s*(?:ssd|خارجي|محمول|داخلي|ميكانيكي|صلب)?\b|\bssd\b|\bnvme\b|\bhdd\b|قرص\s*(?:صلب|تخزين)|وحدة\s*تخزين\s*(?:خارجية|محمولة|داخلية|ssd)|ذاكرة\s*فلاشية|\bفلاش[ةه]\b|فلاش\s*درايف|كارت\s*ميموري|بطاقة\s*ذاكرة|external\s*ssd|portable\s*ssd|internal\s*ssd|solid\s*state\s*drive|external\s*hard\s*drive|\bhard\s*drive\b|\bflash\s*drive\b|\bthumb\s*drive\b|\busb\s*drive\b|\bmemory\s*card\b|\bmicrosd\b|\bsd\s*card\b)',
+     "هارد SSD محمول", "External Portable SSD Storage",
+     "وحدة تخزين ونقل بيانات فائقة السرعة بتصميم مدمج وعملي لحفظ الملفات والنسخ الاحتياطي بأمان وكفاءة."),
+
     ("laptop", r'(?:\bلابتوب\b|لاب\s*توب|حاسوب\s*محمول|كمبيوتر\s*محمول|\blaptop\b|\bnotebook\b|\bvivobook\b|\bzenbook\b|\bideapad\b|\bthinkpad\b|\bthinkbook\b|\blegion\b|\bmacbook\b|\bloqs?\b|\btuf\s*gaming\b)',
      "لابتوب", "Laptop",
      "لابتوب قوي الأداء يجمع بين سرعة المعالجة والشاشة المريحة والبطارية الاعتمادية لإنجاز الدراسة والعمل والألعاب بكفاءة."),
@@ -1237,9 +1243,13 @@ SMART_CATEGORIES = [
      "ماكينة تحضير قهوة", "Coffee & Espresso Machine",
      "ماكينة تحضير قهوة سريعة وعملية تمنحك قهوة غنية المذاق برغوة مثالية وقوام مضبوط بضغطة زر واحدة."),
 
-    ("kettle", r'(?:\bغلاية\b|\bكاتل\b|سخان\s*مياه\s*كهربائي|electric\s*kettle|water\s*kettle|\bkettle\b)',
+    ("kettle", r'(?:\bغلاية\b|\bكاتل\b|electric\s*kettle|water\s*kettle|\bkettle\b)',
      "غلاية مياه كهربائية", "Electric Water Kettle",
      "غلاية مياه كهربائية سريعة الغليان بعنصر تسخين ستانلس ستيل آمن وفصل تلقائي عند الغليان وجفاف المياه."),
+
+    ("water_heater", r'(?:سخان\s*(?:مياه\s*)?(?:غاز|كهربائي|كهرباء|فوري|ديجيتال|مركزي|أتوماتيك|اتوماتيك|بدون\s*مدخنة|بمدخنة|تورنيدو|فريش|أوليمبيك|اوليمبيك|اريستون|أريستون|زانوسي)?|gas\s*water\s*heater|electric\s*water\s*heater|instant\s*water\s*heater|tankless\s*water\s*heater|water\s*heater)',
+     "سخان مياه", "Water Heater",
+     "سخان مياه عملي وآمن بتقنيات تسخين متطورة وموفرة للطاقة مع أنظمة حماية متكاملة لتدفئة فورية ومستقرة للمياه."),
 
     ("steam_cleaner", r'(?:منظف\s*[\u200b\s]*بخاري?|جهاز\s*تنظيف\s*بالبخار|ممسحة\s*بخار|steam\s*cleaner|steam\s*mop)',
      "جهاز تنظيف بالبخار", "Handheld Steam Cleaner",
@@ -1434,6 +1444,8 @@ _EN_BREADCRUMB_CAT_MAP = [
     (r'\bcar\s*chargers?\b', "car_charger"),
     (r'\bwireless\s*chargers?\b', "wireless_charger"),
     (r'\bportable\s*power\s*banks?\b|\bpower\s*banks?\b', "power_bank"),
+    (r'\bexternal\s*hard\s*drives?\b|\bexternal\s*solid\s*state\s*drives?\b|\bdata\s*storage\b|\bsolid\s*state\s*drives?\b|\binternal\s*solid\s*state\s*drives?\b|\busb\s*flash\s*drives?\b|\bflash\s*drives?\b|\bmemory\s*cards?\b|\bmicro\s*sd\s*cards?\b', "storage_drive"),
+    (r'\bwater\s*heaters?(?:\s*&\s*parts)?\b|\bgas\s*water\s*heaters?\b|\belectric\s*water\s*heaters?\b', "water_heater"),
     (r'\bpower\s*strips?\b|\bsurge\s*protectors?\b|\bextension\s*cords?\b', "power_strip"),
     (r'\btravel\s*adapters?\b|\bsocket\s*adapters?\b|\bpower\s*converters?\b', "plug_adapter"),
     (r'\bethernet\s*cables?\b|\bcat\s*[5678]\s*cables?\b', "ethernet_cable"),
@@ -1491,11 +1503,22 @@ _MODIFIER_SPLIT_RE = re.compile(
     re.IGNORECASE,
 )
 
+# إزالة عبارات التوافق ومصادر الطاقة المشروطة (متوافق مع تابلت / يعمل بـ باور بانك / designed for / compatible with...)
+# حتى لا تُصنف السلعة الأساسية خطأً باسم الملحق أو الجهاز المتوافق معه!
+_COMPATIBILITY_CLAUSE_RE = re.compile(
+    r'(?:'
+    r'\b(?:compatible\s+with|compatibility|designed\s+for|works\s+with|suitable\s+for|operates\s+via|powered\s+by|supported\s+by)\b[^\n,;،|()]*|'
+    r'(?:متوافق\s*(?:مع)?|مناسب\s*(?:لـ|مع)?|مخصص\s*(?:لـ)?|يعمل\s*(?:بـ|مع|بواسطة|عبر)?|يمكن\s*تشغيل[هة]\s*(?:بـ|عبر|بواسطة)?|مزود\s*بخاصية\s*التشغيل\s*عبر|خاص\s*بـ|معد\s*لـ)[^\n,;،|()]*'
+    r')',
+    re.IGNORECASE,
+)
+
 
 def _clean_for_cat_match(text):
     if not text:
         return ""
     s = _NEGATED_NOUN_RE.sub(" ", str(text))
+    s = _COMPATIBILITY_CLAUSE_RE.sub(" ", s)
     s = re.sub(r'[\u200b-\u200f\xa0]', ' ', s)
     return re.sub(r'\s+', ' ', s).strip()
 
@@ -1517,8 +1540,29 @@ def _has_accessory_breadcrumb(breadcrumbs_str):
     return bool(re.search(r'\b(?:accessories|ملحقات|اكسسوارات|إكسسوارات)\b', cleaned_bc, re.I))
 
 
-def _is_cat_forbidden(cat_key, brand_en="", price=None, breadcrumbs_str=""):
+def _is_cat_forbidden(cat_key, brand_en="", price=None, breadcrumbs_str="", title_str=""):
     """يتحقق مما إذا كانت الفئة مستحيلة منطقياً للماركة أو السعر أو مسار قسم الإكسسوارات."""
+    t_low = f"{title_str or ''} {breadcrumbs_str or ''}".lower()
+
+    # حماية سخانات المياه والأجهزة الكبيرة من التصنيف الخاطئ كباور بانك أو كابل أو حامل
+    if cat_key == "power_bank":
+        if re.search(r'سخان|heater|غلاية|kettle|بوتاجاز|stove|فرن|oven|غسالة|washing|ثلاجة|fridge|refrigerator|مروحة|pedestal\s*fan', t_low):
+            return True
+        if price is not None and price >= 3500:
+            return True
+
+    # حماية وسائط التخزين والهاردات من التصنيف الخاطئ كأجهزة تابلت
+    if cat_key == "tablet":
+        if re.search(r'\bssd\b|\bhdd\b|\bnvme\b|هارد|ذاكرة\s*فلاشية|solid\s*state|hard\s*drive|flash\s*drive|flash\s*disk', t_low):
+            return True
+
+    # حماية الكابلات والحوامل من التصنيف الخاطئ للأجهزة المنزلية
+    if cat_key in ("charging_cable", "stand_holder", "audio_cable"):
+        if re.search(r'غلاية|kettle|مروحة|fan\b|سخان|heater|بوتاجاز|stove|فرن|oven|غسالة|ثلاجة', t_low):
+            return True
+        if price is not None and price >= 1500:
+            return True
+
     if brand_en in _NO_MAJOR_DEVICE_BRANDS and cat_key in ("smartphone", "tablet", "laptop", "smart_tv", "refrigerator", "washing_machine", "air_conditioner"):
         return True
     if _has_accessory_breadcrumb(breadcrumbs_str):
@@ -1630,7 +1674,7 @@ def _score_text_categories(title, en_slug="", breadcrumbs="", features_text="", 
     # قواعد حسم التضارب المنطقي السياقي:
     # 0) قواعد منطق الماركة والسعر وقسم الإكسسوارات
     for k_chk in list(scores.keys()):
-        if _is_cat_forbidden(k_chk, brand_en=brand_en, price=price, breadcrumbs_str=c_crumbs):
+        if _is_cat_forbidden(k_chk, brand_en=brand_en, price=price, breadcrumbs_str=c_crumbs, title_str=title):
             scores.pop(k_chk, None)
             head_matched_cats.discard(k_chk)
 
@@ -2119,6 +2163,53 @@ def _extract_rich_specs(title, en_slug="", specs_text="", cat_key="", brand_en="
                 spec_ar.append("USB-C")
                 spec_en.append("USB-C")
 
+    # وحدات التخزين والهاردات والفلاشات (SSD / HDD / Flash Drive / MicroSD)
+    if cat_key == "storage_drive":
+        m_mod = re.search(r'\b(T300S|T5|T7\s*(?:Shield)?|T9|Extreme\s*(?:Pro)?|E61|E81|Crucial\s*X\d+|ArmorATD|Canvio|My\s*Passport|Elements|Plus\s*Slim|Bar\s*Plus|Ultra\s*Dual|DataTraveler|EVO\s*Plus|Ultra\s*Plus|SN\d{3,4})\b', combined, re.I)
+        if m_mod:
+            spec_ar.append(m_mod.group(0).strip())
+            spec_en.append(m_mod.group(0).strip())
+        m_tb = re.search(r'\b([1-8])\s*(?:تيرا(?:بايت)?|TB)\b', combined, re.I)
+        if m_tb:
+            spec_ar.append(f"سعة {m_tb.group(1)}TB")
+            spec_en.append(f"{m_tb.group(1)}TB")
+        else:
+            m_gb = re.search(r'\b(32|64|128|256|512|960)\s*(?:جيجا(?:بايت)?|GB)\b', combined, re.I)
+            if m_gb:
+                spec_ar.append(f"سعة {m_gb.group(1)} جيجا")
+                spec_en.append(f"{m_gb.group(1)}GB")
+        m_spd = re.search(r'\b(\d{3,4})\s*(?:MB/s|ميجابايت/ثانية|ميجابايت)\b', combined, re.I)
+        if m_spd:
+            spec_ar.append(f"بسرعة {m_spd.group(1)}MB/s")
+            spec_en.append(f"up to {m_spd.group(1)}MB/s")
+
+    # سخانات المياه المنزلية (غاز / كهرباء / فوري)
+    if cat_key == "water_heater":
+        if re.search(r'غاز|gas', combined, re.I):
+            spec_ar.append("غاز")
+            spec_en.append("Gas")
+        elif re.search(r'كهربائ?ي?|electric', combined, re.I):
+            spec_ar.append("كهربائي")
+            spec_en.append("Electric")
+        elif re.search(r'فوري|instant|tankless', combined, re.I):
+            spec_ar.append("فوري")
+            spec_en.append("Instant Tankless")
+
+        m_liters = re.search(r'\b(5|6|10|15|20|30|40|50|60|80|100)\s*(?:لتر|L(?:iter)?)\b', combined, re.I)
+        if m_liters:
+            spec_ar.append(f"سعة {m_liters.group(1)} لتر")
+            spec_en.append(f"{m_liters.group(1)} Liter")
+
+        if re.search(r'بدون\s*مدخنة|without\s*chimney', combined, re.I):
+            spec_ar.append("بدون مدخنة")
+            spec_en.append("without Chimney")
+        elif re.search(r'بمدخنة|with\s*chimney', combined, re.I):
+            spec_ar.append("بمدخنة")
+            spec_en.append("with Chimney")
+        elif re.search(r'ديجيتال|digital', combined, re.I):
+            spec_ar.append("ديجيتال")
+            spec_en.append("Digital")
+
     # إضافة الهدف المتوافق معه باختصار أنيق للجرابات ولاصقات الشاشة والأساور فقط
     if cat_key in ("protective_case", "screen_protector", "watch_strap"):
         parts = COMPAT_SPLIT_RE.split(title or "", maxsplit=1)
@@ -2299,7 +2390,7 @@ def analyze_product(
             price=price,
         )
         for bc_k, bc_v in _score_en_breadcrumbs(en_bc_list).items():
-            if not _is_cat_forbidden(bc_k, brand_en=brand_en, price=price, breadcrumbs_str=all_crumbs_str):
+            if not _is_cat_forbidden(bc_k, brand_en=brand_en, price=price, breadcrumbs_str=all_crumbs_str, title_str=t_clean):
                 en_scores[bc_k] = en_scores.get(bc_k, 0.0) + bc_v
 
     ranked_en = sorted(en_scores.items(), key=lambda x: x[1], reverse=True)
@@ -2363,7 +2454,7 @@ def analyze_product(
         v_sec_prob = vision_res.get("second_prob", 0.0)
         v_probs = vision_res.get("probs") or {}
 
-        if v_cat in CATEGORY_BY_KEY and not _is_cat_forbidden(v_cat, brand_en, price, all_crumbs_str):
+        if v_cat in CATEGORY_BY_KEY and not _is_cat_forbidden(v_cat, brand_en, price, all_crumbs_str, title_str=t_clean):
             if chosen_cat is None:
                 non_device_ar_hint = bool(re.search(r'كتاب|رواية|قلم|أقلام|شامبو|كريم|غسول|صابون|عطر|شاي|قهوة|زيت|مكرونة|بسكويت', t_clean))
                 if (is_placeholder_title and v_prob >= 0.45) or (
