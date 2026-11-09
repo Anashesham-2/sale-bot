@@ -131,10 +131,10 @@
     "Beko",
     "HIKSEMI",
     "Mienta",
-    "Sylymaks"
+    "Sylymaks",
+    "Starville"
   ],
   "queries": [
-    "عطر بارفان ريد كامارا",
     "معطر الجسم وايلد فكتوريا سيكريت",
     "مكمل غذائي متعدد سينتروم",
     "Dolce Gabbana Devotion",
@@ -213,7 +213,8 @@
     "موبايل سامسونج جالكسي",
     "ارز مصري الضحى الدوحة",
     "Redragon CPU Air ريدراجون",
-    "سيليماكس كريم حماية"
+    "سيليماكس كريم حماية",
+    "قلم لتبييض البشرة ستار فيلا"
   ],
   "channels": [
     "epichardware",
@@ -536,6 +537,10 @@
     "Sal7lyEgypt/39298",
     "epichardware/4510",
     "Sal7lyEgypt/39301",
-    "Sal7lyEgypt/39300"
+    "Sal7lyEgypt/39300",
+    "epichardware/4511",
+    "Sal7lyEgypt/39304",
+    "Sal7lyEgypt/39303",
+    "Sal7lyEgypt/39302"
   ]
 }
