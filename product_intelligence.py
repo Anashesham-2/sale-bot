@@ -562,7 +562,7 @@ def fetch_amazon_en_metadata(url_or_asin, timeout=5.0):
     if not asin:
         return {}
     with _en_meta_lock:
-        if asin in _en_meta_cache:
+        if asin in _en_meta_cache and "image" in _en_meta_cache[asin]:
             return _en_meta_cache[asin]
 
     en_url = f"https://www.amazon.eg/-/en/dp/{asin}"
@@ -627,11 +627,37 @@ def fetch_amazon_en_metadata(url_or_asin, timeout=5.0):
         if not en_title and not en_brand and not en_breadcrumbs:
             return {}
 
+        # 4) صورة المنتج الرسمية عالية الدقة (og:image أو JSON-LD أو hiRes/large)
+        en_image = ""
+        m_img = re.search(r'<meta[^>]*property=["\']og:image["\'][^>]*content=["\'](https://[^"\']+)["\']', raw, re.I)
+        if m_img:
+            en_image = m_img.group(1).strip()
+        if not en_image:
+            m_hires = re.search(r'["\'](?:hiRes|large)["\']\s*:\s*["\'](https://[^"\']+)["\']', raw, re.I)
+            if m_hires:
+                en_image = m_hires.group(1).strip()
+        if not en_image:
+            for s_ld in re.findall(r'<script[^>]*type=["\']application/ld\+json["\'][^>]*>(.*?)</script>', raw, re.S | re.I):
+                try:
+                    j = json.loads(s_ld)
+                    im = j.get("image")
+                    if isinstance(im, list) and im:
+                        im = im[0]
+                    if isinstance(im, dict):
+                        im = im.get("url")
+                    if isinstance(im, str) and im.startswith("http"):
+                        en_image = im.strip()
+                        break
+                except Exception:
+                    pass
+
         meta = {
             "en_title": en_title,
             "en_brand": en_brand,
             "en_breadcrumbs": en_breadcrumbs,
         }
+        if en_image:
+            meta["image"] = en_image
         with _en_meta_lock:
             _en_meta_cache[asin] = meta
             if len(_en_meta_cache) % 20 == 0:
@@ -1708,6 +1734,44 @@ _EN_BREADCRUMB_CAT_MAP = [
     (r'\bballpoint\s*pens?\b|\bgel\s*ink\s*pens?\b|\bhighlighters?\b', "stationery"),
 ]
 
+_AR_BREADCRUMB_CAT_MAP = [
+    (r'شواحن\s*رئيسية|شواحن\s*حائط|شواحن\s*جدارية|شواحن\s*(?:سريعة|منزلية|مكتبية)', "wall_charger"),
+    (r'شواحن\s*سيارات?|شواحن\s*عربيات?', "car_charger"),
+    (r'شواحن\s*لاسلكية', "wireless_charger"),
+    (r'بنوك\s*طاقة|باور\s*بانك|شواحن\s*متنقلة|بطاريات\s*احتياطية', "power_bank"),
+    (r'راوترات?|أجهزة\s*(?:الراوتر|التوجيه)|نقاط\s*الوصول|مقويات\s*الشبكة|أجهزة\s*الشبكات', "router"),
+    (r'محركات\s*أقراص\s*صلبة\s*خارجية|محركات\s*أقراص\s*(?:ssd|الصلبة)|وسائط\s*تخزين|فلاش\s*درايف|بطاقات\s*ذاكرة|كروت\s*ميموري', "storage_drive"),
+    (r'سخانات\s*(?:المياه|الماء|الغاز|الكهرباء)', "water_heater"),
+    (r'مشتركات\s*كهربائية|توصيلات\s*كهربائية|مشترك\s*كهرباء', "power_strip"),
+    (r'محولات\s*القابس|فيش\s*كهربائية|قوابس\s*كهربائية', "plug_adapter"),
+    (r'كابلات\s*(?:إيثرنت|شبكة|انترنت|نت)|أسلاك\s*الشبكة', "ethernet_cable"),
+    (r'كابلات\s*hdmi|أسلاك\s*hdmi', "hdmi_cable"),
+    (r'كابلات\s*(?:شحن|usb|بيانات|تايب\s*سي|لايتنينج)', "charging_cable"),
+    (r'موزعات\s*usb|محطات\s*توصيل\s*usb|usb\s*hubs?', "usb_hub"),
+    (r'جرابات\s*الحماية|أغطية\s*(?:الهواتف|الحماية)|كفرات|حافظات\s*الهواتف', "protective_case"),
+    (r'لاصقات\s*حماية\s*الشاشة|واقيات\s*الشاشة|سكرين\s*بروتكتور', "screen_protector"),
+    (r'أحزمة\s*الساعات|أساور\s*الساعات\s*الذكية|ستراب\s*الساعة', "watch_strap"),
+    (r'ساعات\s*ذكية|أجهزة\s*تتبع\s*اللياقة', "smartwatch"),
+    (r'سماعات\s*داخل\s*الأذن|سماعات\s*أذن\s*لاسلكية|ايربودز', "earbuds"),
+    (r'سماعات\s*رأس|سماعات\s*فوق\s*الأذن|هيدفون', "headphones"),
+    (r'سماعات\s*(?:ألعاب|قيمنق)', "gaming_headset"),
+    (r'مكبرات\s*صوت\s*بلوتوث|سماعات\s*سبيكر\s*محمولة', "speaker"),
+    (r'ساوند\s*بار|مكبرات\s*صوت\s*للتلفزيون', "soundbar"),
+    (r'شاشات\s*تلفزيون|تلفزيونات\s*ذكية', "smart_tv"),
+    (r'شاشات\s*(?:كمبيوتر|ألعاب|مونيتور)', "gaming_monitor"),
+    (r'أجهزة\s*لابتوب|كمبيوتر\s*محمول', "laptop"),
+    (r'لوحات\s*مفاتيح|كيبوردات', "keyboard"),
+    (r'ماوسات|فأرات\s*كمبيوتر', "mouse"),
+    (r'غلايات\s*(?:مياه|كهربائية)|كاتل', "kettle"),
+    (r'قلايات\s*هوائية|اير\s*فراير', "air_fryer"),
+    (r'خلاطات\s*كهربائية|هاند\s*بلندر', "blender"),
+    (r'كبات\s*(?:لحوم|طعام)|مفارم\s*طعام', "food_chopper"),
+    (r'ماكينات\s*قهوة|صانعات\s*القهوة', "coffee_maker"),
+    (r'مكانس\s*(?:كهربائية|روبوت)', "vacuum"),
+    (r'مراوح\s*(?:عمودية|ستاند|منزلية)', "stand_fan"),
+    (r'أقلام|أدوات\s*مكتبية|قرطاسية', "stationery"),
+]
+
 # إزالة تراكيب النفي (مثل: بدون سلك، بدون زيت، بدون أسلاك، بدون حبر، بدون سكر) قبل فحص الفئات!
 _NEGATED_NOUN_RE = re.compile(
     r'(?:بدون\s+(?:سلك|أسلاك|اسلاك|كابل|زيت|حبر|سكر|كحول|عطر|امونيا|أمونيا|سلوفان)|'
@@ -1776,9 +1840,11 @@ def _is_cat_forbidden(cat_key, brand_en="", price=None, breadcrumbs_str="", titl
         if re.search(r'\bssd\b|\bhdd\b|\bnvme\b|هارد|ذاكرة\s*فلاشية|solid\s*state|hard\s*drive|flash\s*drive|flash\s*disk|راوتر|رواتر|router|مودم|modem', t_low):
             return True
 
-    # حماية الكابلات والحوامل من التصنيف الخاطئ للأجهزة المنزلية
+    # حماية الكابلات والحوامل من التصنيف الخاطئ للأجهزة المنزلية أو الشواحن الجدارية
     if cat_key in ("charging_cable", "stand_holder", "audio_cable"):
         if re.search(r'غلاية|kettle|مروحة|fan\b|سخان|heater|بوتاجاز|stove|فرن|oven|غسالة|ثلاجة', t_low):
+            return True
+        if cat_key == "charging_cable" and re.search(r'شواحن(?:\s*رئيسية|\s*حائط|\s*جدارية)?|mains\s*chargers?|wall\s*chargers?|\bchargers\b', breadcrumbs_str, re.I):
             return True
         if price is not None and price >= 1500:
             return True
@@ -1800,37 +1866,41 @@ def _is_cat_forbidden(cat_key, brand_en="", price=None, breadcrumbs_str="", titl
     return False
 
 
-def _score_en_breadcrumbs(en_breadcrumbs):
-    """يستخرج الفئة الدقيقة من مسار القسم الإنجليزي الرسمي للمتجر (الأقرب لنهاية المسار هو الأدق)."""
-    if not en_breadcrumbs:
+def _score_store_breadcrumbs(breadcrumbs):
+    """يستخرج الفئة الدقيقة من مسار القسم الرسمي للمتجر (سواء بالعربي أو الإنجليزي) - الأقرب لنهاية المسار هو الأدق."""
+    if not breadcrumbs:
         return {}
-    crumbs_list = list(en_breadcrumbs) if isinstance(en_breadcrumbs, (list, tuple)) else [s.strip() for s in str(en_breadcrumbs).split(">") if s.strip()]
+    crumbs_list = list(breadcrumbs) if isinstance(breadcrumbs, (list, tuple)) else [s.strip() for s in str(breadcrumbs).split(">") if s.strip()]
     if not crumbs_list:
         return {}
     full_bc = " > ".join(crumbs_list)
     has_acc = _has_accessory_breadcrumb(full_bc)
     bc_scores = {}
+    combined_map = _EN_BREADCRUMB_CAT_MAP + _AR_BREADCRUMB_CAT_MAP
     # نعطي وزناً أعلى للمستويات الفرعية الأخيرة (Leaf category)
     for depth_idx, item in enumerate(crumbs_list):
-        weight = 48.0 if depth_idx == len(crumbs_list) - 1 else (32.0 if depth_idx == len(crumbs_list) - 2 else 18.0)
-        for pat, ckey in _EN_BREADCRUMB_CAT_MAP:
+        weight = 55.0 if depth_idx == len(crumbs_list) - 1 else (36.0 if depth_idx == len(crumbs_list) - 2 else 20.0)
+        for pat, ckey in combined_map:
             if re.search(pat, item, re.I):
                 if has_acc and ckey in ("smartphone", "tablet", "laptop", "smart_tv"):
                     continue
                 bc_scores[ckey] = max(bc_scores.get(ckey, 0.0), weight)
         # حالات خاصة للقسم النهائي فقط عندما لا يكون قسم إكسسوارات
         if not has_acc and depth_idx == len(crumbs_list) - 1:
-            if re.fullmatch(r'smartphones?|mobile\s*phones?', item.strip(), re.I):
-                bc_scores["smartphone"] = max(bc_scores.get("smartphone", 0.0), 48.0)
-            elif re.fullmatch(r'tablets?', item.strip(), re.I):
-                bc_scores["tablet"] = max(bc_scores.get("tablet", 0.0), 48.0)
-            elif re.fullmatch(r'laptops?|notebooks?', item.strip(), re.I):
-                bc_scores["laptop"] = max(bc_scores.get("laptop", 0.0), 48.0)
-            elif re.fullmatch(r'keyboards?', item.strip(), re.I) and not re.search(r'musical|piano', full_bc, re.I):
-                bc_scores["keyboard"] = max(bc_scores.get("keyboard", 0.0), 42.0)
-            elif re.fullmatch(r'mice', item.strip(), re.I):
-                bc_scores["mouse"] = max(bc_scores.get("mouse", 0.0), 42.0)
+            if re.fullmatch(r'smartphones?|mobile\s*phones?|الهواتف\s*الذكية|الجوالات\s*والموبايلات', item.strip(), re.I):
+                bc_scores["smartphone"] = max(bc_scores.get("smartphone", 0.0), 55.0)
+            elif re.fullmatch(r'tablets?|الأجهزة\s*اللوحية|تابلت', item.strip(), re.I):
+                bc_scores["tablet"] = max(bc_scores.get("tablet", 0.0), 55.0)
+            elif re.fullmatch(r'laptops?|notebooks?|أجهزة\s*اللابتوب|كمبيوتر\s*محمول', item.strip(), re.I):
+                bc_scores["laptop"] = max(bc_scores.get("laptop", 0.0), 55.0)
+            elif re.fullmatch(r'keyboards?|لوحات\s*المفاتيح', item.strip(), re.I) and not re.search(r'musical|piano', full_bc, re.I):
+                bc_scores["keyboard"] = max(bc_scores.get("keyboard", 0.0), 48.0)
+            elif re.fullmatch(r'mice|ماوسات', item.strip(), re.I):
+                bc_scores["mouse"] = max(bc_scores.get("mouse", 0.0), 48.0)
     return bc_scores
+
+def _score_en_breadcrumbs(en_breadcrumbs):
+    return _score_store_breadcrumbs(en_breadcrumbs)
 
 
 def _score_text_categories(title, en_slug="", breadcrumbs="", features_text="", brand_en="", price=None):
@@ -2012,19 +2082,32 @@ def _score_text_categories(title, en_slug="", breadcrumbs="", features_text="", 
     if any(k in head_matched_cats for k in ("food_chopper", "blender", "stand_mixer")):
         scores.pop("milk_frother", None)
 
-    # 8) كابل شحن صريح في أول العنوان يلغي الشاحن الجداري (عندما يكون العنوان متسقاً)
-    if "charging_cable" in head_matched_cats and "wall_charger" in scores:
+    # 8) التمييز الدقيق بين شاحن الحائط وكابل الشحن (مسار قسم الشواحن يلغي الكابل فوراً)
+    has_charger_bc = bool(re.search(r'شواحن(?:\s*رئيسية|\s*حائط|\s*جدارية)?|mains\s*chargers?|wall\s*chargers?|\bchargers\b', c_crumbs, re.I))
+    if has_charger_bc and "wall_charger" in scores:
+        scores["wall_charger"] = scores.get("wall_charger", 0.0) + 40.0
+        scores.pop("charging_cable", None)
+    elif "charging_cable" in head_matched_cats and "wall_charger" in scores:
         if not re.search(r'^\s*(?:[\w\u0600-\u06FF]+\s+)?(?:شاحن|مجموعة\s*شاحن|راس\s*شاحن|wall\s*charger|mains\s*charger|gan\s*wall)', f"{c_head} {c_en_head}", re.I):
             scores.pop("wall_charger", None)
 
-    # 9) التمييز الدقيق بين سماعة الأذن اللاسلكية (Earbuds) وسماعة الرأس (Over-Ear Headphones)
+    # 9) أجهزة الراوتر وسخانات المياه والهاردات تلغي الباور بانك والتابلت العشوائي
+    if "router" in scores:
+        scores.pop("power_bank", None)
+    if "storage_drive" in scores:
+        scores.pop("tablet", None)
+        scores.pop("power_bank", None)
+    if "water_heater" in scores:
+        scores.pop("power_bank", None)
+
+    # 10) التمييز الدقيق بين سماعة الأذن اللاسلكية (Earbuds) وسماعة الرأس (Over-Ear Headphones)
     if "earbuds" in scores and "earbuds" in head_matched_cats and not re.search(r'فوق\s*الأذن|على\s*الأذن|over-?ear|on-?ear|gaming\s*headset|سماعة\s*رأس\s*للألعاب', f"{c_head} {c_en_head}", re.I):
         scores["earbuds"] += 25.0
         scores.pop("headphones", None)
     elif any(k in head_matched_cats for k in ("gaming_headset", "headphones", "wired_earphones")):
         scores.pop("earbuds", None)
 
-    # 10) القهوة سريعة التحضير/الحبيبات بدون كلمة "ماكينة/صانعة" تلغي ماكينة القهوة
+    # 11) القهوة سريعة التحضير/الحبيبات بدون كلمة "ماكينة/صانعة" تلغي ماكينة القهوة
     if "coffee_drink" in scores and "coffee_maker" not in head_matched_cats:
         scores.pop("coffee_maker", None)
     if "gaming_monitor" in scores and "smart_tv" in head_matched_cats:
@@ -2676,6 +2759,9 @@ def analyze_product(
         brand_en=brand_en,
         price=price,
     )
+    for bc_k, bc_v in _score_store_breadcrumbs(breadcrumbs).items():
+        if not _is_cat_forbidden(bc_k, brand_en=brand_en, price=price, breadcrumbs_str=all_crumbs_str, title_str=t_clean):
+            ar_scores[bc_k] = ar_scores.get(bc_k, 0.0) + bc_v
     ranked_ar = sorted(ar_scores.items(), key=lambda x: x[1], reverse=True)
     ar_best_cat = ranked_ar[0][0] if ranked_ar else None
     ar_best_score = ranked_ar[0][1] if ranked_ar else 0.0

@@ -935,6 +935,29 @@ def _is_bank_promo(text):
 
     return False
 
+def clean_and_arabicize_promo(text):
+    """ينظف ويعرب عروض أمازون ونون الترويجية وعروض الكميات لتظهر بأسلوب عربي واضح واحترافي."""
+    if not text:
+        return ""
+    t = str(text).strip()
+    t = re.sub(r'\s*(?:Shop items?|تسوق المنتجات|terms|الشروط)\s*.*$', '', t, flags=re.I).strip()
+    # 1. Save X% on Y items
+    m1 = re.search(r'Save\s*(\d+)\s*%\s*on\s*(\d+)\s*items?', t, re.I)
+    if m1:
+        pct, qty = m1.group(1), m1.group(2)
+        return f"وفر {pct}% عند شراء {qty} قطع أو سلع"
+    # 2. Save X% when you buy EGP Y of select items
+    m2 = re.search(r'Save\s*(\d+)\s*%\s*when\s*you\s*(?:buy|spend)\s*(?:EGP|جنيه)?\s*(\d+(?:\.\d+)?)\s*(?:of\s*select\s*items)?', t, re.I)
+    if m2:
+        pct, egp = m2.group(1), m2.group(2)
+        return f"وفر {pct}% عند الشراء بـ {egp} ج.م من السلع المشمولة"
+    # 3. Save EGP X when you spend EGP Y
+    m3 = re.search(r'Save\s*(?:EGP|جنيه)?\s*(\d+(?:\.\d+)?)\s*when\s*you\s*(?:spend|buy)\s*(?:EGP|جنيه)?\s*(\d+(?:\.\d+)?)', t, re.I)
+    if m3:
+        sav, spd = m3.group(1), m3.group(2)
+        return f"وفر {sav} ج.م عند الشراء بـ {spd} ج.م"
+    return t
+
 def detect_stacking_promos(card_text, page_promos=None, promo_links=None):
     """يكتشف فرص دمج الخصومات (خصم الـ Checkout، أكواد الخصم مثل FLASH، عروض اشترِ 1 والثانية هدية، وعروض الفئة)."""
     promos = []
@@ -965,7 +988,8 @@ def detect_stacking_promos(card_text, page_promos=None, promo_links=None):
         m_pct = re.search(r'(\d+)\s*[%٪]', l)
 
         if is_quantity_condition:
-            promos.append(f"🔥 {l} (بيتطبق في السلة/الـ Checkout عند استيفاء الكمية)")
+            clean_ar_p = clean_and_arabicize_promo(l)
+            promos.append(f"🔥 {clean_ar_p} (بيتطبق في السلة/الـ Checkout عند استيفاء الكمية)")
             how_to.append("أضف الكمية المطلوبة للسلة وهيتطبق الخصم التلقائي عند الدفع!")
             continue
         if m_egp and any(k in l for k in ("كوبون", "كود", "إضافي", "سلة", "الدفع")):
@@ -1026,7 +1050,8 @@ def detect_stacking_promos(card_text, page_promos=None, promo_links=None):
 
         # ب) عروض الكمية والشراء المجمع والاشتراك والتوفير (لا نخصمها من سعر القطعة الفردية عشان ميبقاش مضلل)
         if is_quantity_condition:
-            page_found_promos.append(f"🔥 {short_p}")
+            clean_ar_p = clean_and_arabicize_promo(short_p)
+            page_found_promos.append(f"🔥 {clean_ar_p}")
             if pct_m:
                 page_found_howto.append(f"أضف الكمية المطلوبة للسلة وهيتطبق خصم {pct_m.group(1)}% التلقائي عند الدفع!")
             else:
@@ -1339,87 +1364,123 @@ def _fit_caption_for_photo(text):
     return t
 
 def send_telegram_msg(text, image=None, target_chat_ids=None, reply_markup=None):
-    """يبعت العرض بصورة المنتج دائماً (سواء برابط مباشر أو بتحميل الصورة ورفعها لتليجرام أو file_id)، ويدعم أزرار تليجرام التفاعلية."""
+    """يبعت العرض بصورة المنتج دائماً عبر التحميل المباشر والرفع كملف لتليجرام، ويضمن عدم ضياع أو إسقاط صورة المنتج أبداً."""
     if not BOT_TOKEN:
         return False
     img_url = clean_image_url(image)
     is_tg_file_id = bool(image and isinstance(image, str) and not image.startswith("http") and len(image) > 20)
     destinations = target_chat_ids if target_chat_ids is not None else CHAT_IDS
     photo_caption = _fit_caption_for_photo(text)
+
+    # 1. تحميل بايتات الصورة محلياً مسبقاً برأس متصفح مكتبي لتفادي حظر أو بطء خوادم تليجرام في سحب CDN
+    img_bytes = None
+    if img_url:
+        try:
+            r_img = requests.get(
+                img_url,
+                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"},
+                timeout=12,
+            )
+            if r_img.ok and len(r_img.content) > 500:
+                img_bytes = r_img.content
+        except Exception as dl_e:
+            print(f"تعذر تحميل بايتات الصورة من {img_url}: {dl_e}")
+
+    # لو الصورة file_id من تليجرام، نسحب ملفها الفعلي لضمان نجاح إعادة إرسالها لأي قناة أو شات آخر بدون قيود توكن
+    if is_tg_file_id and not img_bytes:
+        try:
+            f_res = requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/getFile?file_id={image}", timeout=8)
+            if f_res.ok:
+                f_path = (f_res.json().get("result") or {}).get("file_path")
+                if f_path:
+                    dl_res = requests.get(f"https://api.telegram.org/file/bot{BOT_TOKEN}/{f_path}", timeout=15)
+                    if dl_res.ok and len(dl_res.content) > 500:
+                        img_bytes = dl_res.content
+        except Exception as tg_f_e:
+            print(f"تعذر تحميل file_id من تليجرام: {tg_f_e}")
+
+    has_photo = bool(img_bytes or img_url or is_tg_file_id)
+    photo_ref = img_url if img_url else image
     at_least_one_success = False
+
     for chat_id in destinations:
         try:
             resp = None
-            if img_url or is_tg_file_id:
-                photo_val = img_url if img_url else image
-                # 1. محاولة إرسال الصورة بالرابط المباشر أو file_id
-                post_data = {
-                    "chat_id": chat_id,
-                    "photo": photo_val,
-                    "caption": photo_caption,
-                    "parse_mode": "HTML",
-                }
-                if reply_markup:
-                    post_data["reply_markup"] = reply_markup
-                resp = requests.post(
-                    f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
-                    json=post_data,
-                    timeout=20,
-                )
-                # 2. لو تليجرام رفض تحميل الرابط مباشرة (مثلاً بسبب حماية CDN)، نحمّل الصورة ونرفعها كملف
-                if not resp.ok and img_url:
-                    try:
-                        img_r = requests.get(
-                            img_url,
-                            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0.0.0"},
-                            timeout=15,
-                        )
-                        if img_r.ok and len(img_r.content) > 500:
-                            f_data = {
-                                "chat_id": chat_id,
-                                "caption": photo_caption,
-                                "parse_mode": "HTML",
-                            }
-                            if reply_markup:
-                                f_data["reply_markup"] = json.dumps(reply_markup)
-                            resp = requests.post(
-                                f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
-                                data=f_data,
-                                files={"photo": ("product.jpg", img_r.content, "image/jpeg")},
-                                timeout=25,
-                            )
-                    except Exception as img_e:
-                        print(f"تعذر رفع صورة المنتج كملف: {img_e}")
-
-                # 3. لو sendPhoto فشل بسبب وسم HTML أو طول كابشن، نجرب كابشن نصي صافي (بدون HTML)
-                if not resp.ok and (img_url or is_tg_file_id):
-                    try:
-                        plain_cap = re.sub(r'<[^>]+>', '', photo_caption)[:950]
-                        p_data = {
-                            "chat_id": chat_id,
-                            "photo": photo_val,
-                            "caption": plain_cap,
-                        }
+            if has_photo:
+                # محاولة 1: رفع الصورة كملف مباشر (أو رابط) مع كابشن HTML المنسق
+                try:
+                    if img_bytes:
+                        f_data = {"chat_id": chat_id, "caption": photo_caption, "parse_mode": "HTML"}
                         if reply_markup:
-                            p_data["reply_markup"] = reply_markup
+                            f_data["reply_markup"] = json.dumps(reply_markup)
                         resp = requests.post(
                             f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
-                            json=p_data,
-                            timeout=15,
+                            data=f_data,
+                            files={"photo": ("product.jpg", img_bytes, "image/jpeg")},
+                            timeout=25,
                         )
-                    except Exception as p_err:
-                        print(f"تعذر إرسال الصورة بكابشن نصي: {p_err}")
-
-                # 4. لو الكابشن ما زال يسبب رفض الصورة، نرسل الصورة منفردة أولاً ثم الرسالة كنص حتى لا تضيع صورة المنتج أبداً!
-                if not resp.ok and (img_url or is_tg_file_id):
-                    try:
-                        p_solo = {"chat_id": chat_id, "photo": photo_val}
-                        resp_solo = requests.post(
+                    else:
+                        post_data = {
+                            "chat_id": chat_id,
+                            "photo": photo_ref,
+                            "caption": photo_caption,
+                            "parse_mode": "HTML",
+                        }
+                        if reply_markup:
+                            post_data["reply_markup"] = reply_markup
+                        resp = requests.post(
                             f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
-                            json=p_solo,
-                            timeout=15,
+                            json=post_data,
+                            timeout=20,
                         )
-                        if resp_solo.ok:
+                except Exception as p1_err:
+                    print(f"خطأ sendPhoto محاولة 1: {p1_err}")
+
+                # محاولة 2: لو فشل بسبب كابشن HTML (وسم غير مغلق أو طول زائد)، نجرب رفع الصورة بكابشن نصي صافي
+                if resp is None or not resp.ok:
+                    try:
+                        plain_cap = re.sub(r'<[^>]+>', '', photo_caption)[:950]
+                        if img_bytes:
+                            f_data_plain = {"chat_id": chat_id, "caption": plain_cap}
+                            if reply_markup:
+                                f_data_plain["reply_markup"] = json.dumps(reply_markup)
+                            resp = requests.post(
+                                f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
+                                data=f_data_plain,
+                                files={"photo": ("product.jpg", img_bytes, "image/jpeg")},
+                                timeout=25,
+                            )
+                        else:
+                            p_data = {"chat_id": chat_id, "photo": photo_ref, "caption": plain_cap}
+                            if reply_markup:
+                                p_data["reply_markup"] = reply_markup
+                            resp = requests.post(
+                                f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
+                                json=p_data,
+                                timeout=15,
+                            )
+                    except Exception as p2_err:
+                        print(f"خطأ sendPhoto محاولة 2: {p2_err}")
+
+                # محاولة 3: لو الكابشن ما زال يسبب أي رفض، نرسل الصورة منفردة (بدون أي كابشن) ثم نرسل نص العرض تحتها فوراً!
+                if resp is None or not resp.ok:
+                    try:
+                        resp_solo = None
+                        if img_bytes:
+                            f_solo = {"chat_id": chat_id}
+                            resp_solo = requests.post(
+                                f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
+                                data=f_solo,
+                                files={"photo": ("product.jpg", img_bytes, "image/jpeg")},
+                                timeout=25,
+                            )
+                        else:
+                            resp_solo = requests.post(
+                                f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
+                                json={"chat_id": chat_id, "photo": photo_ref},
+                                timeout=15,
+                            )
+                        if resp_solo and resp_solo.ok:
                             msg_payload = {
                                 "chat_id": chat_id,
                                 "text": text,
@@ -1428,15 +1489,25 @@ def send_telegram_msg(text, image=None, target_chat_ids=None, reply_markup=None)
                             }
                             if reply_markup:
                                 msg_payload["reply_markup"] = reply_markup
-                            resp = requests.post(
+                            resp_txt = requests.post(
                                 f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
                                 json=msg_payload,
                                 timeout=10,
                             )
-                    except Exception as s_err:
-                        print(f"تعذر إرسال الصورة منفردة: {s_err}")
+                            if not (resp_txt and resp_txt.ok):
+                                msg_payload["text"] = re.sub(r'<[^>]+>', '', text)
+                                msg_payload.pop("parse_mode", None)
+                                requests.post(
+                                    f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+                                    json=msg_payload,
+                                    timeout=10,
+                                )
+                            resp = resp_solo
+                    except Exception as p3_err:
+                        print(f"خطأ sendPhoto منفردة: {p3_err}")
 
-            if resp is None or not resp.ok:
+            # 4. فقط لو لم تكن هناك صورة متوفرة إطلاقاً (has_photo = False)
+            if (resp is None or not resp.ok) and not has_photo:
                 msg_payload = {
                     "chat_id": chat_id,
                     "text": text,
@@ -1450,21 +1521,14 @@ def send_telegram_msg(text, image=None, target_chat_ids=None, reply_markup=None)
                     json=msg_payload,
                     timeout=10,
                 )
-            if resp is None or not resp.ok:
-                # لو فشل بسبب كابشن أو وسم HTML معطوب، نبعته كنص صافي بدون HTML لتجنب ضياع البوست
-                plain_text = re.sub(r'<[^>]+>', '', text)
-                msg_payload = {
-                    "chat_id": chat_id,
-                    "text": plain_text,
-                    "disable_web_page_preview": True,
-                }
-                if reply_markup:
-                    msg_payload["reply_markup"] = reply_markup
-                resp = requests.post(
-                    f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-                    json=msg_payload,
-                    timeout=10,
-                )
+                if not (resp and resp.ok):
+                    plain_text = re.sub(r'<[^>]+>', '', text)
+                    resp = requests.post(
+                        f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+                        json={"chat_id": chat_id, "text": plain_text, "disable_web_page_preview": True},
+                        timeout=10,
+                    )
+
             if resp and resp.ok:
                 print(f"تم إرسال العرض إلى تليجرام ({chat_id}) بنجاح.")
                 at_least_one_success = True
@@ -2787,12 +2851,27 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                     }
                 }
                 if (!image || !image.startsWith('http')) {
+                    for (const s of document.querySelectorAll('script[type="application/ld+json"]')) {
+                        try {
+                            const j = JSON.parse(s.textContent);
+                            const im = Array.isArray(j?.image) ? j.image[0] : (typeof j?.image === 'string' ? j.image : j?.image?.url);
+                            if (im && im.startsWith('http')) { image = im; break; }
+                        } catch(e) {}
+                    }
+                }
+                if (!image || !image.startsWith('http')) {
+                    const hiResM = document.documentElement.innerHTML.match(/['"](?:hiRes|large)['"]\\s*:\\s*['"](https:\\/\\/[^'"]+)['"]/i);
+                    if (hiResM) image = hiResM[1];
+                }
+                if (!image || !image.startsWith('http')) {
                     image = [
+                        document.querySelector('meta[property="og:image"]')?.content,
+                        document.querySelector('meta[name="twitter:image"]')?.content,
+                        document.querySelector('link[rel="image_src"]')?.href,
                         img?.currentSrc,
                         img?.getAttribute('src'),
-                        document.querySelector('meta[property="og:image"]')?.content,
                         ...[...document.querySelectorAll('#altImages img, #imageBlock img')].map(i => i.src)
-                    ].find(u => u && u.startsWith('http') && !u.includes('play-button') && !u.includes('transparent-pixel'));
+                    ].find(u => u && u.startsWith('http') && !u.includes('play-button') && !u.includes('transparent-pixel') && !u.includes('data:image'));
                 }
                 const promos = [
                     ...document.querySelectorAll(
@@ -2936,6 +3015,13 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
         title = (raw_t if raw_t and not is_blocked_title(raw_t) else fb["title"]) or "منتج مميز على أمازون مصر"
         price = price or fb["price"]
         list_price = list_price or fb["list_price"]
+        if not image and asin_m:
+            try:
+                amz_meta = pi.fetch_amazon_en_metadata(canonical_url)
+                if amz_meta and amz_meta.get("image"):
+                    image = clean_image_url(amz_meta["image"])
+            except Exception:
+                pass
         image = image or fallback_image
         s_m = re.search(r'(\d{1,2})\s*%', clean(data.get("savingsTxt") or ""))
         raw_disc = float(s_m.group(1)) if s_m else (fb.get("discount") or 0.0)
