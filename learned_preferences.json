@@ -130,11 +130,10 @@
     "On Layf",
     "Beko",
     "HIKSEMI",
-    "Mienta"
+    "Mienta",
+    "Sylymaks"
   ],
   "queries": [
-    "Diafa Plain Cheddar ضيافة",
-    "معجون أسنان هيربال دابور",
     "عطر بارفان ريد كامارا",
     "معطر الجسم وايلد فكتوريا سيكريت",
     "مكمل غذائي متعدد سينتروم",
@@ -212,7 +211,9 @@
     "هارد SSD خارجي HIKSEMI",
     "مروحة مزودة سرعات مينتا",
     "موبايل سامسونج جالكسي",
-    "ارز مصري الضحى الدوحة"
+    "ارز مصري الضحى الدوحة",
+    "Redragon CPU Air ريدراجون",
+    "سيليماكس كريم حماية"
   ],
   "channels": [
     "epichardware",
@@ -532,6 +533,9 @@
     "Sal7lyEgypt/39296",
     "Sal7lyEgypt/39297",
     "Sal7lyEgypt/39299",
-    "Sal7lyEgypt/39298"
+    "Sal7lyEgypt/39298",
+    "epichardware/4510",
+    "Sal7lyEgypt/39301",
+    "Sal7lyEgypt/39300"
   ]
 }
