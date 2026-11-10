@@ -172,10 +172,10 @@
     "AULA",
     "Infinix",
     "Finish",
-    "Temry"
+    "Temry",
+    "Tide"
   ],
   "queries": [
-    "امتنان عسل الزهور",
     "محول واط USB سامسونج",
     "نيوفلام طقم اواني",
     "علي باور بنك",
@@ -254,7 +254,8 @@
     "اعواد طبل واجنحة Temry",
     "اجنحة واطباق فروزن Temry",
     "لوحة مفاتيح ألعاب ريدراجون",
-    "حليب سائل المراعي"
+    "حليب سائل المراعي",
+    "منظف للغسالات الأوتوماتيك تايد"
   ],
   "channels": [
     "epichardware",
@@ -776,6 +777,10 @@
     "Sal7lyEgypt/39487",
     "Sal7lyEgypt/39486",
     "Sal7lyEgypt/39485",
-    "Sal7lyEgypt/39484"
+    "Sal7lyEgypt/39484",
+    "epichardware/4575",
+    "Sal7lyEgypt/39496",
+    "Sal7lyEgypt/39495",
+    "Sal7lyEgypt/39494"
   ]
 }
