@@ -175,8 +175,6 @@
     "Temry"
   ],
   "queries": [
-    "راوتر لاسلكي محمول TP-Link",
-    "ليمتليس باور ماكس ليميتليس",
     "امتنان عسل الزهور",
     "محول واط USB سامسونج",
     "نيوفلام طقم اواني",
@@ -254,7 +252,9 @@
     "فينش منظف غسالة",
     "طقم مفكات بسقاطة APT",
     "اعواد طبل واجنحة Temry",
-    "اجنحة واطباق فروزن Temry"
+    "اجنحة واطباق فروزن Temry",
+    "لوحة مفاتيح ألعاب ريدراجون",
+    "حليب سائل المراعي"
   ],
   "channels": [
     "epichardware",
@@ -763,6 +763,19 @@
     "Sal7lyEgypt/39482",
     "Sal7lyEgypt/39481",
     "Sal7lyEgypt/39480",
-    "Sal7lyEgypt/39479"
+    "Sal7lyEgypt/39479",
+    "epichardware/4574",
+    "epichardware/4573",
+    "epichardware/4572",
+    "Sal7lyEgypt/39493",
+    "Sal7lyEgypt/39492",
+    "Sal7lyEgypt/39491",
+    "Sal7lyEgypt/39490",
+    "Sal7lyEgypt/39489",
+    "Sal7lyEgypt/39488",
+    "Sal7lyEgypt/39487",
+    "Sal7lyEgypt/39486",
+    "Sal7lyEgypt/39485",
+    "Sal7lyEgypt/39484"
   ]
 }
