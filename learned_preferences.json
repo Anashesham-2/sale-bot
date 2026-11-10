@@ -167,11 +167,10 @@
     "Andyst",
     "Nao",
     "Hitachi",
-    "White"
+    "White",
+    "Carrier"
   ],
   "queries": [
-    "مروحة مزودة سرعات مينتا",
-    "موبايل سامسونج جالكسي",
     "ارز مصري الضحى الدوحة",
     "Redragon CPU Air ريدراجون",
     "سيليماكس كريم حماية",
@@ -249,7 +248,9 @@
     "غسالة اطباق انديسيت انديست",
     "ناو قشر سيلليوم",
     "غسالة ملابس كجم Hitachi",
-    "ثلاجة وايت ويل"
+    "ثلاجة وايت ويل",
+    "تكييف هواء بارد",
+    "تكييف كاريير حصان"
   ],
   "channels": [
     "epichardware",
@@ -715,6 +716,12 @@
     "Sal7lyEgypt/39452",
     "Sal7lyEgypt/39451",
     "Sal7lyEgypt/39450",
-    "Sal7lyEgypt/39449"
+    "Sal7lyEgypt/39449",
+    "epichardware/4555",
+    "epichardware/4554",
+    "epichardware/4553",
+    "Sal7lyEgypt/39460",
+    "Sal7lyEgypt/39459",
+    "Sal7lyEgypt/39458"
   ]
 }
