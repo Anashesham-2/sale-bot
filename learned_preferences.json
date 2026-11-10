@@ -162,16 +162,14 @@
     "Myntra",
     "Nyrf",
     "Midea",
-    "Homkom"
+    "Homkom",
+    "Fyltroks",
+    "Andyst",
+    "Nao",
+    "Hitachi",
+    "White"
   ],
   "queries": [
-    "قهوة سريعة التحضير علي كافيه",
-    "سامسونج هاتف ذكي",
-    "خلاط كهربائي مطحنة ون لايف",
-    "تكييف هواء بارد بيكو",
-    "لابتوب ألعاب LOQ لينوفو",
-    "لابتوب ليجن 16IRX10 لينوفو",
-    "هارد SSD خارجي HIKSEMI",
     "مروحة مزودة سرعات مينتا",
     "موبايل سامسونج جالكسي",
     "ارز مصري الضحى الدوحة",
@@ -244,7 +242,14 @@
     "غسالة أطباق MDWPF1333C ميديا",
     "مكتب منزلي للكمبيوتر هومكوم",
     "تكييف سبليت نيو LG",
-    "مكيف سمارت كول هاير"
+    "مكيف سمارت كول هاير",
+    "تكييف نيو هيرو LG",
+    "ثلاجة نوفروست بيكو",
+    "عدسة كاميرا لسوني فيلتروكس",
+    "غسالة اطباق انديسيت انديست",
+    "ناو قشر سيلليوم",
+    "غسالة ملابس كجم Hitachi",
+    "ثلاجة وايت ويل"
   ],
   "channels": [
     "epichardware",
@@ -695,6 +700,21 @@
     "Sal7lyEgypt/39441",
     "epichardware/4546",
     "epichardware/4545",
-    "epichardware/4544"
+    "epichardware/4544",
+    "epichardware/4552",
+    "epichardware/4551",
+    "epichardware/4550",
+    "epichardware/4549",
+    "epichardware/4548",
+    "epichardware/4547",
+    "Sal7lyEgypt/39457",
+    "Sal7lyEgypt/39456",
+    "Sal7lyEgypt/39455",
+    "Sal7lyEgypt/39454",
+    "Sal7lyEgypt/39453",
+    "Sal7lyEgypt/39452",
+    "Sal7lyEgypt/39451",
+    "Sal7lyEgypt/39450",
+    "Sal7lyEgypt/39449"
   ]
 }
