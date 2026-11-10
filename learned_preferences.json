@@ -168,10 +168,10 @@
     "Nao",
     "Hitachi",
     "White",
-    "Carrier"
+    "Carrier",
+    "AULA"
   ],
   "queries": [
-    "فريش موزع مياه،",
     "مشروب الطاقة التيميت",
     "طقم جرانيت مكون توب شيف",
     "adidas mens ULTIMASHOW اديداس",
@@ -250,7 +250,8 @@
     "تكييف اتش دبليو كاريير",
     "مغرفة مسحوق الفا ليميتليس",
     "اقراص ليميتليس مان",
-    "مرتبة دويتشه ماتراتزن"
+    "مرتبة دويتشه ماتراتزن",
+    "اولا كيبورد العاب"
   ],
   "channels": [
     "epichardware",
@@ -737,6 +738,8 @@
     "epichardware/4562",
     "epichardware/4561",
     "Sal7lyEgypt/39468",
-    "Sal7lyEgypt/39467"
+    "Sal7lyEgypt/39467",
+    "epichardware/4565",
+    "epichardware/4564"
   ]
 }
