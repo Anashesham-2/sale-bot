@@ -190,9 +190,6 @@
     "Derby Sports"
   ],
   "queries": [
-    "صفحة Sal7ly",
-    "مسدس لعبة ارمور نيرف",
-    "كابل USB يوجرين",
     "غسالة أطباق MDWPF1333C ميديا",
     "مكتب منزلي للكمبيوتر هومكوم",
     "تكييف سبليت نيو LG",
@@ -269,7 +266,10 @@
     "دراجة تدريب طراز Derby Sports",
     "باور بانك أنكر انكر",
     "مروحة تبريد بإضاءة هافيت",
-    "تخفيضات تسوق العروض،"
+    "تخفيضات تسوق العروض،",
+    "شاحن أنكر بمنفذ انكر",
+    "موبايل سامسونج جالكسي",
+    "موبايل جالاكسي A57 سامسونج"
   ],
   "channels": [
     "epichardware",
@@ -889,6 +889,15 @@
     "Sal7lyEgypt/39575",
     "Sal7lyEgypt/39578",
     "Sal7lyEgypt/39577",
-    "Sal7lyEgypt/39579"
+    "Sal7lyEgypt/39579",
+    "epichardware/4614",
+    "epichardware/4612",
+    "epichardware/4611",
+    "epichardware/4610",
+    "epichardware/4609",
+    "epichardware/4608",
+    "epichardware/4607",
+    "epichardware/4605",
+    "epichardware/4604"
   ]
 }
