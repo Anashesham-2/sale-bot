@@ -191,10 +191,10 @@
     "Luminarc",
     "OXI",
     "El Mtbkh El Msra",
-    "Sokany"
+    "Sokany",
+    "Sony"
   ],
   "queries": [
-    "فرن فريش كهربائي",
     "غسالة ملابس بلوتوث بيكو",
     "تكييف اتش دبليو كاريير",
     "مغرفة مسحوق الفا ليميتليس",
@@ -273,7 +273,8 @@
     "صفحة Sal7ly",
     "HONOR Pad X9a اونر",
     "لابتوب اومني بوك HP",
-    "ابل ايباد اير"
+    "ابل ايباد اير",
+    "سماعات رأس لاسلكية سوني"
   ],
   "channels": [
     "epichardware",
@@ -943,6 +944,8 @@
     "Sal7lyEgypt/39625",
     "Sal7lyEgypt/39624",
     "Sal7lyEgypt/39629",
-    "Sal7lyEgypt/39628"
+    "Sal7lyEgypt/39628",
+    "Sal7lyEgypt/39631",
+    "Sal7lyEgypt/39630"
   ]
 }
