@@ -194,7 +194,6 @@
     "Sokany"
   ],
   "queries": [
-    "ثلاجة وايت ويل",
     "تكييف هواء بارد",
     "تكييف كاريير حصان",
     "مكيف هواء عاكس LG",
@@ -273,7 +272,8 @@
     "زجاجة مياه بلاستيكية تانك",
     "مكيف سبليت X36CEE تورنيدو",
     "غسالة اوتوماتيك بالكامل باناسونيك",
-    "حذاء الجري كريزي"
+    "حذاء الجري كريزي",
+    "صفحة Sal7ly"
   ],
   "channels": [
     "epichardware",
@@ -930,6 +930,13 @@
     "Sal7lyEgypt/39615",
     "epichardware/4619",
     "Sal7lyEgypt/39617",
-    "Sal7lyEgypt/39616"
+    "Sal7lyEgypt/39616",
+    "epichardware/4620",
+    "Sal7lyEgypt/39623",
+    "Sal7lyEgypt/39622",
+    "Sal7lyEgypt/39621",
+    "Sal7lyEgypt/39620",
+    "Sal7lyEgypt/39619",
+    "Sal7lyEgypt/39618"
   ]
 }
