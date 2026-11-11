@@ -25,7 +25,7 @@ concurrency:
 
 jobs:
   scrape-deals:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 355
 
     env:
@@ -33,6 +33,7 @@ jobs:
       CHECK_INTERVAL: "180"
       # مدة التشغيلة الواحدة بالدقايق (أقصى حد في GitHub 6 ساعات)
       RUN_MINUTES: "340"
+      PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: "20000"
 
     steps:
       - name: Checkout repository
@@ -44,23 +45,70 @@ jobs:
           python-version: '3.12'
           cache: 'pip'
 
+      - name: Install Python dependencies
+        id: pip
+        timeout-minutes: 5
+        run: |
+          pip install --prefer-binary --timeout 20 -r requirements.txt
+          PW_VER=$(python -c "import importlib.metadata; print(importlib.metadata.version('playwright'))")
+          echo "pw_ver=$PW_VER" >> "$GITHUB_OUTPUT"
+
       - name: Cache HuggingFace Vision Model
         uses: actions/cache@v4
         with:
           path: ~/.cache/huggingface
           key: hf-clip-onnx-v1
 
-      - name: Install dependencies and Chromium
+      - name: Preload Vision Model
+        timeout-minutes: 3
+        continue-on-error: true
         run: |
-          pip install -r requirements.txt
-          python -c "import product_intelligence as pi; pi._ensure_vision_loaded()" || true
-          playwright install --with-deps chromium
-          sudo apt-get update && sudo apt-get install -y xvfb
+          timeout 90 python -c "import product_intelligence as pi; pi._ensure_vision_loaded()" || true
+
+      - name: Cache Playwright Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-chromium-${{ steps.pip.outputs.pw_ver }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-chromium-
+
+      - name: Configure fast APT and install Xvfb and Chromium deps
+        timeout-minutes: 5
+        run: |
+          sudo tee /etc/apt/apt.conf.d/99fast-apt >/dev/null <<'EOF'
+          Acquire::ForceIPv4 "true";
+          Acquire::Retries "1";
+          Acquire::http::Timeout "15";
+          Acquire::https::Timeout "15";
+          EOF
+
+          if ! sudo timeout 60 apt-get update; then
+            echo "apt-get update stalled/failed; isolating official Ubuntu repos and switching mirror..."
+            sudo find /etc/apt/sources.list.d/ -maxdepth 1 -type f ! -name 'ubuntu.sources' -delete || true
+            sudo sed -i 's|azure\.archive\.ubuntu\.com|archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || true
+            sudo timeout 60 apt-get update
+          fi
+
+          sudo DEBIAN_FRONTEND=noninteractive timeout 120 apt-get install -y --no-install-recommends xvfb
+          if ! timeout 150 playwright install-deps chromium; then
+            echo "playwright install-deps failed; isolating official Ubuntu repos and retrying..."
+            sudo find /etc/apt/sources.list.d/ -maxdepth 1 -type f ! -name 'ubuntu.sources' -delete || true
+            sudo sed -i 's|azure\.archive\.ubuntu\.com|archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || true
+            timeout 150 playwright install-deps chromium
+          fi
+
+      - name: Install Playwright Chromium browser
+        timeout-minutes: 5
+        run: |
+          timeout 180 playwright install chromium || (rm -rf ~/.cache/ms-playwright && timeout 180 playwright install chromium)
 
       - name: Run deals bot in a loop
+        id: run_bot
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          HF_HUB_DISABLE_TELEMETRY: "1"
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -88,7 +136,7 @@ jobs:
           done
 
       - name: Trigger next continuous session immediately (Zero-Downtime Self-Chain)
-        if: always() && !cancelled()
+        if: ${{ !cancelled() && steps.run_bot.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
