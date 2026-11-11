@@ -178,10 +178,10 @@
     "Aorganyk Rot Stymyolaytor",
     "Basabahs",
     "Gillette",
-    "Bobana"
+    "Bobana",
+    "Baseus"
   ],
   "queries": [
-    "ارز مصري الساعة",
     "مكواة بخار للملابس SPIDA",
     "غسالة اوتوماتيك بالكامل باناسونيك",
     "هوليلاند نظام نقل",
@@ -260,7 +260,8 @@
     "بولة زجاج كبيرة باساباهس",
     "مجموعة شفرات حلاقة جيليت",
     "بلسم زيت الارجان بوبانا",
-    "موزع مياه 16VCB2 فريش"
+    "موزع مياه 16VCB2 فريش",
+    "جهاز بادئ تشغيل بيسوس"
   ],
   "channels": [
     "epichardware",
@@ -808,6 +809,10 @@
     "Sal7lyEgypt/39522",
     "Sal7lyEgypt/39521",
     "Sal7lyEgypt/39520",
-    "Sal7lyEgypt/39519"
+    "Sal7lyEgypt/39519",
+    "epichardware/4583",
+    "Sal7lyEgypt/39525",
+    "Sal7lyEgypt/39524",
+    "Sal7lyEgypt/39523"
   ]
 }
