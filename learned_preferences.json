@@ -190,8 +190,6 @@
     "Derby Sports"
   ],
   "queries": [
-    "مشروب طاقة التيميت",
-    "حذاء كاي سهل مينترا",
     "شاحن ذكي سريع اورايمو",
     "صفحة Sal7ly",
     "مسدس لعبة ارمور نيرف",
@@ -269,7 +267,9 @@
     "تكييف سبليت احترافي فريش",
     "أقراص فيتامينات ومغنيسيوم سينتروم",
     "طقم لوحة مفاتيح يوجرين",
-    "دراجة تدريب طراز Derby Sports"
+    "دراجة تدريب طراز Derby Sports",
+    "باور بانك أنكر انكر",
+    "مروحة تبريد بإضاءة هافيت"
   ],
   "channels": [
     "epichardware",
@@ -874,6 +874,12 @@
     "epichardware/4596",
     "epichardware/4594",
     "Sal7lyEgypt/39569",
-    "Sal7lyEgypt/39568"
+    "Sal7lyEgypt/39568",
+    "epichardware/4600",
+    "epichardware/4599",
+    "epichardware/4598",
+    "Sal7lyEgypt/39573",
+    "Sal7lyEgypt/39572",
+    "Sal7lyEgypt/39571"
   ]
 }
