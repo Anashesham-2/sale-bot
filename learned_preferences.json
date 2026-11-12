@@ -206,10 +206,10 @@
     "Lodoyk",
     "Tefal",
     "iLock",
-    "Lotus,"
+    "Lotus,",
+    "Bosch"
   ],
   "queries": [
-    "شاومي جوال ريدمي",
     "تلفزيون كريستال UHD سامسونج",
     "بلاي ستيشن سوني Playstation",
     "مكنسة كهربائية فاستر فريش",
@@ -288,7 +288,8 @@
     "LED Strip Light اي لوك",
     "مشترك كهربائي مقابس اي لوك",
     "سلك تمديد ايلوك باور لوك",
-    "أطباق عشاء بورسلين Lotus,"
+    "أطباق عشاء بورسلين Lotus,",
+    "خلاط يدوي بوش"
   ],
   "channels": [
     "epichardware",
@@ -1031,6 +1032,7 @@
     "Sal7lyEgypt/39691",
     "Sal7lyEgypt/39694",
     "Sal7lyEgypt/39695",
-    "Sal7lyEgypt/39696"
+    "Sal7lyEgypt/39696",
+    "Sal7lyEgypt/39697"
   ]
 }
