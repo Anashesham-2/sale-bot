@@ -216,7 +216,6 @@
     "Zyna"
   ],
   "queries": [
-    "مكيف هواء سبليت",
     "مكيف هواء سبليت تورنيدو",
     "مكيف سبليت رقمي شارب",
     "مكيف هواء شارب",
@@ -295,7 +294,8 @@
     "قلم لتبييض البشرة",
     "Samsung Inch Mini سامسونج",
     "سماعة ألعاب سلكية ريزر",
-    "طقم أدوات مائدة زينا"
+    "طقم أدوات مائدة زينا",
+    "جهاز باد شريحة ابل"
   ],
   "channels": [
     "epichardware",
@@ -1075,6 +1075,12 @@
     "epichardware/4643",
     "epichardware/4642",
     "Sal7lyEgypt/39724",
-    "Sal7lyEgypt/39722"
+    "Sal7lyEgypt/39722",
+    "epichardware/4646",
+    "Sal7lyEgypt/39729",
+    "Sal7lyEgypt/39728",
+    "Sal7lyEgypt/39727",
+    "Sal7lyEgypt/39726",
+    "Sal7lyEgypt/39725"
   ]
 }
