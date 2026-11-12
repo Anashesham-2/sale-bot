@@ -205,10 +205,10 @@
     "Haylo",
     "Lodoyk",
     "Tefal",
-    "iLock"
+    "iLock",
+    "Lotus,"
   ],
   "queries": [
-    "جهاز بادئ تشغيل بيسوس",
     "شاومي جوال ريدمي",
     "تلفزيون كريستال UHD سامسونج",
     "بلاي ستيشن سوني Playstation",
@@ -287,7 +287,8 @@
     "صينية فرن تيفال",
     "LED Strip Light اي لوك",
     "مشترك كهربائي مقابس اي لوك",
-    "سلك تمديد ايلوك باور لوك"
+    "سلك تمديد ايلوك باور لوك",
+    "أطباق عشاء بورسلين Lotus,"
   ],
   "channels": [
     "epichardware",
@@ -1022,6 +1023,8 @@
     "epichardware/4630",
     "Sal7lyEgypt/39688",
     "Sal7lyEgypt/39687",
-    "Sal7lyEgypt/39686"
+    "Sal7lyEgypt/39686",
+    "Sal7lyEgypt/39690",
+    "Sal7lyEgypt/39689"
   ]
 }
