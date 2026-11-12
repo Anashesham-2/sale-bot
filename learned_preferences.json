@@ -211,11 +211,11 @@
     "Cadbury",
     "Dermacy",
     "Knorr",
-    "Vitrac"
+    "Vitrac",
+    "Razer",
+    "Zyna"
   ],
   "queries": [
-    "مكمل غذائي جلوتامين تشالنجر نيوترشن",
-    "شاحن هافيت بمنفذ",
     "مكيف هواء سبليت",
     "مكيف هواء سبليت تورنيدو",
     "مكيف سبليت رقمي شارب",
@@ -293,7 +293,9 @@
     "حذاء رياضي سوبرنوفا اديداس",
     "مربى فراولة فيتراك،",
     "قلم لتبييض البشرة",
-    "Samsung Inch Mini سامسونج"
+    "Samsung Inch Mini سامسونج",
+    "سماعة ألعاب سلكية ريزر",
+    "طقم أدوات مائدة زينا"
   ],
   "channels": [
     "epichardware",
@@ -1069,6 +1071,10 @@
     "Sal7lyEgypt/39717",
     "Sal7lyEgypt/39721",
     "Sal7lyEgypt/39720",
-    "Sal7lyEgypt/39719"
+    "Sal7lyEgypt/39719",
+    "epichardware/4643",
+    "epichardware/4642",
+    "Sal7lyEgypt/39724",
+    "Sal7lyEgypt/39722"
   ]
 }
