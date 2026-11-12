@@ -209,10 +209,10 @@
     "Lotus,",
     "Bosch",
     "Cadbury",
-    "Dermacy"
+    "Dermacy",
+    "Knorr"
   ],
   "queries": [
-    "لابتوب LOQ 15AHP10 لينوفو",
     "أدوات يدوية مثقاب توتال",
     "لابتوب ألعاب لوك لينوفو",
     "قرص متعدد الفيتامينات سينتروم",
@@ -291,7 +291,8 @@
     "ميكروويف بشواية لتر تورنيدو",
     "برطمان مسحوق مشروب كادبوري",
     "شاحن UC25 عالي هافيت",
-    "مجموعة حماية البشرة Dermacy"
+    "مجموعة حماية البشرة Dermacy",
+    "توابل بطاطس كنور،"
   ],
   "channels": [
     "epichardware",
@@ -1048,6 +1049,8 @@
     "epichardware/4632",
     "epichardware/4631",
     "Sal7lyEgypt/39707",
-    "epichardware/4634"
+    "epichardware/4634",
+    "epichardware/4635",
+    "Sal7lyEgypt/39708"
   ]
 }
