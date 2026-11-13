@@ -224,10 +224,10 @@
     "El Rshydy El Myzan",
     "Gynyrk",
     "Dy As By",
-    "Nor"
+    "Nor",
+    "JBL"
   ],
   "queries": [
-    "صفحة Sal7ly",
     "HONOR Pad X9a اونر",
     "لابتوب اومني بوك HP",
     "ابل ايباد اير",
@@ -306,7 +306,8 @@
     "قلاية هوائية ليتر، دي اس بي",
     "جهاز تحكم الألعاب ريدراجون",
     "مكمل بروتين الشوفان ريد ريكس",
-    "طقم عشاء حديث نور"
+    "طقم عشاء حديث نور",
+    "سماعات أذن رياضية جيه بي ال"
   ],
   "channels": [
     "epichardware",
@@ -1139,6 +1140,9 @@
     "Sal7lyEgypt/39765",
     "epichardware/4667",
     "Sal7lyEgypt/39767",
-    "Sal7lyEgypt/39766"
+    "Sal7lyEgypt/39766",
+    "epichardware/4668",
+    "Sal7lyEgypt/39769",
+    "Sal7lyEgypt/39768"
   ]
 }
