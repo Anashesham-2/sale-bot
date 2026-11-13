@@ -223,10 +223,10 @@
     "Lona",
     "El Rshydy El Myzan",
     "Gynyrk",
-    "Dy As By"
+    "Dy As By",
+    "Nor"
   ],
   "queries": [
-    "حذاء الجري كريزي",
     "صفحة Sal7ly",
     "HONOR Pad X9a اونر",
     "لابتوب اومني بوك HP",
@@ -305,7 +305,8 @@
     "عطربرفيوم غزال جينيرك",
     "قلاية هوائية ليتر، دي اس بي",
     "جهاز تحكم الألعاب ريدراجون",
-    "مكمل بروتين الشوفان ريد ريكس"
+    "مكمل بروتين الشوفان ريد ريكس",
+    "طقم عشاء حديث نور"
   ],
   "channels": [
     "epichardware",
@@ -1135,6 +1136,9 @@
     "Sal7lyEgypt/39764",
     "epichardware/4663",
     "epichardware/4666",
-    "Sal7lyEgypt/39765"
+    "Sal7lyEgypt/39765",
+    "epichardware/4667",
+    "Sal7lyEgypt/39767",
+    "Sal7lyEgypt/39766"
   ]
 }
