@@ -266,10 +266,10 @@
     "Lasn",
     "El Mas",
     "Tymbyrya",
-    "Hymalaya"
+    "Hymalaya",
+    "Fujifilm"
   ],
   "queries": [
-    "عطر بخاخ بارفان مونت بلانك",
     "شنيور دقاق احترافي بوش بروفيشنال",
     "نظام الوسائط المتعددة CASKA",
     "لوحة مفاتيح كاستور ريدراجون",
@@ -348,7 +348,8 @@
     "مروحة مكتب تورنيدو",
     "غسول الوجه هيمالايا",
     "Apt طقم مفكات",
-    "هاتف HONOR X9c اونر"
+    "هاتف HONOR X9c اونر",
+    "طابعة فوجي فيلم انستاكس"
   ],
   "channels": [
     "epichardware",
@@ -1316,6 +1317,7 @@
     "Sal7lyEgypt/39872",
     "epichardware/4729",
     "epichardware/4727",
-    "epichardware/4726"
+    "epichardware/4726",
+    "epichardware/4730"
   ]
 }
