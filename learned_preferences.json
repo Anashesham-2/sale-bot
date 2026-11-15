@@ -274,12 +274,10 @@
     "Moulinex",
     "Gn",
     "Hom Stor",
-    "Nutricook"
+    "Nutricook",
+    "Syka"
   ],
   "queries": [
-    "شاحن هافيت بتقنية",
-    "تلفزيون ذكي FHD هاير",
-    "استحمام نيتشر ديفا،",
     "دقيق جوز الهند ايزيس",
     "خلاط مطبخ بمقبض ايديال ستاندرد",
     "بارفان اوسكار زيمايا، ZIMAYA",
@@ -356,7 +354,10 @@
     "مضرب نسكافيه قابل سوكاني",
     "تلفزيون سمارت بوصة LG",
     "غلاية ذكية بايت اورايمو",
-    "نيوتري كوك مقلاة"
+    "نيوتري كوك مقلاة",
+    "تحكم سوني ديوال Playstation",
+    "طقم بلوزة بأكمام سيكا",
+    "غلاية سيف تاتش تانك"
   ],
   "channels": [
     "epichardware",
@@ -1357,6 +1358,13 @@
     "epichardware/4755",
     "epichardware/4753",
     "epichardware/4752",
-    "epichardware/4751"
+    "epichardware/4751",
+    "epichardware/4757",
+    "Sal7lyEgypt/39927",
+    "Sal7lyEgypt/39926",
+    "Sal7lyEgypt/39925",
+    "Sal7lyEgypt/39924",
+    "Sal7lyEgypt/39923",
+    "Sal7lyEgypt/39922"
   ]
 }
