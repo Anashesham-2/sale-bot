@@ -270,12 +270,12 @@
     "Fujifilm",
     "Byfo",
     "Fryda",
-    "Totchy"
+    "Totchy",
+    "Moulinex",
+    "Gn",
+    "Hom Stor"
   ],
   "queries": [
-    "ماء ميسيلار مزيل نيفيا",
-    "كبيرة اغطية طعام جينيريك",
-    "أوكسي برايت عبوة او اكس اي",
     "كيس بسبوسة ال5",
     "مسحوق غسيل فيلفيتا، فلفيتا",
     "عسل نحل نقي امتنان",
@@ -352,7 +352,10 @@
     "مروحة ستاند ذكية فريش",
     "سماعات أذن XE28 انفينيكس",
     "سلم معدني سوبر اخرى",
-    "Sliced Jalapeño Pepper Totchy"
+    "Sliced Jalapeño Pepper Totchy",
+    "مولينكس قطاعة مولينيت",
+    "طارد للحشرات برائحة جن",
+    "ميزان رقمي منزلي هوم ستور"
   ],
   "channels": [
     "epichardware",
@@ -1345,6 +1348,9 @@
     "Sal7lyEgypt/39914",
     "Sal7lyEgypt/39912",
     "Sal7lyEgypt/39911",
-    "Sal7lyEgypt/39910"
+    "Sal7lyEgypt/39910",
+    "epichardware/4750",
+    "Sal7lyEgypt/39919",
+    "Sal7lyEgypt/39918"
   ]
 }
