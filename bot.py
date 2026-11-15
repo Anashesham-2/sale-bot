@@ -281,7 +281,7 @@ def learn_from_product(title, brand=None):
     """يتعلم الماركة ونوع المنتج من أي عرض يبعته صاحب البوت أو من القنوات المراقبة ليبحث عن عروض مشابهة تلقائياً."""
     changed = False
     b_en_norm = pi.normalize_brand_english(brand, title=title, allow_network=False) if (brand or title) else ""
-    effective_brand = b_en_norm or (brand or "").strip()
+    effective_brand = b_en_norm.strip(" ,.;:-_|") if b_en_norm else ""
     if effective_brand:
         b_clean = effective_brand.strip()
         b_low = b_clean.lower()
@@ -2088,22 +2088,43 @@ async def noon_product_details(context, link):
         await page.evaluate("window.scrollTo(0, document.body.scrollHeight * 0.5)")
         await page.wait_for_timeout(800)
         data = await page.evaluate("""async () => {
-            const h1El = document.querySelector('[data-qa="pdp-product-name"]') || document.querySelector('h1');
-            const full_title = h1El?.innerText?.trim();
-            let brand = document.querySelector('[data-qa*="brand" i], a[class*="brand" i]')?.innerText;
-            if (!brand && h1El?.previousElementSibling) {
-                const prevTxt = (h1El.previousElementSibling.innerText || '').replace(/[>›]/g, '').trim();
-                if (prevTxt.length >= 2 && prevTxt.length <= 35 && !prevTxt.includes('عرض')) {
-                    brand = prevTxt;
+            const container = document.querySelector('[data-qa="pdp-container"]');
+            const h1El = (container || document).querySelector('[data-qa="pdp-product-name"]') || (container || document).querySelector('h1');
+            let full_title = h1El?.innerText?.trim() || '';
+            let brand = null;
+            let nextBrandCode = '';
+            try {
+                const nextEl = document.querySelector('#__NEXT_DATA__');
+                if (nextEl) {
+                    const nj = JSON.parse(nextEl.textContent || '{}');
+                    const prod = nj?.props?.pageProps?.catalog?.product
+                        || nj?.props?.pageProps?.product
+                        || nj?.props?.pageProps?.initialData?.product;
+                    if (prod) {
+                        if (prod.brand) brand = String(prod.brand).trim();
+                        if (prod.brand_code) nextBrandCode = String(prod.brand_code).replace(/[-_]+/g, ' ').trim();
+                        if (!full_title && prod.name) full_title = String(prod.name).trim();
+                    }
                 }
-            }
+            } catch (e) {}
             if (!brand) {
                 for (const s of document.querySelectorAll('script[type="application/ld+json"]')) {
                     try {
                         const j = JSON.parse(s.textContent);
                         const b = j?.brand?.name || (typeof j?.brand === 'string' ? j.brand : null);
-                        if (b) { brand = b; break; }
+                        if (b) { brand = String(b).trim(); break; }
                     } catch (e) {}
+                }
+            }
+            if (!brand && container) {
+                const bEl = container.querySelector('[data-qa="pdp-brand"], [data-qa="pdp-product-brand"]');
+                if (bEl && !bEl.closest('header, nav, footer')) {
+                    brand = bEl.innerText?.trim();
+                } else if (h1El && container.contains(h1El) && h1El.previousElementSibling && !h1El.previousElementSibling.closest('header, nav, footer')) {
+                    const prevTxt = (h1El.previousElementSibling.innerText || '').replace(/[>›]/g, '').trim();
+                    if (prevTxt.length >= 2 && prevTxt.length <= 35 && !prevTxt.includes('عرض') && !prevTxt.includes('تقييم')) {
+                        brand = prevTxt;
+                    }
                 }
             }
             if (brand) brand = brand.replace(/[>›]/g, '').split('\\n')[0].trim();
@@ -2121,7 +2142,6 @@ async def noon_product_details(context, link):
                     if (seller) break;
                 }
             }
-            const container = document.querySelector('[data-qa="pdp-container"]');
             const feats = container
                 ? [...container.querySelectorAll('ul li')]
                     .filter(e => !e.querySelector('a') && !e.closest('a') && !e.closest('header') && !e.closest('nav') && !e.closest('footer'))
@@ -2158,26 +2178,45 @@ async def noon_product_details(context, link):
                     try {
                         const ctrl = new AbortController();
                         const tid = setTimeout(() => ctrl.abort(), 4000);
-                        const resp = await fetch(enUrl, { signal: ctrl.signal });
+                        const resp = await fetch(enUrl, { signal: ctrl.signal, credentials: 'omit' });
                         clearTimeout(tid);
                         if (resp.ok) {
                             const htmlTxt = await resp.text();
                             const ed = new DOMParser().parseFromString(htmlTxt, 'text/html');
-                            en_title = (ed.querySelector('[data-qa="pdp-product-name"]')?.textContent || ed.querySelector('h1')?.textContent || ed.querySelector('meta[property="og:title"]')?.content || '').replace(/\\s+/g, ' ').trim();
-                            let eb = (ed.querySelector('[data-qa*="brand" i], a[class*="brand" i]')?.textContent || '').replace(/[>›]/g, '').split('\\n')[0].trim();
+                            let eb = '';
+                            try {
+                                const nj = JSON.parse(ed.querySelector('#__NEXT_DATA__')?.textContent || '{}');
+                                const prod = nj?.props?.pageProps?.catalog?.product
+                                    || nj?.props?.pageProps?.product
+                                    || nj?.props?.pageProps?.initialData?.product;
+                                if (prod?.brand) eb = String(prod.brand).trim();
+                                else if (prod?.brand_code) eb = String(prod.brand_code).replace(/[-_]+/g, ' ').trim();
+                                if (prod?.name) en_title = String(prod.name).trim();
+                            } catch (e) {}
                             if (!eb) {
-                                try {
-                                    const nj = JSON.parse(ed.querySelector('#__NEXT_DATA__')?.textContent || '{}');
-                                    const prod = nj?.props?.pageProps?.catalog?.product || nj?.props?.pageProps?.product;
-                                    if (prod?.brand) eb = String(prod.brand).trim();
-                                    if (!en_title && prod?.name) en_title = String(prod.name).trim();
-                                } catch (e) {}
+                                for (const s of ed.querySelectorAll('script[type="application/ld+json"]')) {
+                                    try {
+                                        const j = JSON.parse(s.textContent);
+                                        const b = j?.brand?.name || (typeof j?.brand === 'string' ? j.brand : null);
+                                        if (b) { eb = String(b).trim(); break; }
+                                    } catch (e) {}
+                                }
+                            }
+                            const edContainer = ed.querySelector('[data-qa="pdp-container"]');
+                            if (!en_title) {
+                                en_title = (edContainer?.querySelector('[data-qa="pdp-product-name"]')?.textContent || edContainer?.querySelector('h1')?.textContent || ed.querySelector('meta[property="og:title"]')?.content || '').replace(/\\s+/g, ' ').trim();
+                            }
+                            if (!eb && edContainer) {
+                                eb = (edContainer.querySelector('[data-qa="pdp-brand"], [data-qa="pdp-product-brand"]')?.textContent || '').replace(/[>›]/g, '').split('\\n')[0].trim();
                             }
                             en_brand = eb;
                             en_breadcrumbs = [...ed.querySelectorAll('[data-qa*="breadcrumb" i] a, nav[aria-label*="breadcrumb" i] a, [class*="breadcrumb" i] a')]
                                 .map(e => e.textContent.replace(/\\s+/g, ' ').trim()).filter(Boolean);
                         }
                     } catch (e) {}
+                }
+                if (!en_brand && nextBrandCode && /^[A-Za-z][A-Za-z0-9\\s\\-&+]{1,30}$/.test(nextBrandCode)) {
+                    en_brand = nextBrandCode;
                 }
             }
             return {full_title, brand, seller, feats, breadcrumbs, specs, en_slug, en_title, en_brand, en_breadcrumbs, image, promos: promos.slice(0, 5), revs};
@@ -2356,7 +2395,15 @@ async def scrape_noon_eg(page):
             if not title or is_blocked_title(title):
                 continue
             brand = pdp_brand or card.get("brand")
-            if not is_trusted_product(title, brand=extra_ctx.get("en_brand") or brand, rating=info["rating"], reviews=info["reviews"]):
+            norm_brand_noon = pi.normalize_brand_english(
+                brand,
+                title=title,
+                extra_text=" ".join((features or []) + (extra_ctx.get("specs") or [])),
+                en_brand=extra_ctx.get("en_brand") or "",
+                en_title=extra_ctx.get("en_title") or "",
+                allow_network=False,
+            )
+            if not is_trusted_product(title, brand=norm_brand_noon or brand, rating=info["rating"], reviews=info["reviews"]):
                 continue
             if not seller and card.get("express"):
                 seller = "نون (Express)"
@@ -3049,7 +3096,7 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
             eff_price = round(eff_price - extra_egp, 2)
 
         # 🧠 التعلم من أي منتج يمر على البوت (الماركة وفئة المنتج) حتى لو العرض منتهي
-        learn_from_product(title, brand)
+        learn_from_product(title, data.get("en_brand") or brand)
         custom_insight = rewrite_channel_insight(fallback_text)
 
         # 🔎 التحقق الصارم أن العرض لسه متاح وساري على المتجر
@@ -3110,29 +3157,12 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
             await page.evaluate("window.scrollTo(0, document.body.scrollHeight * 0.5)")
             await page.wait_for_timeout(900)
             data = await page.evaluate("""async () => {
-                const h1El = document.querySelector('[data-qa="pdp-product-name"]') || document.querySelector('h1');
+                const container = document.querySelector('[data-qa="pdp-container"]');
+                const h1El = (container || document).querySelector('[data-qa="pdp-product-name"]') || (container || document).querySelector('h1');
                 let full_title = h1El?.innerText?.trim() || document.querySelector('meta[property="og:title"]')?.content || '';
-                let brand = document.querySelector('[data-qa*="brand" i], a[class*="brand" i]')?.innerText;
-                if (!brand && h1El?.previousElementSibling) {
-                    const prevTxt = (h1El.previousElementSibling.innerText || '').replace(/[>›]/g, '').trim();
-                    if (prevTxt.length >= 2 && prevTxt.length <= 35 && !prevTxt.includes('عرض')) {
-                        brand = prevTxt;
-                    }
-                }
-                let ldPrice = null, ldRating = null, ldReviews = null;
-                for (const s of document.querySelectorAll('script[type="application/ld+json"]')) {
-                    try {
-                        const j = JSON.parse(s.textContent);
-                        const b = j?.brand?.name || (typeof j?.brand === 'string' ? j.brand : null);
-                        if (!brand && b) brand = b;
-                        const off = Array.isArray(j?.offers) ? j.offers[0] : j?.offers;
-                        if (off?.price && !ldPrice) ldPrice = String(off.price);
-                        if (j?.aggregateRating?.ratingValue) ldRating = String(j.aggregateRating.ratingValue);
-                        if (j?.aggregateRating?.reviewCount) ldReviews = String(j.aggregateRating.reviewCount);
-                    } catch (e) {}
-                }
+                let brand = null;
 
-                let nextPrice = null, nextWas = null, nextTitle = null, nextBrand = null, nextImage = null;
+                let nextPrice = null, nextWas = null, nextTitle = null, nextBrand = null, nextBrandCode = '', nextImage = null;
                 try {
                     const nextEl = document.querySelector('#__NEXT_DATA__');
                     if (nextEl) {
@@ -3145,7 +3175,8 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                             if (prod.sale_price) nextPrice = String(prod.sale_price);
                             if (prod.was_price) nextWas = String(prod.was_price);
                             if (prod.name) nextTitle = prod.name;
-                            if (prod.brand) nextBrand = prod.brand;
+                            if (prod.brand) nextBrand = String(prod.brand).trim();
+                            if (prod.brand_code) nextBrandCode = String(prod.brand_code).replace(/[-_]+/g, ' ').trim();
                             if (prod.image_keys && prod.image_keys[0]) {
                                 nextImage = 'https://f.nooncdn.com/p/' + prod.image_keys[0] + '.jpg';
                             }
@@ -3153,7 +3184,33 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                     }
                 } catch (e) {}
 
-                if (!brand && nextBrand) brand = nextBrand;
+                if (nextBrand) brand = nextBrand;
+
+                let ldPrice = null, ldRating = null, ldReviews = null;
+                for (const s of document.querySelectorAll('script[type="application/ld+json"]')) {
+                    try {
+                        const j = JSON.parse(s.textContent);
+                        const b = j?.brand?.name || (typeof j?.brand === 'string' ? j.brand : null);
+                        if (!brand && b) brand = String(b).trim();
+                        const off = Array.isArray(j?.offers) ? j.offers[0] : j?.offers;
+                        if (off?.price && !ldPrice) ldPrice = String(off.price);
+                        if (j?.aggregateRating?.ratingValue) ldRating = String(j.aggregateRating.ratingValue);
+                        if (j?.aggregateRating?.reviewCount) ldReviews = String(j.aggregateRating.reviewCount);
+                    } catch (e) {}
+                }
+
+                if (!brand && container) {
+                    const bEl = container.querySelector('[data-qa="pdp-brand"], [data-qa="pdp-product-brand"]');
+                    if (bEl && !bEl.closest('header, nav, footer')) {
+                        brand = bEl.innerText?.trim();
+                    } else if (h1El && container.contains(h1El) && h1El.previousElementSibling && !h1El.previousElementSibling.closest('header, nav, footer')) {
+                        const prevTxt = (h1El.previousElementSibling.innerText || '').replace(/[>›]/g, '').trim();
+                        if (prevTxt.length >= 2 && prevTxt.length <= 35 && !prevTxt.includes('عرض') && !prevTxt.includes('تقييم')) {
+                            brand = prevTxt;
+                        }
+                    }
+                }
+
                 if (!full_title && nextTitle) full_title = nextTitle;
                 if (brand) brand = brand.replace(/[>›]/g, '').split('\\n')[0].trim();
 
@@ -3192,7 +3249,6 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                         if (seller) break;
                     }
                 }
-                const container = document.querySelector('[data-qa="pdp-container"]');
                 const feats = container
                     ? [...container.querySelectorAll('ul li')]
                         .filter(e => !e.querySelector('a') && !e.closest('a') && !e.closest('header') && !e.closest('nav') && !e.closest('footer'))
@@ -3241,26 +3297,45 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
                         try {
                             const ctrl = new AbortController();
                             const tid = setTimeout(() => ctrl.abort(), 4000);
-                            const resp = await fetch(enUrl, { signal: ctrl.signal });
+                            const resp = await fetch(enUrl, { signal: ctrl.signal, credentials: 'omit' });
                             clearTimeout(tid);
                             if (resp.ok) {
                                 const htmlTxt = await resp.text();
                                 const ed = new DOMParser().parseFromString(htmlTxt, 'text/html');
-                                en_title = (ed.querySelector('[data-qa="pdp-product-name"]')?.textContent || ed.querySelector('h1')?.textContent || ed.querySelector('meta[property="og:title"]')?.content || '').replace(/\\s+/g, ' ').trim();
-                                let eb = (ed.querySelector('[data-qa*="brand" i], a[class*="brand" i]')?.textContent || '').replace(/[>›]/g, '').split('\\n')[0].trim();
+                                let eb = '';
+                                try {
+                                    const nj = JSON.parse(ed.querySelector('#__NEXT_DATA__')?.textContent || '{}');
+                                    const prod = nj?.props?.pageProps?.catalog?.product
+                                        || nj?.props?.pageProps?.product
+                                        || nj?.props?.pageProps?.initialData?.product;
+                                    if (prod?.brand) eb = String(prod.brand).trim();
+                                    else if (prod?.brand_code) eb = String(prod.brand_code).replace(/[-_]+/g, ' ').trim();
+                                    if (prod?.name) en_title = String(prod.name).trim();
+                                } catch (e) {}
                                 if (!eb) {
-                                    try {
-                                        const nj = JSON.parse(ed.querySelector('#__NEXT_DATA__')?.textContent || '{}');
-                                        const prod = nj?.props?.pageProps?.catalog?.product || nj?.props?.pageProps?.product;
-                                        if (prod?.brand) eb = String(prod.brand).trim();
-                                        if (!en_title && prod?.name) en_title = String(prod.name).trim();
-                                    } catch (e) {}
+                                    for (const s of ed.querySelectorAll('script[type="application/ld+json"]')) {
+                                        try {
+                                            const j = JSON.parse(s.textContent);
+                                            const b = j?.brand?.name || (typeof j?.brand === 'string' ? j.brand : null);
+                                            if (b) { eb = String(b).trim(); break; }
+                                        } catch (e) {}
+                                    }
+                                }
+                                const edContainer = ed.querySelector('[data-qa="pdp-container"]');
+                                if (!en_title) {
+                                    en_title = (edContainer?.querySelector('[data-qa="pdp-product-name"]')?.textContent || edContainer?.querySelector('h1')?.textContent || ed.querySelector('meta[property="og:title"]')?.content || '').replace(/\\s+/g, ' ').trim();
+                                }
+                                if (!eb && edContainer) {
+                                    eb = (edContainer.querySelector('[data-qa="pdp-brand"], [data-qa="pdp-product-brand"]')?.textContent || '').replace(/[>›]/g, '').split('\\n')[0].trim();
                                 }
                                 en_brand = eb;
                                 en_breadcrumbs = [...ed.querySelectorAll('[data-qa*="breadcrumb" i] a, nav[aria-label*="breadcrumb" i] a, [class*="breadcrumb" i] a')]
                                     .map(e => e.textContent.replace(/\\s+/g, ' ').trim()).filter(Boolean);
                             }
                         } catch (e) {}
+                    }
+                    if (!en_brand && nextBrandCode && /^[A-Za-z][A-Za-z0-9\\s\\-&+]{1,30}$/.test(nextBrandCode)) {
+                        en_brand = nextBrandCode;
                     }
                 }
                 return {full_title, brand, seller, priceNow, priceWas, savingTxt, ratingTxt, reviewsTxt, feats, breadcrumbs, specs, en_slug, en_title, en_brand, en_breadcrumbs, image, promos: promos.slice(0, 5), revs, isOutOfStock, hasAddToCart};
@@ -3305,7 +3380,7 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
             eff_price = round(eff_price - extra_egp, 2)
 
         # 🧠 التعلم من أي منتج يمر على البوت (الماركة وفئة المنتج) حتى لو العرض منتهي
-        learn_from_product(title, brand)
+        learn_from_product(title, data.get("en_brand") or brand)
         custom_insight = rewrite_channel_insight(fallback_text)
 
         # 🔎 التحقق الصارم أن العرض لسه متاح وساري على المتجر

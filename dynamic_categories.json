@@ -22,5 +22,45 @@
     "cat_en": "Exercise bike",
     "desc": "دراجة تمارين رياضية عالي الجودة والعملية بتصميم متين وأداء موثوق.",
     "learned_at": 1794253707.4290445
+  },
+  "dyn_desk": {
+    "cat_key": "dyn_desk",
+    "regex": "\\b(?:مكاتب|Desks|Desk|مكتب\\ كمبيوتر\\ شكل)\\b",
+    "cat_ar": "مكتب كمبيوتر شكل",
+    "cat_en": "Desk",
+    "desc": "مكتب كمبيوتر شكل عالي الجودة والعملية بتصميم متين وأداء موثوق ومواصفات ممتازة (Huuger).",
+    "learned_at": 1794586102.7358983
+  },
+  "dyn_drink_flasks": {
+    "cat_key": "dyn_drink_flasks",
+    "regex": "\\b(?:قوارير\\ الشرب|تانك\\ زجاجة\\ ستانلس|Drink\\ Flasks|Move\\ 550ml)\\b",
+    "cat_ar": "تانك زجاجة ستانلس",
+    "cat_en": "Drink Flasks",
+    "desc": "تانك زجاجة ستانلس عالي الجودة والعملية بتصميم متين وأداء موثوق ومواصفات ممتازة (Tank).",
+    "learned_at": 1794586129.67741
+  },
+  "dyn_tritan_water_bottle": {
+    "cat_key": "dyn_tritan_water_bottle",
+    "regex": "\\b(?:زجاجة\\ مياه\\ تريتان|Tritan\\ water\\ bottle|زجاجات\\ المياه\\ الرياضية)\\b",
+    "cat_ar": "زجاجة مياه تريتان",
+    "cat_en": "Tritan water bottle",
+    "desc": "زجاجة مياه تريتان عالي الجودة والعملية بتصميم متين وأداء موثوق ومواصفات ممتازة (Tank).",
+    "learned_at": 1794586133.7114327
+  },
+  "dyn_medium_duffle_bag": {
+    "cat_key": "dyn_medium_duffle_bag",
+    "regex": "\\b(?:حقائب\\ رياضية\\ كبيرة|شنطة\\ دفل\\ متوسطة|Medium\\ duffle\\ bag)\\b",
+    "cat_ar": "شنطة دفل متوسطة",
+    "cat_en": "Medium duffle bag",
+    "desc": "شنطة دفل متوسطة عالي الجودة والعملية بتصميم متين وأداء موثوق ومواصفات ممتازة (Adidas).",
+    "learned_at": 1794586146.0424297
+  },
+  "dyn_printed_plastic_bottle": {
+    "cat_key": "dyn_printed_plastic_bottle",
+    "regex": "\\b(?:قوارير|Printed\\ plastic\\ bottle|زجاجة\\ بلاستيكية\\ مطبوعة)\\b",
+    "cat_ar": "زجاجة بلاستيكية مطبوعة",
+    "cat_en": "Printed plastic bottle",
+    "desc": "زجاجة بلاستيكية مطبوعة عالي الجودة والعملية بتصميم متين وأداء موثوق ومواصفات ممتازة (Tank).",
+    "learned_at": 1794586150.8192494
   }
 }
