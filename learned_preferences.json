@@ -279,10 +279,10 @@
     "Fyloz",
     "Gak Sbat",
     "Antks",
-    "Molfix"
+    "Molfix",
+    "Lyksar"
   ],
   "queries": [
-    "طقم شاي طراز نور",
     "ماكينة صنع الساندويتشات ويننج ستار",
     "فريماز سناكس بطعم",
     "اورجانيك نيشن 100٪",
@@ -361,7 +361,8 @@
     "سماعات أذن اورا تشويتك",
     "طقم مفكات ايه",
     "حذاء المشي ايه مينترا",
-    "ROMBA SPORT"
+    "ROMBA SPORT",
+    "قارئ بطاقات متعدد ليكسار"
   ],
   "channels": [
     "epichardware",
@@ -1418,6 +1419,8 @@
     "Sal7lyEgypt/39959",
     "Sal7lyEgypt/39958",
     "Sal7lyEgypt/39962",
-    "Sal7lyEgypt/39961"
+    "Sal7lyEgypt/39961",
+    "epichardware/4781",
+    "Sal7lyEgypt/39963"
   ]
 }
