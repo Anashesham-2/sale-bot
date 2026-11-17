@@ -287,11 +287,11 @@
     "Fine",
     "Aylano",
     "Kloryl",
-    "Fyfykol"
+    "Fyfykol",
+    "LDNIO",
+    "Dove"
   ],
   "queries": [
-    "مسحوق غسيل فريدا،",
-    "صابون اليدين بجوز فريدا",
     "منظف ومطهر منزلي بريكس",
     "مروحة ستاند ذكية فريش",
     "سماعات أذن XE28 انفينيكس",
@@ -369,7 +369,9 @@
     "شاشة شاومي A27i",
     "لوحة مفاتيح لاسلكية رابو",
     "كابل إيثرنت يوجرين",
-    "غراء خشب ممتاز فيفيكول"
+    "غراء خشب ممتاز فيفيكول",
+    "LDNIO قاعدة شحن اي دينو",
+    "دوف قالب صابون دوف سبراي"
   ],
   "channels": [
     "epichardware",
@@ -1568,6 +1570,17 @@
     "Sal7lyEgypt/40041",
     "Sal7lyEgypt/40040",
     "Yo_Ayman/16670",
-    "Yo_Ayman/16669"
+    "Yo_Ayman/16669",
+    "epichardware/4822",
+    "epichardware/4821",
+    "Sal7lyEgypt/40050",
+    "Sal7lyEgypt/40049",
+    "Sal7lyEgypt/40048",
+    "Sal7lyEgypt/40047",
+    "Sal7lyEgypt/40046",
+    "Sal7lyEgypt/40045",
+    "Sal7lyEgypt/40044",
+    "Sal7lyEgypt/40043",
+    "Yo_Ayman/16671"
   ]
 }
