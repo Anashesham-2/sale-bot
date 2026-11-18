@@ -73,32 +73,18 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-playwright-chromium-
 
-      - name: Configure fast APT and install Xvfb and Chromium deps
-        timeout-minutes: 8
+      - name: Verify Xvfb and Chromium system libs (skip slow APT if already installed)
+        timeout-minutes: 3
+        continue-on-error: true
         run: |
-          sudo tee /etc/apt/apt.conf.d/99fast-apt >/dev/null <<'EOF'
-          Acquire::ForceIPv4 "true";
-          Acquire::Retries "3";
-          Acquire::http::Timeout "30";
-          Acquire::https::Timeout "30";
-          EOF
-
-          # إزالة المستودعات الخارجية البطيئة مسبقاً لتسريع apt-get ومنع تعليقه
+          if command -v xvfb-run >/dev/null 2>&1 && ldconfig -p | grep -q "libnss3.so" && ldconfig -p | grep -q "libgbm.so"; then
+            echo "Xvfb and core Chromium libraries are already pre-installed on this runner; skipping apt-get."
+            exit 0
+          fi
+          echo "Missing Xvfb or core libs; attempting lightweight install..."
           sudo find /etc/apt/sources.list.d/ -maxdepth 1 -type f ! -name 'ubuntu.sources' -delete || true
-
-          if ! sudo timeout 90 apt-get update; then
-            echo "apt-get update failed on default mirror; switching to archive.ubuntu.com..."
-            sudo sed -i 's|azure\.archive\.ubuntu\.com|archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || true
-            sudo timeout 90 apt-get update
-          fi
-
-          sudo DEBIAN_FRONTEND=noninteractive timeout 120 apt-get install -y --no-install-recommends xvfb
-          if ! timeout 240 playwright install-deps chromium; then
-            echo "playwright install-deps failed; switching mirror and retrying..."
-            sudo sed -i 's|azure\.archive\.ubuntu\.com|archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || true
-            sudo timeout 90 apt-get update || true
-            timeout 240 playwright install-deps chromium || sudo DEBIAN_FRONTEND=noninteractive timeout 180 apt-get install -y --no-install-recommends libnss3 libnspr4 libgbm1 libasound2t64 libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2
-          fi
+          sudo timeout 45 apt-get update || true
+          sudo DEBIAN_FRONTEND=noninteractive timeout 90 apt-get install -y --no-install-recommends xvfb libnss3 libnspr4 libgbm1 || true
 
       - name: Install Playwright Chromium browser
         timeout-minutes: 5
@@ -114,11 +100,18 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          run_py() {
+            if command -v xvfb-run >/dev/null 2>&1; then
+              xvfb-run --auto-servernum --server-args="-screen 0 1366x768x24" python -u "$@"
+            else
+              python -u "$@"
+            fi
+          }
           END=$((SECONDS + RUN_MINUTES * 60))
           while [ $SECONDS -lt $END ]; do
             git fetch origin main || true
             git reset --hard origin/main || true
-            xvfb-run --auto-servernum --server-args="-screen 0 1366x768x24" python -u bot.py --once || echo "Cycle failed"
+            run_py bot.py --once || echo "Cycle failed"
 
             # حفظ العروض المرسلة وسجل الأسعار وذاكرة التعلم بعد كل دورة
             git add sent_deals.txt price_history.json learned_preferences.json pending_deals.json || true
@@ -129,7 +122,7 @@ jobs:
             fi
 
             echo "Waiting ${CHECK_INTERVAL}s (while listening for private chat links)..."
-            xvfb-run --auto-servernum --server-args="-screen 0 1366x768x24" python -u bot.py --listen-only "$CHECK_INTERVAL" || sleep "$CHECK_INTERVAL"
+            run_py bot.py --listen-only "$CHECK_INTERVAL" || sleep "$CHECK_INTERVAL"
 
             git add sent_deals.txt price_history.json learned_preferences.json pending_deals.json || true
             if ! git diff --staged --quiet; then
