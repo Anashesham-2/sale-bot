@@ -297,12 +297,11 @@
     "Asperox Sparx",
     "(en-US) Lino",
     "Elittera",
-    "Sanyta"
+    "Sanyta",
+    "VCOLA",
+    "Pril"
   ],
   "queries": [
-    "مجموعة ماوس ولوحة",
-    "موبايل سامسونج جالاكسي",
-    "سماعات أذن اورا تشويتك",
     "طقم مفكات ايه",
     "حذاء المشي ايه مينترا",
     "ROMBA SPORT",
@@ -379,7 +378,10 @@
     "اورجانيك نيشن جيلت",
     "حذاء كورت بلوك اديداس",
     "مناديل ناعمة للوجه سانيتا",
-    "كيك شوكولاتة سبونج 5 مينتس"
+    "كيك شوكولاتة سبونج 5 مينتس",
+    "مشروب منكه ڤكولا VCOLA",
+    "مسحوق آيس كريم 5 مينتس",
+    "سائل غسيل الأطباق بريل"
   ],
   "channels": [
     "epichardware",
@@ -1640,6 +1642,15 @@
     "Sal7lyEgypt/40072",
     "Sal7lyEgypt/40084",
     "Sal7lyEgypt/40083",
-    "Sal7lyEgypt/40082"
+    "Sal7lyEgypt/40082",
+    "epichardware/4841",
+    "epichardware/4839",
+    "Sal7lyEgypt/40088",
+    "Sal7lyEgypt/40087",
+    "Sal7lyEgypt/40086",
+    "Sal7lyEgypt/40085",
+    "Sal7lyEgypt/40081",
+    "Yo_Ayman/16681",
+    "Yo_Ayman/16680"
   ]
 }
