@@ -293,12 +293,10 @@
     "Thandrobot",
     "ProbTis",
     "Aygo",
-    "Hyonday"
+    "Hyonday",
+    "Asperox Sparx"
   ],
   "queries": [
-    "تحكم سوني ديوال Playstation",
-    "طقم بلوزة بأكمام سيكا",
-    "غلاية سيف تاتش تانك",
     "رابو ماوس لاسلكي",
     "ماكينة تجليد مشط فيلوز",
     "مفرمة ثوم كهربائية عام",
@@ -375,7 +373,10 @@
     "بساط مكتب للهالوين ProbTis",
     "تلفزيون ذكي بوصة هاير",
     "كلوب نويت أنتولد ارماف",
-    "تلفزيون هيونداي بشاشة"
+    "تلفزيون هيونداي بشاشة",
+    "مفرمة صغيرة براتيكو مينتا",
+    "طقم مفكات ايه APT",
+    "كبسولات سباركس دايموند Asperox Sparx"
   ],
   "channels": [
     "epichardware",
@@ -1599,6 +1600,18 @@
     "Sal7lyEgypt/40054",
     "Sal7lyEgypt/40053",
     "Sal7lyEgypt/40052",
-    "Sal7lyEgypt/40051"
+    "Sal7lyEgypt/40051",
+    "epichardware/4831",
+    "Sal7lyEgypt/40065",
+    "Sal7lyEgypt/40064",
+    "Sal7lyEgypt/40063",
+    "Sal7lyEgypt/40062",
+    "Sal7lyEgypt/40061",
+    "Yo_Ayman/16677",
+    "Yo_Ayman/16676",
+    "Yo_Ayman/16675",
+    "Yo_Ayman/16674",
+    "Yo_Ayman/16673",
+    "Yo_Ayman/16672"
   ]
 }
