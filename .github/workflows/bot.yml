@@ -31,9 +31,9 @@ jobs:
     env:
       # المدة بين كل فحص والتاني بالثواني (180 = 3 دقايق)
       CHECK_INTERVAL: "180"
-      # مدة التشغيلة الواحدة بالدقايق (أقصى حد في GitHub 6 ساعات)
-      RUN_MINUTES: "340"
-      PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: "20000"
+      # مدة التشغيلة الواحدة بالدقايق (300 دقيقة = 5 ساعات لضمان الانتهاء قبل حد الـ 355 دقيقة وتفعيل التشغيلة التالية)
+      RUN_MINUTES: "300"
+      PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: "30000"
 
     steps:
       - name: Checkout repository
@@ -74,28 +74,30 @@ jobs:
             ${{ runner.os }}-playwright-chromium-
 
       - name: Configure fast APT and install Xvfb and Chromium deps
-        timeout-minutes: 5
+        timeout-minutes: 8
         run: |
           sudo tee /etc/apt/apt.conf.d/99fast-apt >/dev/null <<'EOF'
           Acquire::ForceIPv4 "true";
-          Acquire::Retries "1";
-          Acquire::http::Timeout "15";
-          Acquire::https::Timeout "15";
+          Acquire::Retries "3";
+          Acquire::http::Timeout "30";
+          Acquire::https::Timeout "30";
           EOF
 
-          if ! sudo timeout 60 apt-get update; then
-            echo "apt-get update stalled/failed; isolating official Ubuntu repos and switching mirror..."
-            sudo find /etc/apt/sources.list.d/ -maxdepth 1 -type f ! -name 'ubuntu.sources' -delete || true
+          # إزالة المستودعات الخارجية البطيئة مسبقاً لتسريع apt-get ومنع تعليقه
+          sudo find /etc/apt/sources.list.d/ -maxdepth 1 -type f ! -name 'ubuntu.sources' -delete || true
+
+          if ! sudo timeout 90 apt-get update; then
+            echo "apt-get update failed on default mirror; switching to archive.ubuntu.com..."
             sudo sed -i 's|azure\.archive\.ubuntu\.com|archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || true
-            sudo timeout 60 apt-get update
+            sudo timeout 90 apt-get update
           fi
 
           sudo DEBIAN_FRONTEND=noninteractive timeout 120 apt-get install -y --no-install-recommends xvfb
-          if ! timeout 150 playwright install-deps chromium; then
-            echo "playwright install-deps failed; isolating official Ubuntu repos and retrying..."
-            sudo find /etc/apt/sources.list.d/ -maxdepth 1 -type f ! -name 'ubuntu.sources' -delete || true
+          if ! timeout 240 playwright install-deps chromium; then
+            echo "playwright install-deps failed; switching mirror and retrying..."
             sudo sed -i 's|azure\.archive\.ubuntu\.com|archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || true
-            timeout 150 playwright install-deps chromium
+            sudo timeout 90 apt-get update || true
+            timeout 240 playwright install-deps chromium || sudo DEBIAN_FRONTEND=noninteractive timeout 180 apt-get install -y --no-install-recommends libnss3 libnspr4 libgbm1 libasound2t64 libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2
           fi
 
       - name: Install Playwright Chromium browser
@@ -122,6 +124,7 @@ jobs:
             git add sent_deals.txt price_history.json learned_preferences.json pending_deals.json || true
             if ! git diff --staged --quiet; then
               git commit -q -m "chore: update deals data [skip ci]" || true
+              git pull --rebase origin main || true
               git push origin HEAD:main || echo "Push failed"
             fi
 
@@ -131,6 +134,7 @@ jobs:
             git add sent_deals.txt price_history.json learned_preferences.json pending_deals.json || true
             if ! git diff --staged --quiet; then
               git commit -q -m "chore: update deals data [skip ci]" || true
+              git pull --rebase origin main || true
               git push origin HEAD:main || echo "Push failed"
             fi
           done
