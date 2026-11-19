@@ -277,10 +277,10 @@
     "Pyrex",
     "Extra Hygiene",
     "Apple",
-    "HyperX"
+    "HyperX",
+    "Pacroban"
   ],
   "queries": [
-    "Apt طقم مفكات",
     "كيبل ديسبلاي بورت UGREEN",
     "Milkato Speculoos Biscuits",
     "موبايل جالاكسي A07s",
@@ -359,7 +359,8 @@
     "مقلاة هوائية TFE Tornado",
     "ساعة ذكية ووتش شاومي",
     "بروتين تشالنجر نيوتريشن تشالنجر نيوترشن",
-    "سماعة رأس سلكية هايبر اكس"
+    "سماعة رأس سلكية هايبر اكس",
+    "كابل باكروبان بطول Pacroban"
   ],
   "channels": [
     "epichardware",
@@ -1950,6 +1951,11 @@
     "Yo_Ayman/16800",
     "Sal7lyEgypt/40440",
     "Sal7lyEgypt/40439",
-    "Sal7lyEgypt/40438"
+    "Sal7lyEgypt/40438",
+    "epichardware/4977",
+    "Sal7lyEgypt/40443",
+    "Sal7lyEgypt/40442",
+    "Sal7lyEgypt/40441",
+    "Yo_Ayman/16804"
   ]
 }
