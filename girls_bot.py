@@ -31,7 +31,7 @@ if os.path.exists(ENV_FILE):
 BOT_TOKEN = os.getenv("GIRLS_BOT_TOKEN") or os.getenv("TELEGRAM_BOT_TOKEN", "")
 OWNER_CHAT_ID = os.getenv("OWNER_CHAT_ID", "6725805788")
 GIRLS_CHANNEL_ID = os.getenv("GIRLS_CHANNEL_ID", "").strip()
-GIRLS_CHANNEL_USERNAME = os.getenv("GIRLS_CHANNEL_USERNAME", "").strip() or "@loqta78"
+GIRLS_CHANNEL_USERNAME = os.getenv("GIRLS_CHANNEL_USERNAME", "").strip() or "https://t.me/+toD37sJhssI3ZjJk"
 AMAZON_TAG = os.getenv("AMAZON_TAG", "anashesham-21")
 NOON_COUPON = os.getenv("NOON_COUPON", "")
 

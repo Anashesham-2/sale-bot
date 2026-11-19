@@ -445,8 +445,13 @@ def build_tiktok_copy(
     tags.append("#لقطة_بنات")
     tags = list(dict.fromkeys(tags))[:6]
 
-    tg_handle = tg_channel_username if str(tg_channel_username).startswith("@") else f"@{tg_channel_username}"
-    tg_url = f"t.me/{tg_handle.lstrip('@')}"
+    ch_raw = str(tg_channel_username or "").strip()
+    if ch_raw.startswith("http://") or ch_raw.startswith("https://"):
+        tg_url = ch_raw.replace("https://", "").replace("http://", "")
+        tg_handle = ch_raw
+    else:
+        tg_handle = ch_raw if ch_raw.startswith("@") else f"@{ch_raw}"
+        tg_url = f"t.me/{tg_handle.lstrip('@')}"
 
     price_line = f"السعر بعد الخصم: {int(round(price)):,} ج.م" if price == int(price) else f"السعر بعد الخصم: {price:,.2f} ج.م"
     old_line = f" (بدل {int(round(list_price)):,} ج.م — وفّرتي {saving:,} ج.م!)" if (list_price and list_price > price) else ""
@@ -567,8 +572,9 @@ def build_girls_telegram_message(
     ]
 
     btn_txt = "🛍️ اطلبي العرض من أمازون الآن" if str(store).lower() == "amazon" else "🛍️ اطلبي العرض من نون الآن"
-    tg_u = tg_channel_username.lstrip("@")
-    share_url = "https://t.me/share/url?url=" + quote_plus(f"https://t.me/{tg_u}") + "&text=" + quote_plus("أقوى عروض الميكب والسكين كير والبنات يومياً 🎀✨")
+    ch_raw = str(tg_channel_username or "").strip()
+    full_ch_url = ch_raw if (ch_raw.startswith("http://") or ch_raw.startswith("https://")) else f"https://t.me/{ch_raw.lstrip('@')}"
+    share_url = "https://t.me/share/url?url=" + quote_plus(full_ch_url) + "&text=" + quote_plus("أقوى عروض الميكب والسكين كير والبنات يومياً 🎀✨")
     reply_markup = {
         "inline_keyboard": [
             [{"text": btn_txt, "url": buy_url}],
