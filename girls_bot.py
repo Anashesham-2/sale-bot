@@ -220,9 +220,11 @@ def _norm_name_key(name_ar):
 # ---------------------------------------------------------------------------
 # 1. فحص عروض البنات فقط على أمازون مصر ونون مصر
 # ---------------------------------------------------------------------------
-async def scrape_girls_amazon(page, queries_batch):
+async def scrape_girls_amazon(page, queries_batch, url_offset=0):
     items = {}
-    urls = list(ge.GIRLS_AMAZON_DEAL_URLS[:3]) + [
+    amz_pool = list(ge.GIRLS_AMAZON_DEAL_URLS)
+    picked_amz = [amz_pool[(url_offset + i) % len(amz_pool)] for i in range(min(3, len(amz_pool)))] if amz_pool else []
+    urls = picked_amz + [
         f"https://www.amazon.eg/s?k={quote_plus(q)}" for _, q in queries_batch
     ]
     for url in urls:
@@ -282,9 +284,11 @@ async def scrape_girls_amazon(page, queries_batch):
     return list(items.values())
 
 
-async def scrape_girls_noon(page, queries_batch):
+async def scrape_girls_noon(page, queries_batch, url_offset=0):
     items = {}
-    urls = list(ge.GIRLS_NOON_DEAL_URLS[:2]) + [
+    noon_pool = list(ge.GIRLS_NOON_DEAL_URLS)
+    picked_noon = [noon_pool[(url_offset + i) % len(noon_pool)] for i in range(min(2, len(noon_pool)))] if noon_pool else []
+    urls = picked_noon + [
         f"https://www.noon.com/egypt-ar/search/?q={quote_plus(q)}" for _, q in queries_batch[:3]
     ]
     for url in urls:
@@ -834,8 +838,8 @@ async def run_girls_cycle(force_tiktok=False):
             await context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
             page = await context.new_page()
 
-            amz_items = await scrape_girls_amazon(page, queries_batch)
-            noon_items = await scrape_girls_noon(page, queries_batch)
+            amz_items = await scrape_girls_amazon(page, queries_batch, url_offset=q_idx)
+            noon_items = await scrape_girls_noon(page, queries_batch, url_offset=q_idx)
             print(f"🔎 تم العثور على {len(amz_items)} عرض بنات مبدئي على أمازون و {len(noon_items)} على نون.")
 
             # تصفية مبدئية وإزالة المكرر ثم جلب تفاصيل الصفحات لأفضل 18 مرشح
@@ -1028,6 +1032,24 @@ async def run_girls_cycle(force_tiktok=False):
     print("===== ✅ اكتملت دورة بوت البنات المستقل =====")
 
 
+async def listen_only_girls(seconds):
+    """يستمع لرسائل الشات الخاص لبوت البنات (@Loqta_Girlsbot) أثناء فترة الانتظار بين الدورات."""
+    end_t = time.time() + max(1, int(seconds))
+    while time.time() < end_t:
+        try:
+            st = _load_state()
+            prev_off = st.get("tg_update_offset")
+            poll_girls_private_chat(st)
+            if st.get("tg_update_offset") != prev_off:
+                _save_state(st)
+        except Exception:
+            pass
+        rem = end_t - time.time()
+        if rem <= 0:
+            break
+        await asyncio.sleep(min(15, rem))
+
+
 async def run_girls_bot_loop():
     """يدير التشغيل المستمر (مثل بوت القناة العامة) مع متابعة شات @Loqta_Girlsbot الخاص بين الدورات."""
     if GIRLS_RUN_MINUTES <= 0:
@@ -1047,18 +1069,15 @@ async def run_girls_bot_loop():
         if remaining <= 45:
             break
         sleep_for = min(GIRLS_CYCLE_SLEEP_SEC, remaining - 30)
-        end_sleep = time.time() + sleep_for
-        while time.time() < end_sleep:
-            try:
-                st = _load_state()
-                prev_off = st.get("tg_update_offset")
-                poll_girls_private_chat(st)
-                if st.get("tg_update_offset") != prev_off:
-                    _save_state(st)
-            except Exception:
-                pass
-            await asyncio.sleep(min(20, max(1, end_sleep - time.time())))
+        await listen_only_girls(sleep_for)
 
 
 if __name__ == "__main__":
-    asyncio.run(run_girls_bot_loop())
+    if "--listen-only" in sys.argv:
+        idx = sys.argv.index("--listen-only")
+        secs = int(sys.argv[idx + 1]) if idx + 1 < len(sys.argv) and sys.argv[idx + 1].isdigit() else 240
+        asyncio.run(listen_only_girls(secs))
+    elif "--once" in sys.argv:
+        asyncio.run(run_girls_cycle(force_tiktok=FORCE_TIKTOK_ONCE))
+    else:
+        asyncio.run(run_girls_bot_loop())

@@ -1,25 +1,41 @@
 name: Girls Deals Bot (TikTok + Girls Channel)
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'girls_bot.py'
+      - 'girls_engine.py'
+      - 'tiktok_card_designer.py'
+      - 'product_intelligence.py'
+      - '.github/workflows/girls_bot.yml'
   schedule:
-    # تشغيل حي مستمر لقناة البنات @Loqta_G (كل 3 ساعات لمدة 165 دقيقة — نفس معدل القناة الرئيسية!)
-    # بينما تيك توك مقيّد داخلياً بـ 4 أوقات ذروة ثابتة فقط يومياً (1م، 5م، 8:30م، 11م بتوقيت القاهرة)
-    - cron: '15 */3 * * *'
-  workflow_dispatch: # تشغيل يدوي فوري في أي وقت
+    # شبكة أمان احتياطية كل 25 دقيقة تضمن استمرار العمل 24/7 بدون انقطاع
+    - cron: '*/25 * * * *'
+  workflow_dispatch:
+    inputs:
+      force_tiktok:
+        description: 'إرسال بوست تيك توك تجريبي فوراً خارج أوقات الذروة؟ (true/false)'
+        required: false
+        default: 'false'
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: girls-bot
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
   girls-deals:
     runs-on: ubuntu-24.04
-    timeout-minutes: 185
+    timeout-minutes: 355
 
     env:
+      CHECK_INTERVAL: "240"
+      RUN_MINUTES: "300"
       PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: "30000"
 
     steps:
@@ -65,10 +81,10 @@ jobs:
         run: |
           timeout 180 playwright install chromium || (rm -rf ~/.cache/ms-playwright && timeout 180 playwright install chromium)
 
-      - name: Run Girls Bot (Independent of Main Channel)
+      - name: Run Girls Bot in a continuous 24/7 loop (Independent of Main Channel)
+        id: run_girls
         env:
-          RUN_MINUTES: "165"
-          FORCE_TIKTOK_ONCE: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
+          FORCE_TIKTOK_ONCE: ${{ github.event.inputs.force_tiktok == 'true' && '1' || '0' }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           GIRLS_BOT_TOKEN: ${{ secrets.GIRLS_BOT_TOKEN }}
           OWNER_CHAT_ID: ${{ secrets.OWNER_CHAT_ID }}
@@ -86,20 +102,60 @@ jobs:
           TIKTOK_WEBHOOK_URL: ${{ secrets.TIKTOK_WEBHOOK_URL }}
           IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}
         run: |
-          if command -v xvfb-run >/dev/null 2>&1; then
-            xvfb-run --auto-servernum --server-args="-screen 0 1366x768x24" python -u girls_bot.py
-          else
-            python -u girls_bot.py
-          fi
-
-      - name: Save independent Girls Bot state
-        if: always()
-        run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add girls_sent_deals.txt girls_tiktok_sent.txt girls_state.json || true
-          if ! git diff --staged --quiet; then
-            git commit -q -m "chore: update girls bot state [skip ci]" || true
-            git pull --rebase --autostash origin main || true
-            git push origin HEAD:main || echo "Push failed"
-          fi
+
+          run_py() {
+            if command -v xvfb-run >/dev/null 2>&1; then
+              xvfb-run --auto-servernum --server-args="-screen 0 1366x768x24" python -u "$@"
+            else
+              python -u "$@"
+            fi
+          }
+
+          save_girls_state() {
+            for f in girls_sent_deals.txt girls_tiktok_sent.txt girls_state.json; do
+              [ -f "$f" ] && git add "$f"
+            done
+            if ! git diff --staged --quiet; then
+              git commit -q -m "chore: update girls bot state [skip ci]" || true
+              for attempt in 1 2 3; do
+                git pull --rebase --autostash origin main && git push origin HEAD:main && break
+                sleep 3
+              done
+            fi
+          }
+
+          END=$((SECONDS + RUN_MINUTES * 60))
+          FIRST_CYCLE=1
+          while [ $SECONDS -lt $END ]; do
+            git fetch origin main || true
+            git reset --hard origin/main || true
+            if [ "$FIRST_CYCLE" -eq 1 ]; then
+              run_py girls_bot.py --once || echo "Girls cycle failed"
+              FIRST_CYCLE=0
+            else
+              FORCE_TIKTOK_ONCE=0 run_py girls_bot.py --once || echo "Girls cycle failed"
+            fi
+            save_girls_state
+
+            REMAIN=$((END - SECONDS))
+            if [ $REMAIN -le 30 ]; then
+              break
+            fi
+            WAIT_S=$CHECK_INTERVAL
+            if [ $REMAIN -lt $((WAIT_S + 20)) ]; then
+              WAIT_S=$((REMAIN - 20))
+            fi
+            echo "Waiting ${WAIT_S}s (listening to @Loqta_Girlsbot private chat)..."
+            run_py girls_bot.py --listen-only "$WAIT_S" || sleep "$WAIT_S"
+            save_girls_state
+          done
+
+      - name: Trigger next continuous Girls Bot session immediately (Zero-Downtime Self-Chain)
+        if: ${{ !cancelled() && steps.run_girls.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Triggering next 5-hour Girls Bot session immediately via workflow_dispatch..."
+          gh workflow run girls_bot.yml --ref main || true

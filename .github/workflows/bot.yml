@@ -8,7 +8,7 @@ on:
       - 'bot.py'
       - 'product_intelligence.py'
       - 'requirements.txt'
-      - '.github/workflows/**'
+      - '.github/workflows/bot.yml'
   schedule:
     # شبكة أمان احتياطية فقط لو تعثرت التشغيلة التلقائية المتسلسلة
     - cron: '*/20 * * * *'
