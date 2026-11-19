@@ -269,8 +269,6 @@
     "VITA-KYEOL"
   ],
   "queries": [
-    "ماكينة صنع الوافل دي اس بي",
-    "برسيل أكتيف يونيفرسال",
     "تلفزيون ذكي جوجل هاير",
     "بساط مكتب للهالوين ProbTis",
     "تلفزيون ذكي بوصة هاير",
@@ -348,7 +346,9 @@
     "باور بانك أنكر انكر",
     "Victus fa2103ne Intel HP",
     "عطر فخر اللطافة Lattafa",
-    "واقي الشمس كوريان VITA-KYEOL"
+    "واقي الشمس كوريان VITA-KYEOL",
+    "أقراص فيتامينات ومغنيسيوم Centrum",
+    "كرياتين نقي بنسبة Max Muscle"
   ],
   "channels": [
     "epichardware",
@@ -1789,6 +1789,9 @@
     "Yo_Ayman/16767",
     "epichardware/4944",
     "epichardware/4942",
-    "Yo_Ayman/16769"
+    "Yo_Ayman/16769",
+    "epichardware/4948",
+    "epichardware/4946",
+    "Sal7lyEgypt/40349"
   ]
 }
