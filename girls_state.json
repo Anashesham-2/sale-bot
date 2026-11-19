@@ -1,0 +1,38 @@
+{
+  "query_idx": 5,
+  "last_tt_cat": "",
+  "recent_names": {
+    "كونسيلر فيت مي للعيون من ميبيلين نيويورك، لون ساند 20": 1795131404,
+    "كونسيلر فيت مي للعيون من ميبيلين نيويورك، بيج فاتح": 1795131410
+  },
+  "price_history": {},
+  "sent_timestamps": [
+    1795131404,
+    1795131410
+  ],
+  "tiktok_slots_sent": [],
+  "sent_today_meta": [
+    {
+      "ts": 1795131404,
+      "link": "https://www.amazon.eg/dp/B007B8UO9G",
+      "name_ar": "كونسيلر فيت مي للعيون من ميبيلين نيويورك، لون ساند 20",
+      "price": 325.0,
+      "list_price": 500.0,
+      "discount": 35.0,
+      "store": "Amazon",
+      "v_score": 74.5
+    },
+    {
+      "ts": 1795131410,
+      "link": "https://www.amazon.eg/dp/B007B8UNVA",
+      "name_ar": "كونسيلر فيت مي للعيون من ميبيلين نيويورك، بيج فاتح",
+      "price": 328.0,
+      "list_price": 500.0,
+      "discount": 34.4,
+      "store": "Amazon",
+      "v_score": 74.2
+    }
+  ],
+  "last_digest_date": "",
+  "tg_update_offset": 0
+}
