@@ -278,10 +278,10 @@
     "Extra Hygiene",
     "Apple",
     "HyperX",
-    "Pacroban"
+    "Pacroban",
+    "Puritan's Pride"
   ],
   "queries": [
-    "كيبل ديسبلاي بورت UGREEN",
     "Milkato Speculoos Biscuits",
     "موبايل جالاكسي A07s",
     "جهاز تمارين جيم مارسي",
@@ -360,7 +360,8 @@
     "ساعة ذكية ووتش شاومي",
     "بروتين تشالنجر نيوتريشن تشالنجر نيوترشن",
     "سماعة رأس سلكية هايبر اكس",
-    "كابل باكروبان بطول Pacroban"
+    "كابل باكروبان بطول Pacroban",
+    "مكمل غذائي نباتي Puritan's Pride"
   ],
   "channels": [
     "epichardware",
@@ -1959,6 +1960,9 @@
     "Yo_Ayman/16804",
     "Sal7lyEgypt/40445",
     "Sal7lyEgypt/40444",
-    "Yo_Ayman/16805"
+    "Yo_Ayman/16805",
+    "epichardware/4978",
+    "Sal7lyEgypt/40447",
+    "Sal7lyEgypt/40446"
   ]
 }
