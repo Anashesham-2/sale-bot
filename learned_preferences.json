@@ -264,11 +264,10 @@
     "Fitbit",
     "Vileda",
     "Tank",
-    "Arzum Okka"
+    "Arzum Okka",
+    "Braes"
   ],
   "queries": [
-    "دوف قالب صابون دوف سبراي",
-    "ثاندروبوت سماعة راس",
     "قاعدة ماوس دمبستر ProbTis",
     "قاعدة ماوس مفرش جينيريك",
     "موبايل انفينيكس هوت",
@@ -346,7 +345,9 @@
     "فلتر مياه تانك Tank",
     "يوجرين PB532 باور UGREEN",
     "ماكينة تحضير اسبريسو Arzum Okka",
-    "ماكينة حلاقة الشعر VGR"
+    "ماكينة حلاقة الشعر VGR",
+    "بلسم مجدد بحجم Braes",
+    "سماعة أورايمو OEB Oraimo"
   ],
   "channels": [
     "epichardware",
@@ -1768,6 +1769,8 @@
     "Yo_Ayman/16761",
     "Yo_Ayman/16760",
     "Yo_Ayman/16759",
-    "Yo_Ayman/16758"
+    "Yo_Ayman/16758",
+    "Sal7lyEgypt/40341",
+    "Sal7lyEgypt/40340"
   ]
 }
