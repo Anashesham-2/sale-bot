@@ -272,14 +272,12 @@
     "Zinox",
     "Eucerin",
     "G-Power",
-    "Lazord"
+    "Lazord",
+    "TotalEnergies",
+    "Pyrex",
+    "Extra Hygiene"
   ],
   "queries": [
-    "مسحوق آيس كريم 5 مينتس",
-    "سائل غسيل الأطباق بريل",
-    "باور بانك أنكر Anker",
-    "تكييف سبليت بروفيشنال فريش",
-    "بخاخ الجسم للرجال اكس",
     "لوحة مفاتيح ألعاب هافيت",
     "مروحة كهربائية أرضية توشيبا",
     "فلاش ميموري كينغستون Kingston",
@@ -354,7 +352,12 @@
     "طقم جرانيت مكون Top Chef",
     "طاسة قلي تيفلون تروفال",
     "باور بانك شفاف جي- بور",
-    "سماعة سبيس بادزN اورايمو"
+    "سماعة سبيس بادزN اورايمو",
+    "توتال انيرجيز كوارتز TotalEnergies",
+    "بايركس طقم اواني Pyrex",
+    "سماعة أذن لاسلكية CHOETECH",
+    "مناديل مبللة منعشة Extra Hygiene",
+    "Pyrex Excellence Daily"
   ],
   "channels": [
     "epichardware",
@@ -1849,6 +1852,13 @@
     "Sal7lyEgypt/40372",
     "Yo_Ayman/16784",
     "Yo_Ayman/16783",
-    "Yo_Ayman/16782"
+    "Yo_Ayman/16782",
+    "epichardware/4960",
+    "Sal7lyEgypt/40383",
+    "Sal7lyEgypt/40382",
+    "Sal7lyEgypt/40381",
+    "Sal7lyEgypt/40380",
+    "Sal7lyEgypt/40379",
+    "Yo_Ayman/16785"
   ]
 }
