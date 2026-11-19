@@ -126,7 +126,7 @@ RAW_BRAND_EN_MAP = {
     "سامسونج": "Samsung", "samsung": "Samsung",
     "ابل": "Apple", "أبل": "Apple", "آبل": "Apple", "apple": "Apple",
     "شاومي": "Xiaomi", "xiaomi": "Xiaomi",
-    "ريدمي": "Redmi", "redmi": "Redmi",
+    "ريدمي": "Xiaomi", "redmi": "Xiaomi",
     "بوكو": "POCO", "poco": "POCO",
     "هواوي": "Huawei", "huawei": "Huawei",
     "هونر": "Honor", "هونور": "Honor", "اونر": "Honor", "أونر": "Honor", "honor": "Honor",
@@ -471,12 +471,29 @@ RAW_BRAND_EN_MAP = {
     "سيليماكس": "Celimax", "celimax": "Celimax", "sylymaks": "Celimax",
     "بنكولين": "Penduline", "بندولين": "Penduline", "penduline": "Penduline",
     "ماستر إلكترون": "Master Electron", "ماستر الكترون": "Master Electron", "mastr el yktron": "Master Electron",
+    "ميز": "MIIIW", "miz": "MIIIW", "myz": "MIIIW", "miiiw": "MIIIW",
     "سوكرادورف": "Sukradorf", "sukradorf": "Sukradorf",
     "أرسيلو": "Arselo", "ارسيلو": "Arselo", "arselo": "Arselo", "rsilou": "Arselo",
     "أكس سكوت": "X-SCOOT", "اكس سكوت": "X-SCOOT", "x-scot": "X-SCOOT",
     "هامر": "Hummer", "hummer": "Hummer", "hamr": "Hummer",
     "دوبي": "DOBE", "dobe": "DOBE", "doby": "DOBE",
     "زون": "Zun", "zun": "Zun",
+    "إيديتا": "Edita", "ايديتا": "Edita", "edita": "Edita",
+    "سلايت": "Slite", "slite": "Slite",
+    "كريستال": "Crystal", "crystal": "Crystal",
+    "عافية": "Afia", "عافيه": "Afia", "afia": "Afia",
+    "جهينة": "Juhayna", "جهينه": "Juhayna", "juhayna": "Juhayna",
+    "المراعي": "Almarai", "almarai": "Almarai",
+    "لمار": "Lamar", "lamar": "Lamar",
+    "بيتي": "Beyti", "beyti": "Beyti",
+    "دومتي": "Domty", "domty": "Domty",
+    "عبور لاند": "Obour Land", "obour land": "Obour Land",
+    "الملكة": "El Maleka", "الملكه": "El Maleka", "el maleka": "El Maleka",
+    "إيطاليانو": "Italiano", "ايطاليانو": "Italiano", "italiano": "Italiano",
+    "ريجينا": "Regina", "regina": "Regina",
+    "الضحى": "El Doha", "الضحي": "El Doha", "el doha": "El Doha",
+    "بايركس": "Pyrex", "pyrex": "Pyrex",
+    "كولدير": "Coldair", "coldair": "Coldair",
     "دايموند هوم": "Diamond Home", "diamond home": "Diamond Home",
     "نيوتري كوك": "Nutricook", "نيوتريكوك": "Nutricook", "nutricook": "Nutricook",
     "إيتل": "Itel", "ايتل": "Itel", "آيتل": "Itel", "اي تل": "Itel", "itel": "Itel", "eytyl": "Itel",
@@ -502,6 +519,10 @@ _NON_BRAND_LATIN = {
     "car", "home", "smart", "fast", "super", "power", "water", "series", "gen", "model",
     "travel", "traveling", "outdoor", "household", "portable", "universal", "classic",
     "fashion", "women", "men", "kids", "baby", "storage", "clothing", "white", "black",
+    "double", "single", "triple", "reusable", "zipper", "plastic", "silicone", "stainless",
+    "steel", "magnetic", "foldable", "electric", "digital", "automatic", "manual", "heavy",
+    "duty", "multi", "adjustable", "premium", "professional", "original", "piece", "pieces",
+    "kitchen", "bathroom", "food", "water", "bags", "bag", "holder", "stand", "cover", "case",
 }
 
 # جدول نطق الحروف الإنجليزية المكتوبة بالعربية لاكتشاف الاختصارات تلقائياً (مثل: تي سي إل -> TCL، دي اس بي -> DSP)
@@ -1363,6 +1384,10 @@ SMART_CATEGORIES = [
      "ذراع تحكم للألعاب", "Gaming Controller Gamepad",
      "ذراع تحكم احترافي للألعاب بأزرار سريعة الاستجابة وعصي تحكم عالية الدقة لتجربة لعب سلسة ومريحة."),
 
+    ("keyboard_mouse_combo", r'(?:(?:كيبورد|لوحة\s*مفاتيح)\s*(?:و|مع)\s*(?:ماوس|فأرة)|(?:ماوس|فأرة)\s*(?:و|مع)\s*(?:كيبورد|لوحة\s*مفاتيح)|keyboard\s*(?:and|&|\+)\s*mouse|mouse\s*(?:and|&|\+)\s*keyboard|combo\s*keyboard)',
+     "طقم كيبورد وماوس", "Keyboard & Mouse Combo",
+     "طقم كيبورد وماوس عملي متكامل بتصميم مريح واستجابة سلسة وسريعة للعمل المكتبي والاستخدام اليومي."),
+
     ("mouse_pad", r'(?:ماوس\s*باد|بساط\s*(?:ماوس|فأرة|للفأرة)|لوحة\s*ماوس|mouse\s*pad|desk\s*mat)',
      "ماوس باد", "Gaming & Desk Mouse Pad",
      "ماوس باد بسطح ناعم عالي الدقة وقاعدة مطاطية ثابتة مضادة للانزلاق لتحكم سلس ومريح في الألعاب والعمل."),
@@ -1551,13 +1576,25 @@ SMART_CATEGORIES = [
      "قاعدة تثبيت وحمل للأجهزة المنزلية", "Heavy-Duty Appliance Base Stand",
      "قاعدة معدنية متينة وقابلة للتعديل لحمل وتثبيت الغسالة والثلاجة وحمايتها من الرطوبة والاهتزاز وسهولة التحريك والتنظيف."),
 
-    ("washing_machine", r'(?:\bغسالة\b|غساله\s*(?:ملابس|أطباق|صحون|فوق|تحميل)|washing\s*machine|dishwasher)',
+    ("dishwasher", r'(?:غسال[ةه]\s*(?:أطباق|اطباق|صحون)|dishwasher)',
+     "غسالة أطباق", "Dishwasher",
+     "غسالة أطباق عالية الكفاءة ببرامج غسيل وتجفيف متعددة لتنظيف وتعقيم الأواني والأطباق بسهولة وتوفير المياه والكهرباء."),
+
+    ("washing_machine", r'(?:\bغسالة\b|غساله\s*(?:ملابس|فوق|تحميل)|washing\s*machine)',
      "غسالة أوتوماتيك", "Washing Machine",
      "غسالة عالية الكفاءة ببرامج غسيل ذكية متعددة تنظف بعمق مع الحفاظ على الأقمشة وتوفير المياه والكهرباء."),
 
-    ("refrigerator", r'(?:\bثلاجة\b|ديب\s*فريزر|\bفريزر\b|\brefrigerator\b|\bfreezer\b|mini\s*bar)',
-     "ثلاجة وفريزر", "Refrigerator & Freezer",
+    ("deep_freezer", r'(?:ديب\s*فريزر|\bفريزر\b|deep\s*free?z+er|\bfree?z+er\b)',
+     "ديب فريزر", "Deep Freezer",
+     "ديب فريزر بتجميد سريع وتوزيع متساوٍ للبرودة مع سعة تخزين واسعة لحفظ الأطعمة طازجة لفترات طويلة."),
+
+    ("refrigerator", r'(?:\bثلاجة\b|\brefrigerator\b|mini\s*bar)',
+     "ثلاجة", "Refrigerator",
      "ثلاجة بتبريد سريع ومتوزع يحفظ الأطعمة طازجة لأطول فترة مع تقسيم داخلي واسع واستهلاك اقتصادي للكهرباء."),
+
+    ("water_dispenser", r'(?:مبرد\s*(?:مياه|ماء|مياة)|كولدير\s*مياه|water\s*dispenser)',
+     "مبرد مياه", "Water Dispenser",
+     "مبرد مياه عملي بتبريد سريع وحنفيات مريحة وتصميم أنيق يناسب المنزل والمكتب بأداء موفر للطاقة."),
 
     ("microwave", r'(?:\bميكروويف\b|\bمايكروويف\b|فرن\s*كهربائي|\bmicrowave\b|electric\s*oven)',
      "فرن وميكروويف كهربائي", "Microwave & Electric Oven",
@@ -1579,7 +1616,11 @@ SMART_CATEGORIES = [
      "مضرب بيض كهربائي", "Electric Hand Mixer",
      "مضرب كهربائي خفيف وقوي بسرعات متعددة لخفق البيض والكريمة وخليط الكيك بسرعة وسهولة."),
 
-    ("blender", r'(?:\bخلاط\b|هاند\s*بلندر|خلاط\s*يدوي|\bblender\b)',
+    ("hand_blender", r'(?:هاند\s*بلندر|خلاط\s*يدوي|hand\s*blender|immersion\s*blender|stick\s*blender)',
+     "هاند بلندر (خلاط يدوي)", "Hand Blender",
+     "هاند بلندر يدوي قوي وسريع بملحقات عملية وشفرات ستانلس ستيل لهرس وخلط الشوربة والعصائر والصوصات في ثوانٍ."),
+
+    ("blender", r'(?:\bخلاط\b|\bblender\b)',
      "خلاط كهربائي", "Electric Blender",
      "خلاط كهربائي بمحرك قوي وشفرات ستانلس ستيل حادة لخلط العصائر والسموذي والمكونات الصلبة بنعومة فائقة."),
 
@@ -1643,9 +1684,13 @@ SMART_CATEGORIES = [
      "ماكينة حلاقة وتشذيب كهربائية", "Electric Hair Clipper & Shaver",
      "ماكينة حلاقة وتشذيب دقيقة بشفرات حادة آمنة على البشرة وبطارية قابلة للشحن لتحديد وحلاقة سهلة في أي وقت."),
 
-    ("hair_styler", r'(?:مكواة\s*شعر|بيبي\s*ليس|فرشاة\s*(?:شعر\s*)?(?:حرارية|airwrapper|أير\s*رابر)|airwrapper|مجفف\s*شعر|\bسشوار\b|\bاستشوار\b|بخاخ\s*بخار\s*نانو.*?\bشعر\b|hair\s*(?:dryer|straightener|curler|styler))',
-     "مصفف ومجفف شعر", "Hair Dryer & Straightener",
-     "جهاز تصفيف وتجفيف شعر احترافي بتوزيع حراري متوازن يمنح الشعر نعومة ولمعاناً طبيعياً مع حماية من التلف."),
+    ("hair_dryer", r'(?:مجفف\s*شعر|\bسشوار\b|\bاستشوار\b|hair\s*dryer|blow\s*dryer)',
+     "مجفف شعر (سشوار)", "Hair Dryer",
+     "مجفف شعر احترافي بقوة هواء عالية وإعدادات حرارة متعددة لتجفيف وتصفيف سريع مع حماية الشعر من الهيشان والتلف."),
+
+    ("hair_styler", r'(?:مكواة\s*شعر|بيبي\s*ليس|فرشاة\s*(?:شعر\s*)?(?:حرارية|airwrapper|أير\s*رابر)|airwrapper|بخاخ\s*بخار\s*نانو.*?\bشعر\b|hair\s*(?:straightener|curler|styler))',
+     "مكواة ومصفف شعر", "Hair Straightener & Styler",
+     "جهاز تصفيف وفرد شعر احترافي بتوزيع حراري متوازن يمنح الشعر نعومة ولمعاناً طبيعياً مع حماية من التلف."),
 
     ("scale", r'(?:\bميزان\b|bathroom\s*scale|kitchen\s*scale|smart\s*scale|body\s*(?:fat\s*)?scale)',
      "ميزان رقمي", "Digital Smart Scale",
@@ -1751,9 +1796,9 @@ SMART_CATEGORIES = [
      "قهوة ومشروبات", "Coffee & Beverages",
      "قهوة ومشروبات بمذاق غني ورائحة محمصة مميزة تمنحك كوباً متوازناً ومنعشاً في كل صباح."),
 
-    ("grocery", r'(?:زيت\s*(?:دوار\s*الشمس|ذرة|زيتون|طهي|قلي|مخلوط|جوز\s*الهند)|\bسمن\b|\bزبدة\b|كريمة\s*فول\s*سوداني|زبدة\s*فول\s*سوداني|\bدقيق\b|\bأرز\b|\bمكرونة\b|\bعسل\b|\bمربى\b|\bشوكولاتة\b|\bبسكويت\b|\bتونة\b|\bصلصة\b|\bمكسرات\b|\bتوابل\b|\bبهارات\b|بذور\s*خردل|sunflower\s*oil|cooking\s*oil|olive\s*oil|peanut\s*butter|\bseasoning\b|\bspices\b)',
+    ("grocery", r'(?:زيت\s*(?:دوار\s*الشمس|عباد\s*الشمس|ذرة|زيتون|طهي|قلي|مخلوط|جوز\s*الهند)|\bسمن\b|\bزبدة\b|كريمة\s*فول\s*سوداني|زبدة\s*فول\s*سوداني|\bدقيق\b|\bأرز\b|\bارز\b|\bمكرونة\b|\bمكرونه\b|\bعسل\b|\bمربى\b|\bشوكولاتة\b|\bشيكولاتة\b|\bبسكويت\b|\bكيك\b|\bكعك\b|\bبراوني\b|\bمولتو\b|\bكرواسون\b|\bباتيه\b|\bويفر\b|\bشيبسي\b|\bشيبس\b|مقرمشات|\bسناكس\b|\bتونة\b|\bصلصة\b|\bمكسرات\b|\bتوابل\b|\bبهارات\b|بذور\s*خردل|sunflower\s*oil|cooking\s*oil|olive\s*oil|peanut\s*butter|\bseasoning\b|\bspices\b|\bbrownie\b|\bcake\b|\bcroissant\b|\bwafer\b|\bbiscuit\b|\bcookies\b|\bchocolate\b|\bchips\b|\bsnacks\b)',
      "منتجات غذائية وسوبرماركت", "Grocery & Food Essentials",
-     "منتج غذائي عالي الجودة بمكونات مختارة بعناية ومذاق رائع للاستخدام اليومي في المطبخ."),
+     "منتج غذائي عالي الجودة بمكونات مختارة بعناية ومذاق رائع للاستخدام اليومي."),
 
     ("auto_care", r'(?:ماء\s*مساحات|زيت\s*محرك|ملمع\s*(?:تابلوه|إطارات)|منفاخ\s*إطارات|مساحات\s*زجاج|شامبو\s*سيارات|motor\s*oil|windshield\s*washer)',
      "عناية ومستلزمات سيارات", "Car Care & Automotive",
@@ -2821,7 +2866,7 @@ def _extract_rich_specs(title, en_slug="", specs_text="", cat_key="", brand_en="
 
         if not model_str:
             m_other_ph = re.search(
-                r'(?:(?:Redmi|ريدمي)\s*(?:Pad\s*(?:SE|Pro)?|\d{1,2}[A-Za-z]?)|'
+                r'(?:(?:Redmi|ريدمي)\s*(?:Pad\s*(?:SE|Pro)?|[A-Za-z]?\d{1,2}[A-Za-z]?(?:\s*(?:Pro|Plus|Lite))?)|'
                 r'(?:POCO|بوكو)\s*[XFM C]\d{1,2}\s*(?:Pro|GT)?|'
                 r'(?:Reno|رينو)\s*\d{1,2}\s*(?:Pro\+?|Pro|F)?|'
                 r'(?:Realme|ريلمي)\s*(?:C\d{2}[A-Za-z]?|\d{1,2}\s*(?:Pro\+?|Pro)?|Note\s*\d{1,2})|'
@@ -3033,24 +3078,30 @@ def _extract_rich_specs(title, en_slug="", specs_text="", cat_key="", brand_en="
                 spec_en.append(cam_q)
 
     # سعة اللتر / المل / الجرام / الكجم / المقاس / عدد القطع حسب الفئة
-    if cat_key in ("kettle", "air_fryer", "stand_mixer", "blender", "microwave", "coffee_maker", "food_chopper", "cookware", "detergent", "grocery"):
+    if cat_key in ("kettle", "air_fryer", "stand_mixer", "blender", "hand_blender", "microwave", "coffee_maker", "food_chopper", "cookware", "detergent", "grocery"):
         m_lit = re.search(r'(?<![\d.])(\d{1,2}(?:\.\d)?)\s*(?:لتر|لترات|L\b|Liter)', f"{primary_both} {en_ref}", re.I)
         if m_lit and 0.2 <= float(m_lit.group(1)) <= 60:
             spec_ar.append(f"سعة {m_lit.group(1)} لتر" if cat_key not in ("detergent", "grocery") else f"{m_lit.group(1)} لتر")
             spec_en.append(f"{m_lit.group(1)}L")
-        elif cat_key in ("food_chopper", "blender"):
+        elif cat_key in ("food_chopper", "blender", "hand_blender"):
             m_ml_ch = re.search(r'\b(\d{3,4})\s*(?:مل(?:لي(?:لتر)?)?|ml\b)', f"{primary_both} {en_ref}", re.I)
             if m_ml_ch and 200 <= int(m_ml_ch.group(1)) <= 2000:
                 spec_ar.append(f"سعة {m_ml_ch.group(1)} مل")
                 spec_en.append(f"{m_ml_ch.group(1)}ml")
 
-    if cat_key in ("washing_machine", "grocery", "detergent", "supplements", "weights_fitness"):
+    if cat_key == "water_dispenser":
+        m_taps = re.search(r'\b([23])\s*(?:حنفي[ةه]|حنفيات|صنبور|taps?|faucets?)\b', f"{primary_both} {en_ref}", re.I)
+        if m_taps:
+            spec_ar.append(f"{m_taps.group(1)} حنفية")
+            spec_en.append(f"{m_taps.group(1)} Taps")
+
+    if cat_key in ("washing_machine", "dishwasher", "grocery", "detergent", "supplements", "weights_fitness"):
         m_kg = re.search(r'(?<![\d.])(\d{1,3}(?:\.\d)?)\s*(?:كجم|كيلو(?:\s*جرام)?|kg\b)', primary_both, re.I)
         if m_kg:
             spec_ar.append(f"{m_kg.group(1)} كجم")
             spec_en.append(f"{m_kg.group(1)}kg")
 
-    if cat_key in ("hair_care", "skin_care", "perfume", "oral_care", "grocery", "coffee_drink", "tea_drink"):
+    if cat_key in ("hair_care", "skin_care", "perfume", "oral_care", "grocery", "coffee_drink", "tea_drink", "supplements"):
         m_ml = re.search(r'\b(\d{2,4})\s*(?:مل(?:لي(?:لتر)?)?|ml\b)', primary_both, re.I)
         if m_ml:
             spec_ar.append(f"{m_ml.group(1)} مل")
@@ -3060,6 +3111,18 @@ def _extract_rich_specs(title, en_slug="", specs_text="", cat_key="", brand_en="
             if m_gm:
                 spec_ar.append(f"{m_gm.group(1)} جم")
                 spec_en.append(f"{m_gm.group(1)}g")
+
+    if cat_key in ("grocery", "supplements", "personal_care", "detergent", "dinnerware", "cookware", "coffee_drink", "tea_drink"):
+        m_pack = re.search(
+            r'\b(\d{1,3})\s*(?:قطعة|قطعه|قطع|كيس|أكياس|اكياس|عبوة|عبوات|باكيت|علبة|زجاجة|قارورة|كبسولة|كبسولات|pcs\b|pieces?\b|pack\b|bars?\b|bags?\b|capsules?\b)|'
+            r'(?:pack\s*of|box\s*of|set\s*of|عبوة\s*من|مجموعة\s*من)\s*(\d{1,3})\b',
+            f"{primary_both} {en_ref}", re.I,
+        )
+        if m_pack:
+            p_num = int(m_pack.group(1) or m_pack.group(2))
+            if 2 <= p_num <= 200:
+                spec_ar.append(f"({p_num} قطعة)")
+                spec_en.append(f"({p_num} Pack)")
 
     if cat_key == "diapers":
         m_dsz = re.search(r'(?:مقاس\s*(?:حفاضة\s*)?|حجم\s*\w+\s*|حديثي\s*الولادة\s*|حديثى\s*الولاده\s*|size\s*)([1-7])\b|\b([1-7])\s*-\s*\d{2}\b', primary_both, re.I)
@@ -3101,9 +3164,9 @@ def _extract_rich_specs(title, en_slug="", specs_text="", cat_key="", brand_en="
     # القدرة بالوات للأجهزة الكهربائية والشواحن والكابلات فقط
     if cat_key in (
         "power_bank", "wall_charger", "car_charger", "wireless_charger", "laptop_charger",
-        "charging_cable", "power_strip", "kettle", "air_fryer", "stand_mixer", "blender",
+        "charging_cable", "power_strip", "kettle", "air_fryer", "stand_mixer", "blender", "hand_blender",
         "food_chopper", "microwave", "coffee_maker", "steam_iron", "steam_cleaner", "vacuum",
-        "hair_styler", "speaker", "soundbar", "sandwich_maker", "electric_stove", "phone_cooler",
+        "hair_styler", "hair_dryer", "speaker", "soundbar", "sandwich_maker", "electric_stove", "phone_cooler", "tools",
     ):
         m_w = re.search(r'(?<![A-Za-z0-9])(\d{1,4})\s*(?:وات|واط|W\b|Watt)', f"{primary_both} {en_ref}", re.I)
         if m_w and 5 <= int(m_w.group(1)) <= 3500:
@@ -3247,25 +3310,88 @@ def _extract_rich_specs(title, en_slug="", specs_text="", cat_key="", brand_en="
 
 _DANGLING_AR_WORDS = {
     "من", "مع", "في", "على", "إلى", "الى", "عن", "بـ", "لـ", "او", "أو", "و",
-    "مزود", "مزودة", "مصنوع", "مصنوعة", "قابلة", "قابل", "متعدد", "متعددة", "ذات", "بها", "خاصية",
+    "مزود", "مزودة", "مصنوع", "مصنوعة", "قابلة", "قابل", "متعدد", "متعددة", "ذات", "ذو", "بها", "خاصية",
+    "لتخزين", "لحفظ", "لتنظيف", "للاستخدام", "مقاس", "بحجم", "بسعة", "بقوة", "بطول", "بوزن",
+    "لون", "بلون", "موديل", "عدد", "مناسب", "مناسبة", "متوافق", "متوافقة", "مصمم", "مصممة",
+    "عبوة", "طقم", "مجموعة", "بدون", "عالي", "عالية", "فائق", "فائقة",
 }
 
-def _clean_natural_ar_fallback(title, brand_en=""):
-    t = re.sub(r'[\(\[\{].*?[\)\]\}]', ' ', title or "")
-    t = re.sub(r'[,،؛|]+', ' ', t)
+_AR_UNIT_NEXT_WORDS = {
+    "قطعة", "قطعه", "قطع", "كيس", "أكياس", "اكياس", "جم", "جرام", "مل", "لتر", "كجم", "كيلو",
+    "سم", "مم", "متر", "وات", "واط", "بوصة", "حنفية", "حنفيات", "أدوار", "ادوار", "علبة", "عبوة", "باكيت", "زجاجة",
+}
+
+def _dedupe_brand_prefix(text, brand_en=""):
+    """يمنع تكرار اسم الماركة في بداية العنوان الإنجليزي حتى مع اختلاف المسافات/الشرط (مثل Red Rex Redrex-)."""
+    if not text or not brand_en:
+        return text
+    s = str(text).strip()
+    b_compact = re.sub(r'[^a-z0-9]', '', brand_en.lower())
+    if len(b_compact) < 2:
+        return s
+    # إزالة أي تكرار لاسم الماركة في أول العنوان
+    toks = s.split()
+    if len(toks) >= 2:
+        first_compact = re.sub(r'[^a-z0-9]', '', toks[0].lower())
+        if first_compact == b_compact:
+            rest = " ".join(toks[1:]).lstrip(" -—:;,.")
+            return f"{brand_en} {rest}".strip() if rest else brand_en
+    if len(toks) >= 3:
+        two_compact = re.sub(r'[^a-z0-9]', '', (toks[0] + toks[1]).lower())
+        third_compact = re.sub(r'[^a-z0-9]', '', toks[2].lower())
+        if two_compact == b_compact and third_compact == b_compact:
+            rest = " ".join(toks[3:]).lstrip(" -—:;,.")
+            return f"{brand_en} {rest}".strip() if rest else brand_en
+    s_compact = re.sub(r'[^a-z0-9]', '', s.lower())
+    if b_compact not in s_compact:
+        return f"{brand_en} {s}".strip()
+    return s
+
+def _clean_natural_ar_fallback(title, brand_en="", extra_specs_ar=None):
+    t = str(title or "")
+    # الاحتفاظ بالمعلومات المهمة داخل الأقواس مثل (12 قطعة) أو (50 جم) وإزالة الحشو الآخر
+    def _keep_useful_parens(m):
+        inner = m.group(1).strip()
+        if re.search(r'\d+\s*(?:قطعة|قطعه|قطع|جم|جرام|مل|لتر|كجم|سم|متر|وات|واط|عبوة|باكيت|كيس)', inner):
+            return f" {inner} "
+        return " "
+    t = re.sub(r'[\(\[\{]([^\)\]\}]*)[\)\]\}]', _keep_useful_parens, t)
+    t = re.sub(r'[,،؛|–—]+', ' ', t)
+    t = re.sub(r'\s*-\s*', ' ', t)
     if brand_en:
+        # إزالة الماركة بالعربي أو الإنجليزي لتجنب تكرارها ثم وضعها بشكل منسق
+        t = re.sub(rf'(?:\bمن\s+)?\b{re.escape(brand_en)}\b', ' ', t, flags=re.I)
+        b_comp = re.sub(r'[^a-z0-9]', '', brand_en.lower())
+        if len(b_comp) >= 4:
+            t = re.sub(rf'\b{re.escape(b_comp)}\b', ' ', t, flags=re.I)
         for ar_k, en_v in RAW_BRAND_EN_MAP.items():
             if en_v.lower() == brand_en.lower() and re.search(r'[\u0600-\u06FF]', ar_k):
                 t = re.sub(rf'(?:\bمن\s+)?\b{re.escape(ar_k)}\b', ' ', t)
-    words = [
+    all_words = [
         w for w in t.split()
-        if (len(w) > 1 or w.isdigit()) and w.lower() not in ("أصلي", "اصلي", "جديد", "عرض", "خصم")
-    ][:8]
-    while words and norm_ar_token(words[-1]) in {norm_ar_token(d) for d in _DANGLING_AR_WORDS}:
+        if (len(w) > 1 or w.isdigit()) and w.lower() not in ("أصلي", "اصلي", "جديد", "عرض", "خصم", "الاصلي", "الأصلي")
+    ]
+    limit = 8
+    words = all_words[:limit]
+    # لو انتهى الاقتطاع عند رقم صِرف والكلمة التالية مباشرة هي وحدة قياس (مثل 30 قطعة)، نضم الوحدة
+    if words and words[-1].isdigit() and len(all_words) > limit:
+        nxt = all_words[limit]
+        if norm_ar_token(nxt) in {norm_ar_token(u) for u in _AR_UNIT_NEXT_WORDS}:
+            words.append(nxt)
+    norm_dangling = {norm_ar_token(d) for d in _DANGLING_AR_WORDS}
+    while words and (norm_ar_token(words[-1]) in norm_dangling or words[-1].isdigit()):
         words.pop()
     res = " ".join(words).strip()
     if brand_en and brand_en.lower() not in res.lower():
         res = f"{res} {brand_en}".strip()
+    # إلحاق أي مواصفة جوهرية ناقصة (مثل الوزن أو عدد القطع) دون تكرار
+    for sp in (extra_specs_ar or []):
+        sp_clean = sp.strip()
+        sp_digits = re.findall(r'\d+(?:\.\d+)?', sp_clean)
+        if sp_clean and sp_clean.lower() not in res.lower():
+            if not (sp_digits and all(d in res for d in sp_digits)):
+                if len(res) + len(sp_clean) + 1 <= 85:
+                    res = f"{res} {sp_clean}".strip()
     return res[:85]
 
 
@@ -3322,14 +3448,17 @@ def _clean_en_official_title(en_title, brand_en=""):
     picked = clauses[0].strip()
     if len(picked.split()) < 4 and len(clauses) > 1:
         picked = f"{picked} {clauses[1].strip()}".strip()
-    words = _strip_en_seo_fluff(picked.split())[:7]
-    while words and words[-1].lower() in ("for", "with", "and", "or", "in", "to", "of", "by", "the", "a", "an"):
+    fluff_cleaned = _strip_en_seo_fluff(picked.split())
+    words = fluff_cleaned[:7]
+    # لو انتهى الاقتطاع عند "Pack" أو "Set" وبعدها "of 12" نضمها حتى لا تنقطع العبارة
+    if words and words[-1].lower() in ("pack", "set", "box") and len(fluff_cleaned) >= 9 and fluff_cleaned[7].lower() == "of":
+        words.extend(fluff_cleaned[7:9])
+    while words and words[-1].lower() in ("for", "with", "and", "or", "in", "to", "of", "by", "the", "a", "an", "pack", "set", "box"):
         words.pop()
     out = " ".join(words).strip(" ,.-—|")
     if not out:
         return ""
-    if brand_en and brand_en.lower() not in out.lower():
-        out = f"{brand_en} {out}".strip()
+    out = _dedupe_brand_prefix(out, brand_en)
     return out[:85]
 
 
@@ -3363,10 +3492,19 @@ def _clean_en_slug_title(en_slug, brand_en=""):
         else:
             titled.append(w.capitalize())
     out = " ".join(titled)
-    if brand_en and brand_en.lower() not in out.lower():
-        out = f"{brand_en} {out}"
+    out = _dedupe_brand_prefix(out, brand_en)
     return out[:85].strip()
 
+
+# الفئات الواسعة (السوبرماركت، المكملات، الملابس، التجميل، الأواني، العدد...)
+# التي لا يكفي اسم القسم العام لوصف المنتج، فيُحتفظ باسم المنتج الحقيقي النظيف بدل استبداله باسم القسم!
+_BROAD_CATEGORIES_KEEP_TITLE = {
+    "grocery", "supplements", "cookware", "dinnerware", "clothing", "shoes",
+    "skin_care", "hair_care", "personal_care", "makeup", "detergent", "car_care",
+    "tools", "toys", "home_decor", "storage_organizer", "furniture", "stationery",
+    "tea_drink", "coffee_drink", "perfume", "oral_care", "kitchen_tools",
+    "baby_gear", "pet_supplies", "weights_fitness",
+}
 
 def analyze_product(
     title,
@@ -3592,37 +3730,62 @@ def analyze_product(
     if chosen_cat and chosen_cat in CATEGORY_BY_KEY:
         _, _, cat_ar, cat_en, cat_fallback_desc = CATEGORY_BY_KEY[chosen_cat]
 
-        # للفئات الديناميكية المكتشفة تلقائياً: لو لم تتوفر مواصفات محددة، نضيف الكلمات المميزة من العنوان
-        if chosen_cat.startswith("dyn_") and not spec_ar_str:
-            t_rem = re.sub(r'[\(\[\{].*?[\)\]\}]', ' ', title_for_specs)
-            norm_cat_tokens = {norm_ar_token(w) for w in cat_ar.split()}
-            dyn_words = []
-            for raw_w in t_rem.split():
-                w_norm = norm_ar_token(raw_w)
-                if (len(raw_w) > 1 or raw_w.isdigit()) and w_norm not in norm_cat_tokens and raw_w.lower() not in _OPEN_WORLD_DANGLING_AR:
-                    if not brand_en or raw_w.lower() != brand_en.lower():
-                        dyn_words.append(raw_w)
-            if dyn_words:
-                spec_ar_str = " ".join(dyn_words[:4]).strip()
+        # للفئات الواسعة (السوبرماركت، المكملات، التجميل، الأواني، الملابس، العدد...):
+        # نعرض اسم المنتج الحقيقي النظيف (مثل: كيك براوني تودو Edita / زيت عباد شمس Slite) بدل اسم القسم العام!
+        if chosen_cat in _BROAD_CATEGORIES_KEEP_TITLE and not ar_title_corrupted and re.search(r'[\u0600-\u06FF]', t_clean):
+            specific_ar = _clean_natural_ar_fallback(t_clean, brand_en=brand_en, extra_specs_ar=specs_ar_list)
+            if len(specific_ar) >= 6:
+                name_ar = specific_ar
+            elif brand_en and brand_en.lower() not in spec_ar_str.lower() and brand_en.lower() not in cat_ar.lower():
+                name_ar = f"{cat_ar} {brand_en} {spec_ar_str}".strip()
+            else:
+                name_ar = f"{cat_ar} {spec_ar_str}".strip()
 
-        if brand_en and brand_en.lower() not in spec_ar_str.lower() and brand_en.lower() not in cat_ar.lower():
-            name_ar = f"{cat_ar} {brand_en} {spec_ar_str}".strip()
+            if en_official_clean and len(en_official_clean) >= 6:
+                built_en = _dedupe_brand_prefix(en_official_clean, brand_en)
+            elif not re.search(r'[\u0600-\u06FF]', t_clean) and len(t_clean) >= 6:
+                built_en = _dedupe_brand_prefix(" ".join(t_clean.split()[:7]).strip(" ,.-"), brand_en)
+            else:
+                tr_en_broad = translate_ar_to_en_fast(name_ar, timeout=3.5) if allow_network_translate else ""
+                if tr_en_broad and len(tr_en_broad) >= 5:
+                    built_en = _dedupe_brand_prefix(tr_en_broad, brand_en)
+                elif brand_en and brand_en.lower() not in spec_en_str.lower() and brand_en.lower() not in cat_en.lower():
+                    built_en = f"{brand_en} {spec_en_str} {cat_en}".strip()
+                else:
+                    built_en = f"{spec_en_str} {cat_en}".strip()
+            name_en = built_en
         else:
-            name_ar = f"{cat_ar} {spec_ar_str}".strip()
+            # للفئات الديناميكية المكتشفة تلقائياً: لو لم تتوفر مواصفات محددة، نضيف الكلمات المميزة من العنوان
+            if chosen_cat.startswith("dyn_") and not spec_ar_str:
+                t_rem = re.sub(r'[\(\[\{].*?[\)\]\}]', ' ', title_for_specs)
+                norm_cat_tokens = {norm_ar_token(w) for w in cat_ar.split()}
+                dyn_words = []
+                for raw_w in t_rem.split():
+                    w_norm = norm_ar_token(raw_w)
+                    if (len(raw_w) > 1 or raw_w.isdigit()) and w_norm not in norm_cat_tokens and raw_w.lower() not in _OPEN_WORLD_DANGLING_AR:
+                        if not brand_en or raw_w.lower() != brand_en.lower():
+                            dyn_words.append(raw_w)
+                if dyn_words:
+                    spec_ar_str = " ".join(dyn_words[:4]).strip()
 
-        if brand_en and brand_en.lower() not in spec_en_str.lower() and brand_en.lower() not in cat_en.lower():
-            built_en = f"{brand_en} {spec_en_str} {cat_en}".strip()
-        else:
-            built_en = f"{spec_en_str} {cat_en}".strip()
+            if brand_en and brand_en.lower() not in spec_ar_str.lower() and brand_en.lower() not in cat_ar.lower():
+                name_ar = f"{cat_ar} {brand_en} {spec_ar_str}".strip()
+            else:
+                name_ar = f"{cat_ar} {spec_ar_str}".strip()
 
-        # لو لم نستخرج موديل محدد وكان لدينا عنوان إنجليزي رسمي أنيق من المتجر، نحتفظ به ليكون غنياً ودقيقاً
-        if not spec_en_str and en_official_clean and len(en_official_clean) >= 10:
-            built_en = en_official_clean
-        elif not re.search(r'[\u0600-\u06FF]', t_clean) and len(t_clean) >= 8 and not spec_en_str:
-            short_orig_en = " ".join(t_clean.split()[:8]).strip(" ,.-")
-            built_en = f"{brand_en} {short_orig_en}".strip() if (brand_en and brand_en.lower() not in short_orig_en.lower()) else short_orig_en
+            if brand_en and brand_en.lower() not in spec_en_str.lower() and brand_en.lower() not in cat_en.lower():
+                built_en = f"{brand_en} {spec_en_str} {cat_en}".strip()
+            else:
+                built_en = f"{spec_en_str} {cat_en}".strip()
 
-        name_en = built_en
+            # لو لم نستخرج موديل محدد وكان لدينا عنوان إنجليزي رسمي أنيق من المتجر، نحتفظ به ليكون غنياً ودقيقاً
+            if not spec_en_str and en_official_clean and len(en_official_clean) >= 10:
+                built_en = _dedupe_brand_prefix(en_official_clean, brand_en)
+            elif not re.search(r'[\u0600-\u06FF]', t_clean) and len(t_clean) >= 8 and not spec_en_str:
+                short_orig_en = " ".join(t_clean.split()[:7]).strip(" ,.-")
+                built_en = _dedupe_brand_prefix(short_orig_en, brand_en)
+
+            name_en = built_en
     else:
         cat_fallback_desc = None
         if re.search(r'[\u0600-\u06FF]', t_clean) and not ar_title_corrupted:
@@ -3738,7 +3901,7 @@ def build_smart_description(title, features=None, extra_desc=None, brand_en="", 
             return ce
 
     b_suffix = f" من {brand_en}" if brand_en else ""
-    specs_clean = [s.strip() for s in (extracted_specs_ar or []) if s and len(s.strip()) >= 2]
+    specs_clean = [s.strip("() ").strip() for s in (extracted_specs_ar or []) if s and len(s.strip("() ")) >= 2]
     specs_phrase = ""
     if specs_clean:
         specs_phrase = " (" + "، ".join(specs_clean[:3]) + ")"

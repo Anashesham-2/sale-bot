@@ -37,13 +37,18 @@ if MAIN_CHANNEL_ID not in CHAT_IDS and MAIN_CHANNEL_USERNAME not in CHAT_IDS:
 # الـ Chat ID الخاص بصاحب البوت لاستقبال أي لينك في الخاص وتحويله لأفلييت القناة ونشره فوراً
 OWNER_CHAT_ID = int(os.getenv("OWNER_CHAT_ID", "6725805788"))
 MIN_DISCOUNT = 30
-MAX_PER_CYCLE = int(os.getenv("MAX_PER_CYCLE", "8"))  # أقصى عدد عروض تتبعت لكل متجر في الدورة الواحدة (تقليل السبام)
-# توازن ذكي بين المتجرين: نون ما يزيدش عن عروض أمازون في نفس الدورة إلا بهامش بسيط (إلا لو العرض لقطة ببلاش/نص السعر)
+MAX_PER_CYCLE = int(os.getenv("MAX_PER_CYCLE", "10"))  # الحد الأقصى الافتراضي للدورة
+# توازن طبيعي حسب قوة العروض مع أفضلية لأمازون (10 أمازون مقابل 6 نون للعروض العادية، و8 لنون في العروض اللقطة جداً)
+AMAZON_MAX_PER_CYCLE = int(os.getenv("AMAZON_MAX_PER_CYCLE", "10"))
+NOON_MAX_PER_CYCLE = int(os.getenv("NOON_MAX_PER_CYCLE", "6"))
 NOON_MIN_PER_CYCLE = int(os.getenv("NOON_MIN_PER_CYCLE", "4"))
 # تنويع الفئات: أقصى عدد منتجات من نفس الفئة في الدورة الواحدة لكل متجر (إلا عروض ببلاش)
 MAX_SAME_CAT_PER_CYCLE = int(os.getenv("MAX_SAME_CAT_PER_CYCLE", "2"))
 _cycle_amazon_sent = 0
 _last_built_cat_key = ""
+_last_built_name_ar = ""
+_msg_button_meta = {}  # يربط نص كل بوست برابط الشراء المباشر ليعمل الزر بدون إظهار الرابط النصي
+_recent_name_ar_sent = {}  # يمنع تكرار نفس الاسم الموحّد خلال 24 ساعة حتى لو اختلف الرابط أو اللون
 HASHTAG = "#عروض_لقطة"
 # كود أفلييت أمازون مصر الخاص بالقناة (Tracking ID)
 AMAZON_TAG = os.getenv("AMAZON_TAG", "anashesham-21")
@@ -388,7 +393,7 @@ def should_send_deal(link, title, current_price, promo_sig=""):
 
     return True, None
 
-def mark_deal_sent(link, title=None, effective_price=None, promo_sig=""):
+def mark_deal_sent(link, title=None, effective_price=None, promo_sig="", norm_name_ar=None):
     now = time.time()
     if link not in sent_deals:
         sent_deals.add(link)
@@ -407,7 +412,37 @@ def mark_deal_sent(link, title=None, effective_price=None, promo_sig=""):
             prev_tp = sent_title_prices.get(t_key)
             if prev_tp is None or effective_price < prev_tp:
                 sent_title_prices[t_key] = effective_price
+    if norm_name_ar:
+        nk = _normalize_ar(norm_name_ar)
+        if len(nk) >= 8:
+            entry["norm_name_ar"] = nk
+            _recent_name_ar_sent[nk] = (now, effective_price or 0.0)
     save_history()
+
+def is_duplicate_unified_name(name_ar, current_price):
+    """يمنع تكرار نشر نفس المنتج (بنفس الاسم الموحّد) خلال آخر 24 ساعة حتى لو نزل بلينك أو لون مختلف."""
+    if not name_ar:
+        return False
+    nk = _normalize_ar(name_ar)
+    if len(nk) < 8:
+        return False
+    now = time.time()
+    # التحقق من الكاش المحلي + سجل price_history لآخر 24 ساعة
+    rec = _recent_name_ar_sent.get(nk)
+    if not rec:
+        for _u, ent in price_history.items():
+            if ent.get("norm_name_ar") == nk:
+                ts = ent.get("last_sent_at") or ent.get("last_sent") or 0
+                if now - ts < 86400:
+                    rec = (ts, ent.get("last_sent_price") or 0.0)
+                    _recent_name_ar_sent[nk] = rec
+                    break
+    if rec:
+        prev_ts, prev_p = rec
+        if now - prev_ts < 86400:
+            if not prev_p or current_price is None or current_price > prev_p * 0.90:
+                return True
+    return False
 
 def record_price(link, price):
     """يسجّل السعر الحالي ويرجع (أقل سعر سابق، أعلى سعر، أقل سعر) خلال آخر 90 يوم."""
@@ -1167,10 +1202,11 @@ def build_message(store, title, price, list_price, discount, link,
         en_brand=en_brand,
         en_breadcrumbs=en_breadcrumbs,
     )
-    global _last_built_cat_key
+    global _last_built_cat_key, _last_built_name_ar
     _last_built_cat_key = intel.get("cat_key") or ""
     brand_en = intel["brand_en"]
     name_ar = intel["name_ar"]
+    _last_built_name_ar = name_ar
     name_en = intel["name_en"]
     desc = intel["description"]
 
@@ -1271,21 +1307,12 @@ def build_message(store, title, price, list_price, discount, link,
         if stack_howto:
             lines.append(f"💡 <b>طريقة التفعيل:</b> {html.escape(stack_howto[0])}")
 
-    # 2) رابط المنتج مباشرةً
+    # 2) تجهيز رابط الشراء المباشر + رابط تصفح باقي منتجات العرض للزر التفاعلي (بدون إظهار رابط الأفلييت النصي في البوست)
     short_branded_link = branded_url(link)
-    lines += [
-        "",
-        f"🔗 <b>رابط المنتج:</b>\n{short_branded_link}",
-    ]
-
-    # رابط صفحة تصفح باقي المنتجات المشمولة في نفس العرض (من رسالة المستخدم أو من المتجر)
     col_link = promo_collection_url or ((promo_links or [None])[0] if (promo_links and stack_promos) else None)
+    short_col = None
     if col_link and ("amazon." in col_link or "is.gd" in str(col_link) or "link.amazon" in str(col_link) or "/promotion/psp" in str(col_link)):
         short_col = branded_url(col_link)
-        lines += [
-            "",
-            f"🛍️ <b>رابط باقي المنتجات المشمولة في نفس العرض:</b>\n{short_col}",
-        ]
 
     # 3) وصف المنتج (مختصر ومفهوم وذكي بالعربي فقط)
     if desc:
@@ -1305,11 +1332,20 @@ def build_message(store, title, price, list_price, discount, link,
 
     lines += [
         "",
+        "👇 <i>اضغط على الزر بالأسفل لطلب العرض مباشرةً من المتجر</i>",
         "⚠️ <i>ملحوظة: ده مجرد ترشيح للعرض، والتجربة وقرار الشراء عليك.</i>",
         "",
         deal_hashtags,
     ]
-    return "\n".join(lines)
+    final_msg = "\n".join(lines)
+    if len(_msg_button_meta) > 400:
+        _msg_button_meta.clear()
+    _msg_button_meta[final_msg] = {
+        "buy_url": short_branded_link,
+        "col_url": short_col,
+        "store": store,
+    }
+    return final_msg
 
 def build_section_alert(store, brand_label, section_url, items):
     """يبني رسالة تنبيه ذكية لما يلاقي خصومات قوية على سكشن/براند كامل (زي أبو عوف أو Fogg)."""
@@ -1324,20 +1360,26 @@ def build_section_alert(store, brand_label, section_url, items):
     ]
     for it in items[:4]:
         old_s = f"<s>{fmt(it['list_price'])}</s> ← " if it.get("list_price") else ""
+        it_link = branded_url(it["link"])
         lines.append(
             f"• <b>{html.escape(it['title'][:65])}</b>\n"
-            f"  💰 {old_s}<b>{fmt(it['price'])} ج.م</b> (خصم {it['discount']:.0f}%)\n"
-            f"  🔗 {it['link']}"
+            f"  💰 {old_s}<b>{fmt(it['price'])} ج.م</b> (خصم {it['discount']:.0f}%) — <a href=\"{html.escape(it_link)}\">اطلب الآن 🛒</a>"
         )
     lines += [
         "",
-        f"🛒 <b>رابط كل عروض {html.escape(brand_label)} على {store_ar}:</b>\n{section_url}",
-        "",
+        "👇 <i>اضغط على الزر بالأسفل لتصفح كل عروض القسم مباشرةً</i>",
         "⚠️ <i>ملحوظة: ده مجرد ترشيح للعرض، والتجربة وقرار الشراء عليك.</i>",
         "",
         HASHTAG,
     ]
-    return "\n".join(lines)
+    final_msg = "\n".join(lines)
+    _msg_button_meta[final_msg] = {
+        "buy_url": branded_url(section_url),
+        "col_url": None,
+        "store": store,
+        "btn_label": f"🛒 تصفح كل عروض {brand_label} على {store_ar}",
+    }
+    return final_msg
 
 def _fit_caption_for_photo(text):
     """
@@ -1391,19 +1433,27 @@ def _fit_caption_for_photo(text):
 
     return t
 
-def build_buy_button_markup(text):
-    """يبني زر شراء مباشر أسفل العرض (يفتح تطبيق أمازون/نون فوراً) + زر مشاركة القناة."""
-    m = re.search(r'🔗 <b>رابط المنتج:</b>\s*\n?\s*(https?://\S+)', text or "")
-    if not m:
+def build_buy_button_markup(text, buy_url=None, col_url=None, store=None):
+    """يبني أزرار الشراء المباشر أسفل العرض (بدون إظهار رابط الأفلييت النصي) + زر مشاركة القناة."""
+    meta = _msg_button_meta.get(text) or {}
+    link = buy_url or meta.get("buy_url")
+    col_link = col_url or meta.get("col_url")
+    btn_override = meta.get("btn_label")
+    st_low = (store or meta.get("store") or "").lower()
+    if not link:
+        m = re.search(r'🔗 <b>رابط المنتج:</b>\s*\n?\s*(https?://\S+)', text or "")
+        if m:
+            link = m.group(1).strip()
+    if not link or not str(link).startswith("http"):
         return None
-    link = m.group(1).strip()
-    is_amz = "amazon." in link.lower()
-    btn_txt = "🛒 اطلب من أمازون الآن" if is_amz else "🛒 اطلب من نون الآن"
+    is_amz = (st_low == "amazon") or ("amazon." in link.lower())
+    btn_txt = btn_override or ("🛒 اطلب العرض من أمازون الآن" if is_amz else "🛒 اطلب العرض من نون الآن")
+    rows = [[{"text": btn_txt, "url": link}]]
+    if col_link and str(col_link).startswith("http"):
+        rows.append([{"text": "🛍️ تصفح باقي منتجات نفس العرض", "url": col_link}])
     share_url = "https://t.me/share/url?url=" + quote_plus(f"https://t.me/{MAIN_CHANNEL_USERNAME.lstrip('@')}") + "&text=" + quote_plus("أقوى عروض وخصومات أمازون ونون مصر يومياً 🔥")
-    return {"inline_keyboard": [
-        [{"text": btn_txt, "url": link}],
-        [{"text": "📢 شارك قناة لقطة مع صحابك", "url": share_url}],
-    ]}
+    rows.append([{"text": "📢 شارك قناة لقطة مع صحابك", "url": share_url}])
+    return {"inline_keyboard": rows}
 
 def send_telegram_msg(text, image=None, target_chat_ids=None, reply_markup=None):
     """يبعت العرض بصورة المنتج دائماً عبر التحميل المباشر والرفع كملف لتليجرام، ويضمن عدم ضياع أو إسقاط صورة المنتج أبداً."""
@@ -1845,15 +1895,15 @@ async def scrape_amazon_eg(page):
 
     brands_to_check = [
         (b_lbl, f"https://www.amazon.eg/s?k={quote_plus(kw_list[0])}")
-        for b_lbl, kw_list in (all_brands_pool[(_brand_rot_idx + i) % len(all_brands_pool)] for i in range(8))
+        for b_lbl, kw_list in (all_brands_pool[(_brand_rot_idx + i) % len(all_brands_pool)] for i in range(10))
     ]
-    _brand_rot_idx = (_brand_rot_idx + 8) % len(all_brands_pool)
+    _brand_rot_idx = (_brand_rot_idx + 10) % len(all_brands_pool)
 
     cats_to_check = [
         AMAZON_CATEGORY_SEARCHES[(_amz_cat_rot_idx + i) % len(AMAZON_CATEGORY_SEARCHES)]
-        for i in range(5)
+        for i in range(6)
     ]
-    _amz_cat_rot_idx = (_amz_cat_rot_idx + 5) % len(AMAZON_CATEGORY_SEARCHES)
+    _amz_cat_rot_idx = (_amz_cat_rot_idx + 6) % len(AMAZON_CATEGORY_SEARCHES)
 
     learned_to_check = []
     l_queries = learned_prefs.get("queries", [])
@@ -1970,7 +2020,7 @@ async def scrape_amazon_eg(page):
     pdp_Lookups = 0
 
     for tier_rank, famous, _, discount, full_link, card, info, prev_min, max_p, min_p in candidates:
-        if amazon_sent >= MAX_PER_CYCLE:
+        if amazon_sent >= AMAZON_MAX_PER_CYCLE:
             break
         try:
             seller, brand, pdp_rating, pdp_reviews, features, image, rev_snippets, page_promos, promo_links, extra_ctx = None, None, None, None, [], None, [], [], [], {}
@@ -2024,12 +2074,14 @@ async def scrape_amazon_eg(page):
                 en_breadcrumbs=extra_ctx.get("en_breadcrumbs"),
             )
             cat_k = _last_built_cat_key
+            if is_duplicate_unified_name(_last_built_name_ar, eff_price) and not update_reason:
+                continue
             if cat_k and amz_cat_counts.get(cat_k, 0) >= MAX_SAME_CAT_PER_CYCLE and tier_rank < 3:
                 continue
             if cat_k:
                 amz_cat_counts[cat_k] = amz_cat_counts.get(cat_k, 0) + 1
 
-            mark_deal_sent(full_link, full_title_amz, eff_price, promo_sig)
+            mark_deal_sent(full_link, full_title_amz, eff_price, promo_sig, norm_name_ar=_last_built_name_ar)
             amazon_sent += 1
             _cycle_amazon_sent = amazon_sent
             is_free_now = is_almost_free(eff_price, info["list_price"], discount)
@@ -2411,9 +2463,9 @@ async def scrape_noon_eg(page):
             saving_egp = (info["list_price"] - info["price"]) if (info["list_price"] and info["list_price"] > info["price"]) else 0
 
             if famous:
-                qualifies = (discount >= 8) or (discount >= 6 and (has_card_promo or saving_egp >= 40)) or freebie
+                qualifies = (discount >= 10) or (discount >= 7 and (has_card_promo or saving_egp >= 50)) or freebie
             else:
-                qualifies = (discount >= 20) or (discount >= 15 and has_card_promo) or freebie or (saving_egp >= 1000)
+                qualifies = (discount >= 25) or (discount >= 18 and has_card_promo) or freebie or (saving_egp >= 1000)
 
             ok_prelim, _ = should_send_deal(full_link, prelim_title, info["price"])
             if qualifies and ok_prelim and not freebie and not is_real_low_price(full_link, info["price"]):
@@ -2433,11 +2485,12 @@ async def scrape_noon_eg(page):
     noon_cat_counts = {}
     consecutive_blocks = 0
     pdp_lookups = 0
-    # توازن ذكي: عدد عروض نون في الدورة يتناسب مع عروض أمازون (مع حد أدنى)، والعروض اللقطة (ببلاش/نص السعر) تعدي دائماً
-    noon_cap = min(MAX_PER_CYCLE, max(NOON_MIN_PER_CYCLE, _cycle_amazon_sent + 2))
-    print(f"حد عروض نون في الدورة دي: {noon_cap} (أمازون بعت {_cycle_amazon_sent})")
+    # توازن طبيعي حسب جودة العروض مع أفضلية خفيفة لأمازون (بحد 6 عروض عادية لنون، ويسمح حتى 8 في العروض اللقطة جداً)
+    noon_cap = min(NOON_MAX_PER_CYCLE, max(NOON_MIN_PER_CYCLE, _cycle_amazon_sent))
+    noon_hard_max = NOON_MAX_PER_CYCLE + 2
+    print(f"حد عروض نون في الدورة دي: {noon_cap} (بحد أقصى {noon_hard_max} للقطات القوية — أمازون بعت {_cycle_amazon_sent})")
     for tier_rank, famous, _, discount, full_link, card, info, prev_min, max_p, min_p in candidates:
-        if noon_sent >= MAX_PER_CYCLE or (noon_sent >= noon_cap and tier_rank < 2):
+        if noon_sent >= noon_hard_max or (noon_sent >= noon_cap and tier_rank < 2):
             break
         try:
             card_title = card.get("name") or noon_title(card["text"])
@@ -2501,12 +2554,14 @@ async def scrape_noon_eg(page):
                 en_breadcrumbs=extra_ctx.get("en_breadcrumbs"),
             )
             cat_k = _last_built_cat_key
+            if is_duplicate_unified_name(_last_built_name_ar, eff_price) and not update_reason:
+                continue
             if cat_k and noon_cat_counts.get(cat_k, 0) >= MAX_SAME_CAT_PER_CYCLE and tier_rank < 3:
                 continue
             if cat_k:
                 noon_cat_counts[cat_k] = noon_cat_counts.get(cat_k, 0) + 1
 
-            mark_deal_sent(full_link, title, eff_price, promo_sig)
+            mark_deal_sent(full_link, title, eff_price, promo_sig, norm_name_ar=_last_built_name_ar)
             noon_sent += 1
             is_free_now = is_almost_free(eff_price, info["list_price"], discount)
             await pace_and_send(msg, image=chosen_img_noon, is_freebie=is_free_now)
@@ -3881,7 +3936,8 @@ async def poll_private_chat_once(context):
                 if MAIN_CHANNEL_USERNAME and MAIN_CHANNEL_USERNAME not in channel_destinations:
                     channel_destinations.append(MAIN_CHANNEL_USERNAME)
 
-                sent_ok = await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, channel_destinations)
+                buy_btn_markup = build_buy_button_markup(deal_msg, buy_url=branded_url(orig_url))
+                sent_ok = await asyncio.to_thread(send_telegram_msg, deal_msg, deal_img, channel_destinations, buy_btn_markup)
                 if sent_ok:
                     mark_deal_sent(orig_url, title, eff_p, promo_sig)
                     success_txt = (
