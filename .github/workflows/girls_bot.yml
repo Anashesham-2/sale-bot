@@ -1,0 +1,105 @@
+name: Girls Deals Bot (TikTok + Girls Channel)
+
+on:
+  schedule:
+    # أوقات الذروة الخوارزمية للبنات في مصر (بتوقيت القاهرة UTC+2):
+    # 1:00 ظهراً | 5:00 عصراً | 8:30 مساءً | 11:00 مساءً
+    - cron: '0 11 * * *'
+    - cron: '0 15 * * *'
+    - cron: '30 18 * * *'
+    - cron: '0 21 * * *'
+  workflow_dispatch: # تشغيل يدوي فوري في أي وقت
+
+permissions:
+  contents: write
+
+concurrency:
+  group: girls-bot
+  cancel-in-progress: false
+
+jobs:
+  girls-deals:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+
+    env:
+      PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: "30000"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        id: pip
+        timeout-minutes: 5
+        run: |
+          pip install --prefer-binary --timeout 20 -r requirements.txt
+          PW_VER=$(python -c "import importlib.metadata; print(importlib.metadata.version('playwright'))")
+          echo "pw_ver=$PW_VER" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-chromium-${{ steps.pip.outputs.pw_ver }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-chromium-
+
+      - name: Verify Xvfb and Chromium system libs (skip slow APT if already installed)
+        timeout-minutes: 3
+        continue-on-error: true
+        run: |
+          if command -v xvfb-run >/dev/null 2>&1 && ldconfig -p | grep -q "libnss3.so" && ldconfig -p | grep -q "libgbm.so"; then
+            echo "Xvfb and core Chromium libraries are already pre-installed; skipping apt-get."
+            exit 0
+          fi
+          sudo find /etc/apt/sources.list.d/ -maxdepth 1 -type f ! -name 'ubuntu.sources' -delete || true
+          sudo timeout 45 apt-get update || true
+          sudo DEBIAN_FRONTEND=noninteractive timeout 90 apt-get install -y --no-install-recommends xvfb libnss3 libnspr4 libgbm1 || true
+
+      - name: Install Playwright Chromium browser
+        timeout-minutes: 5
+        run: |
+          timeout 180 playwright install chromium || (rm -rf ~/.cache/ms-playwright && timeout 180 playwright install chromium)
+
+      - name: Run Girls Bot (Independent of Main Channel)
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          GIRLS_BOT_TOKEN: ${{ secrets.GIRLS_BOT_TOKEN }}
+          OWNER_CHAT_ID: ${{ secrets.OWNER_CHAT_ID }}
+          GIRLS_CHANNEL_ID: ${{ secrets.GIRLS_CHANNEL_ID }}
+          GIRLS_CHANNEL_USERNAME: ${{ secrets.GIRLS_CHANNEL_USERNAME }}
+          AMAZON_TAG: ${{ secrets.AMAZON_TAG }}
+          NOON_COUPON: ${{ secrets.NOON_COUPON }}
+          UPLOAD_POST_API_KEY: ${{ secrets.UPLOAD_POST_API_KEY }}
+          UPLOAD_POST_USER: ${{ secrets.UPLOAD_POST_USER }}
+          TIKTOK_ACCESS_TOKEN: ${{ secrets.TIKTOK_ACCESS_TOKEN }}
+          TIKTOK_REFRESH_TOKEN: ${{ secrets.TIKTOK_REFRESH_TOKEN }}
+          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+          TIKTOK_POST_MODE: ${{ secrets.TIKTOK_POST_MODE }}
+          TIKTOK_WEBHOOK_URL: ${{ secrets.TIKTOK_WEBHOOK_URL }}
+          IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}
+        run: |
+          if command -v xvfb-run >/dev/null 2>&1; then
+            xvfb-run --auto-servernum --server-args="-screen 0 1366x768x24" python -u girls_bot.py
+          else
+            python -u girls_bot.py
+          fi
+
+      - name: Save independent Girls Bot state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add girls_sent_deals.txt girls_tiktok_sent.txt girls_state.json || true
+          if ! git diff --staged --quiet; then
+            git commit -q -m "chore: update girls bot state [skip ci]" || true
+            git pull --rebase --autostash origin main || true
+            git push origin HEAD:main || echo "Push failed"
+          fi

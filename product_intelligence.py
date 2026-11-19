@@ -495,6 +495,52 @@ RAW_BRAND_EN_MAP = {
     "بايركس": "Pyrex", "pyrex": "Pyrex",
     "كولدير": "Coldair", "coldair": "Coldair",
     "دايموند هوم": "Diamond Home", "diamond home": "Diamond Home",
+    # أشهر ماركات الجمال والمكياج والسكين كير والعطور والفوط الصحية في مصر
+    "ميبيلين": "Maybelline", "مايبيلين": "Maybelline", "maybelline": "Maybelline",
+    "لوريال": "L'Oreal Paris", "لوريال باريس": "L'Oreal Paris", "loreal": "L'Oreal Paris", "l'oreal": "L'Oreal Paris",
+    "شيجلام": "Sheglam", "شي جلام": "Sheglam", "sheglam": "Sheglam",
+    "ايسنس": "Essence", "إيسنس": "Essence", "essence": "Essence",
+    "سيبيل": "Cybele", "سايبيل": "Cybele", "cybele": "Cybele",
+    "اماندا": "Amanda", "أماندا": "Amanda", "amanda": "Amanda",
+    "بورجوا": "Bourjois", "bourjois": "Bourjois",
+    "فلورمار": "Flormar", "flormar": "Flormar",
+    "نيكس": "NYX", "nyx": "NYX",
+    "كيكو": "KIKO", "kiko": "KIKO",
+    "كاتريس": "Catrice", "catrice": "Catrice",
+    "ريميل": "Rimmel", "rimmel": "Rimmel",
+    "غارنييه": "Garnier", "جارنييه": "Garnier", "garnier": "Garnier",
+    "لاروش بوزيه": "La Roche-Posay", "لا روش بوزيه": "La Roche-Posay", "la roche-posay": "La Roche-Posay", "la roche posay": "La Roche-Posay",
+    "سيرافي": "CeraVe", "سيرافى": "CeraVe", "cerave": "CeraVe",
+    "فيشي": "Vichy", "فيشى": "Vichy", "vichy": "Vichy",
+    "يوسيرين": "Eucerin", "eucerin": "Eucerin",
+    "بيوديرما": "Bioderma", "bioderma": "Bioderma",
+    "ستارفيل": "Starville", "starville": "Starville",
+    "انفينيتي": "Infinity", "إنفينيتي": "Infinity", "infinity": "Infinity",
+    "بيزلين": "Beesline", "beesline": "Beesline",
+    "كولاجرا": "Kolagra", "kolagra": "Kolagra",
+    "ايفا": "Eva", "إيفا": "Eva", "eva": "Eva",
+    "شان": "Shan", "shan": "Shan",
+    "كلاري": "Clary", "كلارى": "Clary", "clary": "Clary",
+    "سترونج فيل": "Strongville", "سترونجفيل": "Strongville", "strongville": "Strongville",
+    "بليس": "Bless", "bless": "Bless",
+    "كارسيل": "Karseell", "karseell": "Karseell",
+    "سيروبايب": "Seropipe", "seropipe": "Seropipe",
+    "باث اند بودي": "Bath & Body Works", "باث آند بودي": "Bath & Body Works", "bath & body works": "Bath & Body Works", "bath and body works": "Bath & Body Works",
+    "فيكتوريا سيكريت": "Victoria's Secret", "فيكتوريا سيكرت": "Victoria's Secret", "victoria's secret": "Victoria's Secret",
+    "تريسمي": "TRESemme", "تريسمى": "TRESemme", "tresemme": "TRESemme",
+    "بانتين": "Pantene", "pantene": "Pantene",
+    "إلفيف": "Elvive", "الفيف": "Elvive", "elvive": "Elvive",
+    "جليس": "Gliss", "gliss": "Gliss",
+    "فاتيكا": "Vatika", "vatika": "Vatika",
+    "اولويز": "Always", "أولويز": "Always", "always": "Always",
+    "سوفي": "Sofy", "سوفى": "Sofy", "sofy": "Sofy",
+    "كوتكس": "Kotex", "kotex": "Kotex",
+    "برايفت": "Private", "private": "Private",
+    "كاري فري": "Carefree", "كاريفري": "Carefree", "carefree": "Carefree",
+    "ذا أورديناري": "The Ordinary", "ذا اورديناري": "The Ordinary", "the ordinary": "The Ordinary",
+    "كوسركس": "COSRX", "cosrx": "COSRX",
+    "انوا": "Anua", "أنوا": "Anua", "anua": "Anua",
+    "بيوتي اوف جوسون": "Beauty of Joseon", "beauty of joseon": "Beauty of Joseon",
     "نيوتري كوك": "Nutricook", "نيوتريكوك": "Nutricook", "nutricook": "Nutricook",
     "إيتل": "Itel", "ايتل": "Itel", "آيتل": "Itel", "اي تل": "Itel", "itel": "Itel", "eytyl": "Itel",
     "باساب": "Passap", "بساب": "Passap", "passap": "Passap", "basab": "Passap",
@@ -1752,7 +1798,15 @@ SMART_CATEGORIES = [
      "ملابس وأزياء", "Apparel & Clothing",
      "ملابس بخامات قطنية ناعمة ومريحة وقصة عملية متقنة تحافظ على رونقها وألوانها مع الغسيل والاستخدام اليومي."),
 
-    ("perfume", r'(?:(?<!ب)\bعطر\b|\bبرفان\b|بودي\s*(?:سبلاش|ميست)|بخاخ\s*(?:للجسم|بودي)|مزيل\s*(?:عرق|للعرق)|سبراي\s*مزيل|eau\s*de\s*(?:parfum|toilette)|body\s*(?:splash|mist|spray)|\bdeodorant\b)',
+    ("sanitary_pads", r'(?:فوط\s*(?:صحية|صحيه|نسائية|نسائيه|يومية|يوميه|ليلية|ليليه|قطنية)|فوطة\s*صحية|غسول\s*(?:نسائي|حميمي|للمنطقة\s*الحساسة)|مناديل\s*حميمية|أولويز|اولويز|كوتكس|سوفي\s*فوط|برايفت\s*فوط|كاري\s*فري|sanitary\s*(?:pads?|napkins?)|panty\s*liners?|feminine\s*(?:wash|wipes|care)|intimate\s*wash|\bkotex\b|\bcarefree\b)',
+     "فوط صحية وعناية نسائية", "Sanitary Pads & Feminine Care",
+     "حماية مريحة وناعمة على البشرة بقدرة امتصاص عالية وثبات ممتاز للراحة والثقة طوال اليوم."),
+
+    ("body_splash", r'(?:بودي\s*(?:سبلاش|ميست|لوشن\s*معطر)|معطر\s*(?:جسم|للجسم|شعر|للشعر)|هير\s*ميست|body\s*(?:splash|mist)|hair\s*mist|fragrance\s*mist)',
+     "بودي سبلاش ومعطر جسم", "Body Splash & Fragrance Mist",
+     "بودي سبلاش منعش برائحة أنثوية جذابة تدوم طويلاً ويمنحك إحساساً بالانتعاش والنعومة طوال اليوم."),
+
+    ("perfume", r'(?:(?<!ب)\bعطر\b|\bبرفان\b|\bبرفيوم\b|أو\s*دو\s*بارفان|او\s*دو\s*بارفان|بخاخ\s*(?:للجسم|بودي)|مزيل\s*(?:عرق|للعرق)|سبراي\s*مزيل|eau\s*de\s*(?:parfum|toilette)|\bperfume\b|\bparfum\b|body\s*spray|\bdeodorant\b)',
      "عطر وبخاخ للجسم", "Perfume & Body Fragrance",
      "عطر وبخاخ منعش برائحة جذابة وثبات مميز يمنحك انتعاشاً وثقة طوال اليوم."),
 
@@ -1824,9 +1878,13 @@ SMART_CATEGORIES = [
      "لوحات وديكور منزلي", "Wall Art & Home Decor",
      "لوحات وديكور جداري أنيق بطباعة عالية الوضوح وألوان جذابة تضيف لمسة فنية راقية لغرف المعيشة والمكاتب."),
 
-    ("makeup", r'(?:أحمر\s*شفاه|ملمع\s*شفاه|ماسكارا|ماسكرا|كريم\s*أساس|فاونديشن|كونسيلر|آيلاينر|ايلاينر|بلاشر|مكياج|طلاء\s*أظافر|lipstick|lip\s*gloss|mascara|foundation|concealer|eyeliner|\bmakeup\b)',
+    ("makeup", r'(?:أحمر\s*(?:شفاه|خدود)|احمر\s*(?:شفاه|خدود)|ملمع\s*شفاه|ليب\s*(?:جلوس|بالم|ستيك|لاينر|أويل|اويل)|تنت\s*(?:شفاه|خدود|للبشرة)?|\bتنت\b|ماسكارا|ماسكرا|كريم\s*أساس|فاونديشن|كونسيلر|آيلاينر|ايلاينر|بلاشر|برونزر|هايلايتر|بودرة\s*(?:وجه|تثبيت|مضغوطة)|لوس\s*باودر|كومباكت\s*باودر|برايمر|آيشادو|ايشادو|ظلال\s*عيون|قلم\s*(?:حواجب|كحل|تحديد\s*شفاه)|جل\s*حواجب|رموش\s*صناعية|مكياج|ميكب|طلاء\s*أظافر|مانيكير|فرش\s*مكياج|بيوتي\s*بلندر|إسفنجة\s*مكياج|lipstick|lip\s*(?:gloss|balm|tint|oil|liner)|cheek\s*tint|mascara|foundation|concealer|eyeliner|blush(?:er)?|bronzer|highlighter|eyeshadow|setting\s*(?:powder|spray)|primer|brow\s*(?:gel|pencil)|nail\s*polish|makeup\s*(?:brush|sponge)|\bmakeup\b)',
      "مستحضرات تجميل ومكياج", "Makeup & Cosmetics",
      "مستحضر تجميل بتركيبة ناعمة وثبات مميز يمنحك إطلالة جذابة وطبيعية طوال اليوم."),
+
+    ("women_accessories", r'(?:حقيب[ةه]\s*(?:يد|كتف|كروس|حريمي|نسائي|سهرة|مكياج)|شنط[ةه]\s*(?:يد|كتف|كروس|حريمي|نسائي|بناتي|مكياج)|محفظ[ةه]\s*(?:نسائية|حريمي|بناتي)|أقراط|حلق\s*(?:أذن|حريمي|نسائي|بناتي|ذهب|فضة|ستانلس)|سلسل[ةه]\s*(?:رقبة|حريمي|نسائي|بناتي|ستانلس|فضة)|انسيال|أسور[ةه]\s*(?:حريمي|نسائي|بناتي|يد)|سوار\s*(?:حريمي|نسائي|بناتي|يد)|خاتم\s*(?:حريمي|نسائي|بناتي|فضة)|توك\s*شعر|مشابك\s*شعر|بندانا|سكارف|طرح[ةه]|إيشارب|ايشارب|نظارة\s*شمس\s*(?:حريمي|نسائي|بناتي)|ساعة\s*(?:يد\s*)?(?:حريمي|نسائي|بناتي)|handbag|tote\s*bag|crossbody\s*bag|shoulder\s*bag|makeup\s*bag|women(?:\'?s)?\s*(?:bag|wallet|watch|sunglasses|jewelry)|earrings|necklace|bracelet|anklet|hair\s*(?:clips?|claw|accessories|scrunchies?))',
+     "إكسسوارات وشنط حريمي", "Women's Bags & Accessories",
+     "قطعة إكسسوار حريمي أنيقة بتصميم عصري وخامات عالية الجودة تكمل إطلالتك اليومية بكل شياكة."),
 
     ("mop_cleaning_tool", r'(?:طقم\s*(?:دلو\s*و)?ممسحة|ممسحة\s*(?:دوارة|أرضيات|مايكروفايبر)|جردل\s*وممسحة|مساحة\s*أرضيات|floor\s*mop|spin\s*mop|mop\s*bucket)',
      "طقم ممسحة وتنظيف أرضيات", "Spin Floor Mop & Bucket Set",
@@ -3101,7 +3159,7 @@ def _extract_rich_specs(title, en_slug="", specs_text="", cat_key="", brand_en="
             spec_ar.append(f"{m_kg.group(1)} كجم")
             spec_en.append(f"{m_kg.group(1)}kg")
 
-    if cat_key in ("hair_care", "skin_care", "perfume", "oral_care", "grocery", "coffee_drink", "tea_drink", "supplements"):
+    if cat_key in ("hair_care", "skin_care", "perfume", "body_splash", "oral_care", "grocery", "coffee_drink", "tea_drink", "supplements"):
         m_ml = re.search(r'\b(\d{2,4})\s*(?:مل(?:لي(?:لتر)?)?|ml\b)', primary_both, re.I)
         if m_ml:
             spec_ar.append(f"{m_ml.group(1)} مل")
@@ -3112,17 +3170,19 @@ def _extract_rich_specs(title, en_slug="", specs_text="", cat_key="", brand_en="
                 spec_ar.append(f"{m_gm.group(1)} جم")
                 spec_en.append(f"{m_gm.group(1)}g")
 
-    if cat_key in ("grocery", "supplements", "personal_care", "detergent", "dinnerware", "cookware", "coffee_drink", "tea_drink"):
+    if cat_key in ("grocery", "supplements", "personal_care", "sanitary_pads", "detergent", "dinnerware", "cookware", "coffee_drink", "tea_drink"):
         m_pack = re.search(
-            r'\b(\d{1,3})\s*(?:قطعة|قطعه|قطع|كيس|أكياس|اكياس|عبوة|عبوات|باكيت|علبة|زجاجة|قارورة|كبسولة|كبسولات|pcs\b|pieces?\b|pack\b|bars?\b|bags?\b|capsules?\b)|'
+            r'\b(\d{1,3})\s*(?:قطعة|قطعه|قطع|فوطة|فوطه|فوط|كيس|أكياس|اكياس|عبوة|عبوات|باكيت|علبة|زجاجة|قارورة|كبسولة|كبسولات|pcs\b|pieces?\b|pads?\b|liners?\b|pack\b|bars?\b|bags?\b|capsules?\b)|'
             r'(?:pack\s*of|box\s*of|set\s*of|عبوة\s*من|مجموعة\s*من)\s*(\d{1,3})\b',
             f"{primary_both} {en_ref}", re.I,
         )
         if m_pack:
             p_num = int(m_pack.group(1) or m_pack.group(2))
             if 2 <= p_num <= 200:
-                spec_ar.append(f"({p_num} قطعة)")
-                spec_en.append(f"({p_num} Pack)")
+                u_ar = "فوطة" if cat_key == "sanitary_pads" else "قطعة"
+                u_en = "Pads" if cat_key == "sanitary_pads" else "Pack"
+                spec_ar.append(f"({p_num} {u_ar})")
+                spec_en.append(f"({p_num} {u_en})")
 
     if cat_key == "diapers":
         m_dsz = re.search(r'(?:مقاس\s*(?:حفاضة\s*)?|حجم\s*\w+\s*|حديثي\s*الولادة\s*|حديثى\s*الولاده\s*|size\s*)([1-7])\b|\b([1-7])\s*-\s*\d{2}\b', primary_both, re.I)
@@ -3500,7 +3560,8 @@ def _clean_en_slug_title(en_slug, brand_en=""):
 # التي لا يكفي اسم القسم العام لوصف المنتج، فيُحتفظ باسم المنتج الحقيقي النظيف بدل استبداله باسم القسم!
 _BROAD_CATEGORIES_KEEP_TITLE = {
     "grocery", "supplements", "cookware", "dinnerware", "clothing", "shoes",
-    "skin_care", "hair_care", "personal_care", "makeup", "detergent", "car_care",
+    "skin_care", "hair_care", "personal_care", "makeup", "sanitary_pads",
+    "body_splash", "women_accessories", "detergent", "car_care",
     "tools", "toys", "home_decor", "storage_organizer", "furniture", "stationery",
     "tea_drink", "coffee_drink", "perfume", "oral_care", "kitchen_tools",
     "baby_gear", "pet_supplies", "weights_fitness",

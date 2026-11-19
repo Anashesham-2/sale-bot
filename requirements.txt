@@ -1,6 +1,8 @@
 playwright
 requests
 Pillow
+arabic-reshaper
+python-bidi
 numpy
 onnxruntime
 tokenizers
