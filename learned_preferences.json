@@ -282,7 +282,6 @@
     "Puritan's Pride"
   ],
   "queries": [
-    "Milkato Speculoos Biscuits",
     "موبايل جالاكسي A07s",
     "جهاز تمارين جيم مارسي",
     "خلاط بلينديو بلس مولينكس",
@@ -361,7 +360,8 @@
     "بروتين تشالنجر نيوتريشن تشالنجر نيوترشن",
     "سماعة رأس سلكية هايبر اكس",
     "كابل باكروبان بطول Pacroban",
-    "مكمل غذائي نباتي Puritan's Pride"
+    "مكمل غذائي نباتي Puritan's Pride",
+    "موبايل سامسونج جالكسي"
   ],
   "channels": [
     "epichardware",
@@ -1963,6 +1963,7 @@
     "Yo_Ayman/16805",
     "epichardware/4978",
     "Sal7lyEgypt/40447",
-    "Sal7lyEgypt/40446"
+    "Sal7lyEgypt/40446",
+    "epichardware/4979"
   ]
 }
