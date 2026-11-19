@@ -1519,7 +1519,7 @@ SMART_CATEGORIES = [
      "سماعة أذن سلكية", "Wired In-Ear Earphones",
      "سماعة أذن سلكية بصوت نقي وباس متوازن وميكروفون مدمج للمكالمات الواضحة مع سلك متين وتصميم مريح للأذن."),
 
-    ("earbuds", r'(?:سماع(?:ة|ات)\s*(?:أذن|اذن|بلوتوث|لاسلكية|ايربودز?|إيربودز?)|داخل\s*الأذن|ايربودز|إيربودز|جالاكسي\s*بادز|جالكسي\s*بادز|ريدمي\s*بادز|فري\s*بادز|in-?ear\s*(?:earphones|earbuds|headphones|wireless)|earbuds|airpods|true\s*wireless|\btws\b|freeclips|spacebuds|freebuds|\b(?:r50i|p20i|p30i|p40i|k20i|a20i|a30i|v20i|c30i|c40i)\b|liberty\s*(?:buds|\d)|wave\s*(?:beam|buds|flex))',
+    ("earbuds", r'(?:سماع(?:ة|ات)\s*(?:أذن|اذن|بلوتوث|لاسلكية|ايربودز?|إيربودز?)|داخل\s*الأذن|ايربودز|إيربودز|جالاكسي\s*بادز|جالكسي\s*بادز|ريدمي\s*بادز|فري\s*بادز|فري\s*كليب|in-?ear\s*(?:earphones|earbuds|headphones|wireless)|earbuds|airpods|true\s*wireless|\btws\b|freeclips?|spacebuds|freebuds|\b(?:r50i|p20i|p30i|p40i|k20i|a20i|a30i|v20i|c30i|c40i)\b|liberty\s*(?:buds|\d)|wave\s*(?:beam|buds|flex))',
      "سماعة أذن لاسلكية", "True Wireless Earbuds",
      "سماعة أذن لاسلكية بصوت نقي غني بالباس وميكروفون واضح للمكالمات مع بطارية تدوم طويلاً وعلبة شحن مدمجة."),
 
@@ -2958,7 +2958,9 @@ def _extract_rich_specs(title, en_slug="", specs_text="", cat_key="", brand_en="
 
     # 6. استخراج رقم/اسم الموديل العام (يشمل موديلات الشواحن مثل X516/Nano/Nexode والكيبوردات مثل WIN68 HE والمراوح والصوتيات)
     m_named = re.search(
-        r'\b(Tapo\s*[A-Z]?\d{2,4}[A-Z]*|OneBlade|FreeClips|FreeBuds(?:\s*SE\s*\d?)?|SpaceBuds(?:\s*Neo)?|Zeus\s*(?:H\d+)?|'
+        r'\b(Tapo\s*[A-Z]?\d{2,4}[A-Z]*|OneBlade|FreeClips?|FreeBuds(?:\s*SE\s*\d?)?|SpaceBuds(?:\s*Neo)?|'
+        r'Galaxy\s*Buds\s*(?:\d+\s*)?(?:Pro|FE|Live|Plus)?|Redmi\s*Buds\s*\d+\s*(?:Pro|Lite|Active)?|'
+        r'AirPods(?:\s*(?:Pro|Max))?(?:\s*\d)?|OpenFit(?:\s*Air)?|OpenRun(?:\s*Pro)?|NeoBuds(?:\s*Pro)?|Zeus\s*(?:H\d+)?|'
         r'Go\s*[34]|Flip\s*[56]|Charge\s*5|Select\s*\d\s*(?:Go)?|Motion\s*[A-Z]?\d{3}|Space\s*One|'
         r'Wave\s*(?:Beam|Buds|Flex|\d{3}TWS)|Tune\s*\d{3}(?:BT|NC)?|T\d{3}BT|Life\s*[APQ]\d\w*|Liberty\s*(?:Buds|\d\w*)|'
         r'R50i(?:\s*NC)?|P20i|P30i|P40i|K20i|A20i|A30i|V20i|C30i|C40i|Q20i|H30i|'
@@ -2983,7 +2985,11 @@ def _extract_rich_specs(title, en_slug="", specs_text="", cat_key="", brand_en="
             mv = mv.upper()
         else:
             _casing_map = {
-                "freeclips": "FreeClips", "freebuds": "FreeBuds", "se": "SE", "spacebuds": "SpaceBuds", "oneblade": "OneBlade",
+                "freeclip": "FreeClip", "freeclips": "FreeClips", "freebuds": "FreeBuds", "se": "SE",
+                "spacebuds": "SpaceBuds", "oneblade": "OneBlade", "airpods": "AirPods",
+                "galaxy": "Galaxy", "redmi": "Redmi", "openfit": "OpenFit", "openrun": "OpenRun",
+                "neobuds": "NeoBuds", "fe": "FE", "lite": "Lite", "live": "Live", "active": "Active",
+                "plus": "Plus", "air": "Air",
                 "tapo": "Tapo", "zeus": "Zeus", "neo": "Neo", "liberty": "Liberty",
                 "wave": "Wave", "beam": "Beam", "buds": "Buds", "flex": "Flex", "tune": "Tune",
                 "life": "Life", "charge": "Charge", "flip": "Flip", "go": "Go", "select": "Select",
@@ -3253,7 +3259,7 @@ def _clean_natural_ar_fallback(title, brand_en=""):
                 t = re.sub(rf'(?:\bمن\s+)?\b{re.escape(ar_k)}\b', ' ', t)
     words = [
         w for w in t.split()
-        if len(w) > 1 and w.lower() not in ("أصلي", "اصلي", "جديد", "عرض", "خصم")
+        if (len(w) > 1 or w.isdigit()) and w.lower() not in ("أصلي", "اصلي", "جديد", "عرض", "خصم")
     ][:8]
     while words and norm_ar_token(words[-1]) in {norm_ar_token(d) for d in _DANGLING_AR_WORDS}:
         words.pop()
@@ -3261,6 +3267,46 @@ def _clean_natural_ar_fallback(title, brand_en=""):
     if brand_en and brand_en.lower() not in res.lower():
         res = f"{res} {brand_en}".strip()
     return res[:85]
+
+
+_EN_TYPO_FIXES = {
+    "frezzer": "Freezer",
+    "frezer": "Freezer",
+    "stwatch": "Smartwatch",
+    "smartwtch": "Smartwatch",
+    "earphon": "Earphone",
+    "headphon": "Headphone",
+    "refrigrator": "Refrigerator",
+    "refregirator": "Refrigerator",
+    "blutooth": "Bluetooth",
+    "wirless": "Wireless",
+    "chargar": "Charger",
+    "freeclip": "FreeClip",
+}
+
+_EN_SEO_FLUFF = {
+    "groundbreaking", "aesthetic", "feather", "featherlight", "wearing", "revolutionary",
+    "amazing", "best", "authentic", "ultimate", "perfect", "newest", "latest", "upgraded",
+    "frz", "ref", "big", "box", "stylish", "elegant", "ergonomic", "comfortable",
+    "high-quality", "heavy-duty", "premium", "luxury", "superb", "awesome",
+}
+
+def _strip_en_seo_fluff(words):
+    """ينظف الكلمات التسويقية العشوائية وأخطاء الإملاء الشائعة في عناوين المتاجر."""
+    cleaned = []
+    for raw_w in words:
+        wl = raw_w.lower().strip(",.;:")
+        if not wl:
+            continue
+        if wl in _EN_TYPO_FIXES:
+            w_out = _EN_TYPO_FIXES[wl]
+        elif wl in _EN_SEO_FLUFF and len(cleaned) >= 2:
+            continue
+        else:
+            w_out = raw_w
+        if not cleaned or cleaned[-1].lower() != w_out.lower():
+            cleaned.append(w_out)
+    return cleaned
 
 
 def _clean_en_official_title(en_title, brand_en=""):
@@ -3276,7 +3322,7 @@ def _clean_en_official_title(en_title, brand_en=""):
     picked = clauses[0].strip()
     if len(picked.split()) < 4 and len(clauses) > 1:
         picked = f"{picked} {clauses[1].strip()}".strip()
-    words = picked.split()[:9]
+    words = _strip_en_seo_fluff(picked.split())[:7]
     while words and words[-1].lower() in ("for", "with", "and", "or", "in", "to", "of", "by", "the", "a", "an"):
         words.pop()
     out = " ".join(words).strip(" ,.-—|")
@@ -3303,14 +3349,14 @@ def _clean_en_slug_title(en_slug, brand_en=""):
     s = re.sub(r'[-_]+', ' ', s).strip()
     if not s or re.search(r'[\u0600-\u06FF]', s):
         return ""
-    words = []
-    for raw_w in s.split():
-        if not words or words[-1].lower() != raw_w.lower():
-            words.append(raw_w)
-    words = words[:9]
+    words = _strip_en_seo_fluff(s.split())[:7]
+    while words and words[-1].lower() in ("for", "with", "and", "or", "in", "to", "of", "by", "the", "a", "an"):
+        words.pop()
     titled = []
     for w in words:
-        if w.upper() in ("USB", "HDMI", "LED", "LCD", "QLED", "OLED", "UHD", "FHD", "HD", "ANC", "ENC", "TWS", "RGB", "ARGB", "PWM", "SSD", "RAM", "5G", "4K", "3K", "2K", "PD", "GAN"):
+        if w in _EN_TYPO_FIXES.values():
+            titled.append(w)
+        elif w.upper() in ("USB", "HDMI", "LED", "LCD", "QLED", "OLED", "UHD", "FHD", "HD", "ANC", "ENC", "TWS", "RGB", "ARGB", "PWM", "SSD", "RAM", "5G", "4K", "3K", "2K", "PD", "GAN"):
             titled.append(w.upper())
         elif re.match(r'^\d+(?:gb|tb|mah|w|l|ml|kg|hz|mp|mm)$', w, re.I):
             titled.append(w.upper().replace("MAH", "mAh").replace("ML", "ml").replace("KG", "kg").replace("HZ", "Hz").replace("MM", "mm"))
@@ -3553,11 +3599,11 @@ def analyze_product(
             dyn_words = []
             for raw_w in t_rem.split():
                 w_norm = norm_ar_token(raw_w)
-                if len(raw_w) > 1 and w_norm not in norm_cat_tokens and raw_w.lower() not in _OPEN_WORLD_DANGLING_AR:
+                if (len(raw_w) > 1 or raw_w.isdigit()) and w_norm not in norm_cat_tokens and raw_w.lower() not in _OPEN_WORLD_DANGLING_AR:
                     if not brand_en or raw_w.lower() != brand_en.lower():
                         dyn_words.append(raw_w)
             if dyn_words:
-                spec_ar_str = " ".join(dyn_words[:3]).strip()
+                spec_ar_str = " ".join(dyn_words[:4]).strip()
 
         if brand_en and brand_en.lower() not in spec_ar_str.lower() and brand_en.lower() not in cat_ar.lower():
             name_ar = f"{cat_ar} {brand_en} {spec_ar_str}".strip()
@@ -3635,7 +3681,7 @@ def analyze_product(
     name_ar = re.sub(r'\s+', ' ', name_ar).strip(" -—,:;.")[:88]
     name_en = name_en[:88]
 
-    # 5. بناء الوصف العربي الدقيق (مع تجاهل نقاط الوصف العربية إن كان العنوان العربي للصفحة تالفاً)
+    # 5. بناء الوصف العربي الدقيق (مع تجاهل نقاط الوصف العربية إن كان العنوان العربي للصفحة تالفاً، ودمج المواصفات الحقيقية)
     safe_feats = [] if ar_title_corrupted else feats_list
     safe_extra = None if ar_title_corrupted else extra_desc
     description = build_smart_description(
@@ -3645,6 +3691,7 @@ def analyze_product(
         brand_en=brand_en,
         cat_key=chosen_cat,
         cat_fallback_desc=cat_fallback_desc,
+        extracted_specs_ar=specs_ar_list,
     )
 
     return {
@@ -3658,8 +3705,8 @@ def analyze_product(
     }
 
 
-def build_smart_description(title, features=None, extra_desc=None, brand_en="", cat_key=None, cat_fallback_desc=None):
-    """يبني وصفاً عربياً نظيفاً ودقيقاً يشرح المنتج الحقيقي بدون أخطاء تصنيف أو حشو."""
+def build_smart_description(title, features=None, extra_desc=None, brand_en="", cat_key=None, cat_fallback_desc=None, extracted_specs_ar=None):
+    """يبني وصفاً عربياً نظيفاً ودقيقاً يشرح المنتج الحقيقي ويدمج مواصفاته الفعلية بدون حشو أو تكرار ممل."""
     noise_phrases = (
         "حول هذه السلعة", "بلد المنشأ", "رقم الموديل", "تاريخ توفر", "ضمان",
         "أبعاد", "الوزن:", "وزن السلعة", "العلامة التجارية:", "الماركة:",
@@ -3691,22 +3738,31 @@ def build_smart_description(title, features=None, extra_desc=None, brand_en="", 
             return ce
 
     b_suffix = f" من {brand_en}" if brand_en else ""
+    specs_clean = [s.strip() for s in (extracted_specs_ar or []) if s and len(s.strip()) >= 2]
+    specs_phrase = ""
+    if specs_clean:
+        specs_phrase = " (" + "، ".join(specs_clean[:3]) + ")"
+
     if not cat_fallback_desc and cat_key and cat_key in CATEGORY_BY_KEY:
         cat_fallback_desc = CATEGORY_BY_KEY[cat_key][4]
 
     if cat_fallback_desc:
-        if brand_en and brand_en.lower() not in cat_fallback_desc.lower():
-            first_comma = cat_fallback_desc.find("،")
+        base_desc = cat_fallback_desc
+        if brand_en and brand_en.lower() not in base_desc.lower():
+            first_comma = base_desc.find("،")
             if 5 < first_comma < 50:
-                return cat_fallback_desc[:first_comma] + b_suffix + cat_fallback_desc[first_comma:]
+                base_desc = base_desc[:first_comma] + b_suffix + specs_phrase + base_desc[first_comma:]
+                return base_desc
             m_clause = re.search(
                 r'\s+(?=(?:بشاشة|بصوت|بتصميم|بتدفق|بتبريد|ببرامج|بمعالج|بمحرك|بشفرات|بوعاء|بسرعات|بدقة|بمعدل|بتركيبة|بخامات|بقوة|بسعة|يدعم|تدعم|يمنحك|تمنحك|تتميز|يتميز|يجمع|تجمع|تستخلص|لتحضير|لتنظيف|لتصفيف|لتبريد|لتشغيل|لنقل|لوضع|لحماية|لفرم|لحمل|يوفر|تساعدك))',
-                cat_fallback_desc,
+                base_desc,
             )
             if m_clause and 6 <= m_clause.start() <= 60:
-                return cat_fallback_desc[:m_clause.start()] + b_suffix + cat_fallback_desc[m_clause.start():]
-            return f"{cat_fallback_desc.rstrip('.')} ({brand_en})."
-        return cat_fallback_desc
+                return base_desc[:m_clause.start()] + b_suffix + specs_phrase + base_desc[m_clause.start():]
+            return f"{base_desc.rstrip('.')}{specs_phrase} ({brand_en})."
+        if specs_phrase and specs_clean[0].lower() not in base_desc.lower():
+            return f"{base_desc.rstrip('.')}{specs_phrase}."
+        return base_desc
 
     clean_t = _clean_natural_ar_fallback(title, brand_en="")
-    return f"منتج عملي عالي الجودة والاعتمادية{b_suffix} ({clean_t})، مصمم بخامات متينة لتقديم أداء ممتاز وقيمة حقيقية مقابل السعر."
+    return f"منتج عملي عالي الجودة والاعتمادية{b_suffix} ({clean_t}){specs_phrase}، مصمم بخامات متينة لتقديم أداء ممتاز وقيمة حقيقية مقابل السعر."
