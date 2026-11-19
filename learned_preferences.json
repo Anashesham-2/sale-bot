@@ -261,7 +261,6 @@
     "Marsi"
   ],
   "queries": [
-    "قلاية تعمل بدون تورنيدو",
     "سائل غسيل للملابس او اكس اي",
     "قابس USB شاحن أنكر",
     "يوجرين مللي أمبير يو جرين",
@@ -340,7 +339,8 @@
     "Milkato Speculoos Biscuits",
     "موبايل جالاكسي A07s",
     "جهاز تمارين جيم مارسي",
-    "خلاط بلينديو بلس مولينكس"
+    "خلاط بلينديو بلس مولينكس",
+    "سنتروم سيلفر، قرص Centrum"
   ],
   "channels": [
     "epichardware",
@@ -1665,6 +1665,10 @@
     "Sal7lyEgypt/40273",
     "Sal7lyEgypt/40272",
     "Sal7lyEgypt/40271",
-    "Sal7lyEgypt/40270"
+    "Sal7lyEgypt/40270",
+    "Sal7lyEgypt/40279",
+    "Sal7lyEgypt/40278",
+    "Sal7lyEgypt/40277",
+    "Sal7lyEgypt/40276"
   ]
 }
