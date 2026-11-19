@@ -2,12 +2,9 @@ name: Girls Deals Bot (TikTok + Girls Channel)
 
 on:
   schedule:
-    # أوقات الذروة الخوارزمية للبنات في مصر (بتوقيت القاهرة UTC+2):
-    # 1:00 ظهراً | 5:00 عصراً | 8:30 مساءً | 11:00 مساءً
-    - cron: '0 11 * * *'
-    - cron: '0 15 * * *'
-    - cron: '30 18 * * *'
-    - cron: '0 21 * * *'
+    # تشغيل حي مستمر لقناة البنات @Loqta_G (كل 3 ساعات لمدة 165 دقيقة — نفس معدل القناة الرئيسية!)
+    # بينما تيك توك مقيّد داخلياً بـ 4 أوقات ذروة ثابتة فقط يومياً (1م، 5م، 8:30م، 11م بتوقيت القاهرة)
+    - cron: '15 */3 * * *'
   workflow_dispatch: # تشغيل يدوي فوري في أي وقت
 
 permissions:
@@ -20,7 +17,7 @@ concurrency:
 jobs:
   girls-deals:
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 185
 
     env:
       PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: "30000"
@@ -70,6 +67,8 @@ jobs:
 
       - name: Run Girls Bot (Independent of Main Channel)
         env:
+          RUN_MINUTES: "165"
+          FORCE_TIKTOK_ONCE: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           GIRLS_BOT_TOKEN: ${{ secrets.GIRLS_BOT_TOKEN }}
           OWNER_CHAT_ID: ${{ secrets.OWNER_CHAT_ID }}
@@ -94,6 +93,7 @@ jobs:
           fi
 
       - name: Save independent Girls Bot state
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

@@ -476,7 +476,7 @@ def build_tiktok_copy(
         f"📝 {description[:180]}" if description else "",
         f"⭐ التقييم: {rating}/5" + (f" ({reviews} تقييم)" if reviews else "") if rating else "",
         "",
-        f"🔗 رابط الشراء المباشر بالخصم في قناة التليجرام في البايو: {tg_handle} ({tg_url})",
+        f"⚡ العروض دي بتخلص بسرعة! اللينك المباشر + كل لقطات البنات لايف أول بأول في قناة التليجرام (الرابط في البايو): {tg_handle} ({tg_url})",
         f"💗 {cta_comment}",
         "",
         " ".join(tags),

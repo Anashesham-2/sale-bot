@@ -1,5 +1,6 @@
 import asyncio
 import hashlib
+import html
 import json
 import os
 import re
@@ -47,8 +48,16 @@ TIKTOK_WEBHOOK_URL = os.getenv("TIKTOK_WEBHOOK_URL", "").strip()
 # رابط استضافة صور مؤقتة (مطلوب فقط لـ TikTok Official API v2 إذا استُخدم بدون Upload-Post)
 IMGBB_API_KEY = os.getenv("IMGBB_API_KEY", "").strip()
 
-GIRLS_TG_MAX_PER_RUN = int(os.getenv("GIRLS_TG_MAX_PER_RUN", "4"))
-GIRLS_TIKTOK_MAX_PER_RUN = int(os.getenv("GIRLS_TIKTOK_MAX_PER_RUN", "1"))  # 1 بوست في كل وقت ذروة = 4 يومياً (مثالي للخوارزمية)
+# معدل النشر الحي على قناة تليجرام البنات (@Loqta_G) — نفس الذكاء والتنظيم بتاع القناة الرئيسية (@loqta78)
+GIRLS_TG_MAX_PER_CYCLE = int(os.getenv("GIRLS_TG_MAX_PER_CYCLE", os.getenv("GIRLS_TG_MAX_PER_RUN", "6")))
+GIRLS_HOURLY_CAP = int(os.getenv("GIRLS_HOURLY_CAP", "6"))  # حد أقصى 6 عروض عادية بالساعة (الخصومات >= 50% تنزل فوراً!)
+GIRLS_QUIET_START = int(os.getenv("GIRLS_QUIET_START", "3"))  # ساعات الهدوء الليلي بتوقيت القاهرة (3–8 صباحاً)
+GIRLS_QUIET_END = int(os.getenv("GIRLS_QUIET_END", "8"))
+GIRLS_CYCLE_SLEEP_SEC = int(os.getenv("GIRLS_CYCLE_SLEEP_SEC", "360"))  # فحص متجدد كل 6 دقائق لايف
+GIRLS_RUN_MINUTES = int(os.getenv("RUN_MINUTES", "0"))  # 0 = دورة واحدة | >0 = تشغيل مستمر على السيرفر
+# تيك توك ثابت ومقيد على 4 أوقات ذروة يومياً فقط (1 بوست في كل وقت ذروة = مثالي لخوارزمية تيك توك وجذب متابعين لـ @Loqta_G)
+GIRLS_TIKTOK_MAX_PER_SLOT = int(os.getenv("GIRLS_TIKTOK_MAX_PER_RUN", "1"))
+FORCE_TIKTOK_ONCE = os.getenv("FORCE_TIKTOK_ONCE", "0").strip() == "1"
 
 # ملفات حالة مستقلة تماماً عن القناة العامة
 GIRLS_SENT_TG_FILE = os.path.join(BASE_DIR, "girls_sent_deals.txt")
@@ -56,6 +65,58 @@ GIRLS_SENT_TT_FILE = os.path.join(BASE_DIR, "girls_tiktok_sent.txt")
 GIRLS_STATE_FILE = os.path.join(BASE_DIR, "girls_state.json")
 
 _AR_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩٬٫", "0123456789,.")
+
+
+def _cairo_now():
+    """يرجع توقيت القاهرة الحالي (UTC+2)."""
+    return time.gmtime(time.time() + 2 * 3600)
+
+
+def _is_girls_quiet_hours():
+    h = _cairo_now().tm_hour
+    if GIRLS_QUIET_START < GIRLS_QUIET_END:
+        return GIRLS_QUIET_START <= h < GIRLS_QUIET_END
+    return h >= GIRLS_QUIET_START or h < GIRLS_QUIET_END
+
+
+def _count_girls_sent_in_window(state, seconds=3600):
+    now = time.time()
+    return sum(1 for ts in (state.get("sent_timestamps") or []) if ts > now - seconds)
+
+
+def _can_post_girls_tg_now(state, discount=0.0):
+    """
+    نفس نظام Anti-Spam وساعات الهدوء الليلي في القناة الرئيسية (@loqta78):
+    - خصومات >= 65% (ببلاش) تنزل فوراً 24/7.
+    - خصومات >= 50% (نص السعر) تنزل حتى في ساعات الهدوء الليلي وتتجاوز حد الساعة.
+    - العروض العادية تلتزم بحد 6 عروض/ساعة وساعات الهدوء (3–8 صباحاً).
+    """
+    if discount >= 65.0:
+        return True
+    if _is_girls_quiet_hours() and discount < 50.0:
+        return False
+    if discount < 50.0 and _count_girls_sent_in_window(state, 3600) >= GIRLS_HOURLY_CAP:
+        return False
+    return True
+
+
+def _get_active_tiktok_slot():
+    """
+    تيك توك ثابت ومقيد على 4 أوقات ذروة فقط بتوقيت القاهرة (1 بوست في كل وقت = 4 يومياً):
+    1:00 ظهراً | 5:00 عصراً | 8:30 مساءً | 11:00 مساءً.
+    """
+    ct = _cairo_now()
+    date_str = f"{ct.tm_year:04d}-{ct.tm_mon:02d}-{ct.tm_mday:02d}"
+    h, m = ct.tm_hour, ct.tm_min
+    if h == 13:
+        return f"{date_str}|13:00"
+    if h == 17:
+        return f"{date_str}|17:00"
+    if (h == 20 and m >= 15) or (h == 21 and m < 30):
+        return f"{date_str}|20:30"
+    if h == 23:
+        return f"{date_str}|23:00"
+    return None
 
 
 def clean_txt(s):
@@ -109,13 +170,23 @@ def _append_set(path, s_set, val):
 
 
 def _load_state():
+    st = {}
     if os.path.exists(GIRLS_STATE_FILE):
         try:
             with open(GIRLS_STATE_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
+                st = json.load(f) or {}
         except Exception:
-            pass
-    return {"query_idx": 0, "last_tt_cat": "", "recent_names": {}, "price_history": {}}
+            st = {}
+    st.setdefault("query_idx", 0)
+    st.setdefault("last_tt_cat", "")
+    st.setdefault("recent_names", {})
+    st.setdefault("price_history", {})
+    st.setdefault("sent_timestamps", [])
+    st.setdefault("tiktok_slots_sent", [])
+    st.setdefault("sent_today_meta", [])
+    st.setdefault("last_digest_date", "")
+    st.setdefault("tg_update_offset", 0)
+    return st
 
 
 def _save_state(st):
@@ -125,6 +196,15 @@ def _save_state(st):
         k: v for k, v in (st.get("recent_names") or {}).items()
         if now - v < 86400 * 3
     }
+    st["sent_timestamps"] = [
+        int(ts) for ts in (st.get("sent_timestamps") or [])
+        if now - ts < 86400
+    ]
+    st["sent_today_meta"] = [
+        m for m in (st.get("sent_today_meta") or [])
+        if now - (m.get("ts") or 0) < 86400
+    ][-80:]
+    st["tiktok_slots_sent"] = (st.get("tiktok_slots_sent") or [])[-32:]
     with open(GIRLS_STATE_FILE, "w", encoding="utf-8") as f:
         json.dump(st, f, ensure_ascii=False, indent=2)
 
@@ -566,13 +646,172 @@ def publish_to_tiktok(slide_paths, title, caption):
 
 
 # ---------------------------------------------------------------------------
-# 4. الدورة الرئيسية المستقلة لبوت البنات
+# 4. تقارير الشات الخاص (@Loqta_Girlsbot) + ملخص أقوى 5 لقطات بنات يومياً
 # ---------------------------------------------------------------------------
-async def run_girls_cycle():
-    print(f"\n===== 🎀 بدء دورة بوت البنات المستقل: {time.strftime('%Y-%m-%d %H:%M:%S')} =====")
+def _send_tg_text(chat_id, text_html, reply_markup=None):
+    if not BOT_TOKEN or not chat_id:
+        return False
+    payload = {
+        "chat_id": chat_id,
+        "text": text_html,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True,
+    }
+    if reply_markup:
+        payload["reply_markup"] = reply_markup
+    try:
+        r = requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json=payload, timeout=15)
+        return r.ok
+    except Exception as e:
+        print(f"[Girls TG text] error: {e}")
+        return False
+
+
+def build_girls_stats_report(state):
+    """تقرير حالة حي ومستقل لبوت وقناة البنات (@Loqta_G) عند إرسال /stats في شات @Loqta_Girlsbot."""
+    now = time.time()
+    ct = _cairo_now()
+    today_str = f"{ct.tm_year:04d}-{ct.tm_mon:02d}-{ct.tm_mday:02d}"
+    sent_1h = _count_girls_sent_in_window(state, 3600)
+    sent_24h = _count_girls_sent_in_window(state, 86400)
+    meta_24 = [m for m in (state.get("sent_today_meta") or []) if now - (m.get("ts") or 0) < 86400]
+    amz_24 = sum(1 for m in meta_24 if str(m.get("store", "")).lower() == "amazon")
+    noon_24 = sum(1 for m in meta_24 if str(m.get("store", "")).lower() != "amazon")
+    tt_today = [s.split("|", 1)[1] for s in (state.get("tiktok_slots_sent") or []) if s.startswith(f"{today_str}|")]
+    quiet_txt = "🌙 هدوء ليلي (خصم 50%+ فقط)" if _is_girls_quiet_hours() else "☀️ نشر حي مستمر"
+    lines = [
+        f"🎀📊 <b>تقرير حالة بوت «لقطة بنات» ({GIRLS_CHANNEL_USERNAME})</b>",
+        f"🕒 وقت القاهرة: <code>{ct.tm_hour:02d}:{ct.tm_min:02d}</code> | {quiet_txt}",
+        "",
+        f"📨 <b>عروض قناة البنات آخر 24 ساعة:</b> {sent_24h}",
+        f"   • 🔥 أمازون: <b>{amz_24}</b> | 🟡 نون: <b>{noon_24}</b>",
+        f"⏱️ <b>آخر ساعة:</b> {sent_1h} / {GIRLS_HOURLY_CAP} (نفس نظام Anti-Spam)",
+        f"🎬 <b>تيك توك اليوم (ثابت 4 ذروة):</b> {len(tt_today)} / 4" + (f" ({'، '.join(tt_today)})" if tt_today else ""),
+    ]
+    if meta_24:
+        top3 = sorted(meta_24, key=lambda m: (m.get("v_score") or 0, m.get("discount") or 0), reverse=True)[:3]
+        lines += ["", "🏆 <b>أقوى 3 لقطات بنات اليوم:</b>"]
+        for idx, m in enumerate(top3, 1):
+            st_ar = "أمازون" if str(m.get("store", "")).lower() == "amazon" else "نون"
+            pr = m.get("price") or 0
+            pr_s = f"{int(round(pr)):,}" if pr == int(pr) else f"{pr:,.2f}"
+            lines.append(f"{idx}️⃣ {html.escape(str(m.get('name_ar') or '')[:55])} — <b>{pr_s} ج.م</b> ({m.get('discount', 0):.0f}% على {st_ar})")
+    return "\n".join(lines)
+
+
+def maybe_send_girls_daily_top5_digest(state):
+    """ملخص يومي لأقوى 5 لقطات بنات الساعة 9:30 مساءً بتوقيت القاهرة (بعيد عن موعد القناة العامة 9:00 م)."""
+    ct = _cairo_now()
+    if not (ct.tm_hour == 21 and ct.tm_min >= 25):
+        return False
+    today_str = f"{ct.tm_year:04d}-{ct.tm_mon:02d}-{ct.tm_mday:02d}"
+    if state.get("last_digest_date") == today_str:
+        return False
+    now = time.time()
+    cands = [m for m in (state.get("sent_today_meta") or []) if now - (m.get("ts") or 0) < 86400 and m.get("link") and m.get("name_ar")]
+    if len(cands) < 3:
+        return False
+    cands.sort(key=lambda m: (m.get("v_score") or 0, m.get("discount") or 0), reverse=True)
+    top5 = []
+    seen_nk = set()
+    for m in cands:
+        nk = _norm_name_key(m["name_ar"])
+        if nk in seen_nk:
+            continue
+        seen_nk.add(nk)
+        top5.append(m)
+        if len(top5) >= 5:
+            break
+    if len(top5) < 3:
+        return False
+
+    nums = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
+    lines = [
+        "🎀🏆 <b>ملخص أقوى 5 لقطات بنات اليوم في «لقطة بنات»!</b>",
+        "<i>لو فاتك أي عرض النهارده، دي أقوى خصومات الجمال اللي نزلناها:</i>",
+        "",
+    ]
+    kb_rows = []
+    for idx, m in enumerate(top5):
+        nm = str(m["name_ar"])
+        pr = float(m.get("price") or 0)
+        lp = float(m.get("list_price") or 0)
+        disc = float(m.get("discount") or 0)
+        st_ar = "أمازون" if str(m.get("store", "")).lower() == "amazon" else "نون"
+        pr_s = f"{int(round(pr)):,}" if pr == int(pr) else f"{pr:,.2f}"
+        old_s = f"<s>{int(round(lp)):,}</s> ← " if lp > pr else ""
+        disc_s = f" (خصم {disc:.0f}%)" if disc >= 5 else ""
+        lines.append(f"{nums[idx]} <b>{html.escape(nm[:62])}</b>\n   💰 {old_s}<b>{pr_s} ج.م</b>{disc_s} — {st_ar}")
+        btn_nm = nm[:26].rsplit(" ", 1)[0] if len(nm) > 26 and " " in nm[:26] else nm[:26]
+        kb_rows.append([{"text": f"🛍️ {idx+1}. اطلبي {btn_nm} ({pr_s} ج.م)", "url": make_buy_url(m["link"])}])
+
+    ch_raw = str(GIRLS_CHANNEL_USERNAME or "@Loqta_G").strip()
+    ch_url = ch_raw if ch_raw.startswith("http") else f"https://t.me/{ch_raw.lstrip('@')}"
+    share_url = "https://t.me/share/url?url=" + quote_plus(ch_url) + "&text=" + quote_plus("ملخص أقوى 5 لقطات بنات اليوم على أمازون ونون مصر 🎀🔥")
+    kb_rows.append([{"text": "💌 شاركي ملخص اليوم مع صاحباتك", "url": share_url}])
+    lines += [
+        "",
+        "👇 <i>اضغطي على رقم أي عرض بالأسفل للطلب المباشر قبل انتهاء الخصم</i>",
+        "",
+        "#لقطة_بنات #أقوى_عروض_اليوم",
+    ]
+    if _send_tg_text(GIRLS_CHANNEL_ID, "\n".join(lines), reply_markup={"inline_keyboard": kb_rows}):
+        state["last_digest_date"] = today_str
+        print(f"🎀🏆 تم إرسال ملخص أقوى 5 لقطات بنات اليوم ({today_str}) بنجاح!")
+        return True
+    return False
+
+
+def poll_girls_private_chat(state):
+    """يتابع رسائل الشات الخاص المستقل لبوت @Loqta_Girlsbot (مثل /stats أو /start) لصاحب البوت فقط."""
+    if not BOT_TOKEN:
+        return
+    offset = int(state.get("tg_update_offset") or 0)
+    params = {"timeout": 0, "allowed_updates": json.dumps(["message"])}
+    if offset > 0:
+        params["offset"] = offset
+    try:
+        r = requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates", params=params, timeout=8)
+        if not r.ok:
+            return
+        updates = r.json().get("result") or []
+    except Exception:
+        return
+    for upd in updates:
+        uid = int(upd.get("update_id") or 0)
+        if uid >= offset:
+            offset = uid + 1
+            state["tg_update_offset"] = offset
+        msg = upd.get("message") or {}
+        chat_id = (msg.get("chat") or {}).get("id")
+        if str(chat_id) != str(OWNER_CHAT_ID):
+            continue
+        txt = (msg.get("text") or "").strip()
+        if not txt:
+            continue
+        low = txt.lower()
+        if low.startswith("/stats") or txt in ("احصائيات", "إحصائيات", "الاحصائيات", "الإحصائيات"):
+            _send_tg_text(chat_id, build_girls_stats_report(state))
+        elif low.startswith("/start"):
+            _send_tg_text(
+                chat_id,
+                f"🎀 <b>بوت «لقطة بنات» شغّال لايف ومستقل 100%!</b>\n\n"
+                f"📢 القناة: {GIRLS_CHANNEL_USERNAME} (نشر مستمر بنفس معدل القناة الرئيسية)\n"
+                f"🎬 تيك توك: ثابت 4 بوستات يومياً في أوقات الذروة (1 ظهراً، 5 عصراً، 8:30 م، 11 م)\n"
+                f"📊 ابعت <code>/stats</code> في أي وقت لتقرير الإحصائيات الفوري.",
+            )
+
+
+# ---------------------------------------------------------------------------
+# 5. الدورة الرئيسية المستقلة لبوت البنات (تليجرام لايف مستمر + تيك توك 4 ذروات ثابتة)
+# ---------------------------------------------------------------------------
+async def run_girls_cycle(force_tiktok=False):
+    ct = _cairo_now()
+    print(f"\n===== 🎀 بدء دورة بوت البنات المستقل (القاهرة {ct.tm_hour:02d}:{ct.tm_min:02d}) =====")
     sent_tg = _load_set(GIRLS_SENT_TG_FILE)
     sent_tt = _load_set(GIRLS_SENT_TT_FILE)
     state = _load_state()
+    poll_girls_private_chat(state)
 
     q_idx = int(state.get("query_idx", 0))
     queries_batch = [
@@ -623,9 +862,6 @@ async def run_girls_cycle():
                     continue
 
                 nk = _norm_name_key(intel["name_ar"])
-                if nk in (state.get("recent_names") or {}):
-                    continue
-
                 v_score = ge.score_girls_virality(
                     girls_cat=intel["girls_cat"],
                     brand_en=intel.get("brand_en") or "",
@@ -651,21 +887,24 @@ async def run_girls_cycle():
             await browser.close()
 
     print(f"🎀 عروض بنات صافية ومعتمدة بعد الفلترة الذكية: {len(raw_candidates)}")
-    if not raw_candidates:
-        _save_state(state)
-        return
 
-    # 1) النشر على قناة تليجرام البنات المستقلة (لو تم تفعيل GIRLS_CHANNEL_ID)
-    if GIRLS_CHANNEL_ID:
+    # 1) النشر الحي المستمر على قناة تليجرام البنات (@Loqta_G) بنفس معدل ونظام @loqta78
+    if GIRLS_CHANNEL_ID and raw_candidates:
         tg_sorted = sorted(raw_candidates, key=lambda x: x["v_score"], reverse=True)
         tg_sent_cnt = 0
-        used_cats = set()
+        cat_counts = {}
+        recent_names = state.get("recent_names") or {}
         for c in tg_sorted:
-            if tg_sent_cnt >= GIRLS_TG_MAX_PER_RUN:
+            if tg_sent_cnt >= GIRLS_TG_MAX_PER_CYCLE:
                 break
             link = c["item"]["link"]
             gcat = c["intel"]["girls_cat"]
-            if link in sent_tg or gcat in used_cats:
+            disc = float(c["item"]["discount"] or 0)
+            if link in sent_tg or c["name_key"] in recent_names:
+                continue
+            if cat_counts.get(gcat, 0) >= 2 and disc < 65.0:
+                continue
+            if not _can_post_girls_tg_now(state, discount=disc):
                 continue
             buy_u = make_buy_url(link)
             msg_html, markup = ge.build_girls_telegram_message(
@@ -673,7 +912,7 @@ async def run_girls_cycle():
                 intel=c["intel"],
                 price=c["item"]["price"],
                 list_price=c["item"]["list_price"],
-                discount=c["item"]["discount"],
+                discount=disc,
                 buy_url=buy_u,
                 seller=c["pdp"]["seller"],
                 rating=c["item"].get("rating"),
@@ -682,75 +921,144 @@ async def run_girls_cycle():
                 noon_coupon=NOON_COUPON,
             )
             if send_telegram_photo_post(GIRLS_CHANNEL_ID, msg_html, c["pdp"]["image"], reply_markup=markup):
+                now_ts = int(time.time())
                 _append_set(GIRLS_SENT_TG_FILE, sent_tg, link)
-                state["recent_names"][c["name_key"]] = time.time()
-                used_cats.add(gcat)
+                state["recent_names"][c["name_key"]] = now_ts
+                state["sent_timestamps"].append(now_ts)
+                state["sent_today_meta"].append({
+                    "ts": now_ts,
+                    "link": link,
+                    "name_ar": c["intel"]["name_ar"][:85],
+                    "price": c["item"]["price"],
+                    "list_price": c["item"]["list_price"],
+                    "discount": round(disc, 1),
+                    "store": c["item"]["store"],
+                    "v_score": c["v_score"],
+                })
+                cat_counts[gcat] = cat_counts.get(gcat, 0) + 1
                 tg_sent_cnt += 1
                 print(f"✅ [Girls TG #{tg_sent_cnt}] {c['intel']['name_ar']} (Score={c['v_score']})")
                 await asyncio.sleep(5)
 
-    # 2) النشر الخوارزمي التلقائي على تيك توك (أقوى عرض واحد في كل وقت ذروة)
-    tt_sorted = sorted(raw_candidates, key=lambda x: x["tt_score"], reverse=True)
-    tt_sent_cnt = 0
-    for c in tt_sorted:
-        if tt_sent_cnt >= GIRLS_TIKTOK_MAX_PER_RUN:
-            break
-        link = c["item"]["link"]
-        if link in sent_tt:
-            continue
+    # 2) تيك توك ثابت ومقيّد بـ 4 أوقات ذروة يومياً فقط (1 بوست دعائي قوي في كل وقت ذروة لجذب المتابعين لقناة @Loqta_G)
+    active_slot = _get_active_tiktok_slot()
+    slots_done = set(state.get("tiktok_slots_sent") or [])
+    should_post_tiktok = False
+    slot_key_to_record = None
+    if active_slot and active_slot not in slots_done:
+        should_post_tiktok = True
+        slot_key_to_record = active_slot
+    elif force_tiktok:
+        date_str = f"{ct.tm_year:04d}-{ct.tm_mon:02d}-{ct.tm_mday:02d}"
+        should_post_tiktok = True
+        slot_key_to_record = active_slot or f"{date_str}|manual-{ct.tm_hour:02d}{ct.tm_min:02d}"
 
-        copy_bundle = ge.build_tiktok_copy(
-            name_ar=c["intel"]["name_ar"],
-            name_en=c["intel"]["name_en"],
-            brand_en=c["intel"].get("brand_en") or "",
-            girls_cat=c["intel"]["girls_cat"],
-            price=c["item"]["price"],
-            list_price=c["item"]["list_price"],
-            discount=c["item"]["discount"],
-            description=c["intel"].get("description") or "",
-            features=c["pdp"]["features"],
-            rating=c["item"].get("rating"),
-            reviews=c["item"].get("reviews"),
-            store=c["item"]["store"],
-            tg_channel_username=GIRLS_CHANNEL_USERNAME,
-        )
+    if should_post_tiktok and raw_candidates:
+        tt_sorted = sorted(raw_candidates, key=lambda x: x["tt_score"], reverse=True)
+        tt_sent_cnt = 0
+        for c in tt_sorted:
+            if tt_sent_cnt >= GIRLS_TIKTOK_MAX_PER_SLOT:
+                break
+            link = c["item"]["link"]
+            if link in sent_tt:
+                continue
 
-        slug_id = hashlib.md5(link.encode("utf-8")).hexdigest()[:8]
-        slide_paths = designer.generate_tiktok_carousel(
-            product_image=c["pdp"]["image"],
-            name_ar=c["intel"]["name_ar"],
-            name_en=c["intel"]["name_en"],
-            brand_en=c["intel"].get("brand_en") or "",
-            price=c["item"]["price"],
-            list_price=c["item"]["list_price"],
-            discount=c["item"]["discount"],
-            copy_bundle=copy_bundle,
-            store=c["item"]["store"],
-            rating=c["item"].get("rating"),
-            reviews=c["item"].get("reviews"),
-            prefix=f"girls_{slug_id}",
-        )
+            copy_bundle = ge.build_tiktok_copy(
+                name_ar=c["intel"]["name_ar"],
+                name_en=c["intel"]["name_en"],
+                brand_en=c["intel"].get("brand_en") or "",
+                girls_cat=c["intel"]["girls_cat"],
+                price=c["item"]["price"],
+                list_price=c["item"]["list_price"],
+                discount=c["item"]["discount"],
+                description=c["intel"].get("description") or "",
+                features=c["pdp"]["features"],
+                rating=c["item"].get("rating"),
+                reviews=c["item"].get("reviews"),
+                store=c["item"]["store"],
+                tg_channel_username=GIRLS_CHANNEL_USERNAME,
+            )
 
-        ok_tt, mode = publish_to_tiktok(slide_paths, copy_bundle["tiktok_title"], copy_bundle["tiktok_caption"])
-        if ok_tt:
-            _append_set(GIRLS_SENT_TT_FILE, sent_tt, link)
-            state["last_tt_cat"] = c["intel"]["girls_cat"]
-            state["recent_names"][c["name_key"]] = time.time()
-            tt_sent_cnt += 1
-            print(f"🚀 [TikTok Published via {mode}] {c['intel']['name_ar']} (TT Score={c['tt_score']})")
-        else:
-            # لو لم تُضف مفاتيح تيك توك بعد: نرسل السلايدات الـ 3 المصممة والكابشن الجاهز لصاحب البوت في الخاص
-            if mode == "unconfigured":
+            slug_id = hashlib.md5(link.encode("utf-8")).hexdigest()[:8]
+            slide_paths = designer.generate_tiktok_carousel(
+                product_image=c["pdp"]["image"],
+                name_ar=c["intel"]["name_ar"],
+                name_en=c["intel"]["name_en"],
+                brand_en=c["intel"].get("brand_en") or "",
+                price=c["item"]["price"],
+                list_price=c["item"]["list_price"],
+                discount=c["item"]["discount"],
+                copy_bundle=copy_bundle,
+                store=c["item"]["store"],
+                rating=c["item"].get("rating"),
+                reviews=c["item"].get("reviews"),
+                prefix=f"girls_{slug_id}",
+            )
+
+            ok_tt, mode = publish_to_tiktok(slide_paths, copy_bundle["tiktok_title"], copy_bundle["tiktok_caption"])
+            if ok_tt:
+                _append_set(GIRLS_SENT_TT_FILE, sent_tt, link)
+                state["last_tt_cat"] = c["intel"]["girls_cat"]
+                if slot_key_to_record and slot_key_to_record not in state["tiktok_slots_sent"]:
+                    state["tiktok_slots_sent"].append(slot_key_to_record)
+                tt_sent_cnt += 1
+                print(f"🚀 [TikTok Published via {mode} | slot={slot_key_to_record}] {c['intel']['name_ar']} (TT Score={c['tt_score']})")
+            elif mode == "unconfigured":
                 if send_tiktok_preview_to_owner(slide_paths, copy_bundle["tiktok_caption"]):
                     _append_set(GIRLS_SENT_TT_FILE, sent_tt, link)
                     state["last_tt_cat"] = c["intel"]["girls_cat"]
-                    state["recent_names"][c["name_key"]] = time.time()
+                    if slot_key_to_record and slot_key_to_record not in state["tiktok_slots_sent"]:
+                        state["tiktok_slots_sent"].append(slot_key_to_record)
                     tt_sent_cnt += 1
-                    print(f"📲 [TikTok Ready Preview -> Owner TG] {c['intel']['name_ar']}")
+                    print(f"📲 [TikTok Ready Preview -> Owner TG | slot={slot_key_to_record}] {c['intel']['name_ar']}")
+    elif not active_slot:
+        print(f"⏳ [TikTok] خارج أوقات الذروة الـ 4 الثابتة (1م / 5م / 8:30م / 11م) — النشر الآن لقناة التليجرام {GIRLS_CHANNEL_USERNAME} فقط.")
+
+    # 3) ملخص أقوى 5 لقطات بنات الساعة 9:30 مساءً
+    try:
+        maybe_send_girls_daily_top5_digest(state)
+    except Exception as de:
+        print(f"[Girls Digest] error: {de}")
 
     _save_state(state)
+    try:
+        pi.save_tr_cache()
+    except Exception:
+        pass
     print("===== ✅ اكتملت دورة بوت البنات المستقل =====")
 
 
+async def run_girls_bot_loop():
+    """يدير التشغيل المستمر (مثل بوت القناة العامة) مع متابعة شات @Loqta_Girlsbot الخاص بين الدورات."""
+    if GIRLS_RUN_MINUTES <= 0:
+        await run_girls_cycle(force_tiktok=FORCE_TIKTOK_ONCE)
+        return
+
+    deadline = time.time() + GIRLS_RUN_MINUTES * 60
+    first_cycle = True
+    while time.time() < deadline:
+        try:
+            await run_girls_cycle(force_tiktok=(FORCE_TIKTOK_ONCE and first_cycle))
+        except Exception as e:
+            print(f"⚠️ خطأ في دورة بوت البنات: {e}")
+        first_cycle = False
+
+        remaining = deadline - time.time()
+        if remaining <= 45:
+            break
+        sleep_for = min(GIRLS_CYCLE_SLEEP_SEC, remaining - 30)
+        end_sleep = time.time() + sleep_for
+        while time.time() < end_sleep:
+            try:
+                st = _load_state()
+                prev_off = st.get("tg_update_offset")
+                poll_girls_private_chat(st)
+                if st.get("tg_update_offset") != prev_off:
+                    _save_state(st)
+            except Exception:
+                pass
+            await asyncio.sleep(min(20, max(1, end_sleep - time.time())))
+
+
 if __name__ == "__main__":
-    asyncio.run(run_girls_cycle())
+    asyncio.run(run_girls_bot_loop())
