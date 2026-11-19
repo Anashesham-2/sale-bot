@@ -266,10 +266,10 @@
     "Tank",
     "Arzum Okka",
     "Braes",
-    "VITA-KYEOL"
+    "VITA-KYEOL",
+    "Braim Tech"
   ],
   "queries": [
-    "بساط مكتب للهالوين ProbTis",
     "تلفزيون ذكي بوصة هاير",
     "كلوب نويت أنتولد ارماف",
     "تلفزيون هيونداي بشاشة",
@@ -348,7 +348,8 @@
     "واقي الشمس كوريان VITA-KYEOL",
     "أقراص فيتامينات ومغنيسيوم Centrum",
     "كرياتين نقي بنسبة Max Muscle",
-    "كيس فاكهة رامي ريد ريكس"
+    "كيس فاكهة رامي ريد ريكس",
+    "غلاية كهربائية برايم برايم تيك"
   ],
   "channels": [
     "epichardware",
@@ -1793,6 +1794,8 @@
     "epichardware/4948",
     "epichardware/4946",
     "Sal7lyEgypt/40349",
-    "epichardware/4949"
+    "epichardware/4949",
+    "Sal7lyEgypt/40351",
+    "Sal7lyEgypt/40350"
   ]
 }
