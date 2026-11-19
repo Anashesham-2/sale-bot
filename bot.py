@@ -3241,6 +3241,16 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
             brand=brand, title=title, prev_min=prev_min,
             is_user_submission=is_user_submission
         )
+        # حارس صارم ضد نشر أي منتج بلا اسم حقيقي (مثل "منتج مميز على أمازون مصر") أو بسعر مستخلص خطأ من نص قناة مراقبة (مثل 3 ج.م بدل 316 ج.م)
+        _is_placeholder_t = (not title) or len(title.strip()) < 6 or any(
+            ph in title.lower() for ph in ("منتج مميز على أمازون", "منتج مميز على نون", "منتج على أمازون", "featured product", "selected deal")
+        )
+        if _is_placeholder_t:
+            is_active = False
+            active_reason = "تعذر جلب اسم المنتج الحقيقي من صفحة المتجر"
+        elif (not live_price_found) and (not is_user_submission) and price is not None and price < 15 and (list_price or 0) >= 100:
+            is_active = False
+            active_reason = "السعر المستخرج غير موثوق (غير مؤكد من صفحة المتجر)"
 
         msg = build_message(
             "Amazon", title, price, list_price, discount, canonical_url,
@@ -3525,6 +3535,16 @@ async def scrape_single_product(context, raw_url, fallback_text="", fallback_ima
             brand=brand, title=title, prev_min=prev_min,
             is_user_submission=is_user_submission
         )
+        # حارس صارم ضد نشر أي منتج بلا اسم حقيقي (مثل "منتج مميز على أمازون مصر") أو بسعر مستخلص خطأ من نص قناة مراقبة (مثل 3 ج.م بدل 316 ج.م)
+        _is_placeholder_t = (not title) or len(title.strip()) < 6 or any(
+            ph in title.lower() for ph in ("منتج مميز على أمازون", "منتج مميز على نون", "منتج على أمازون", "featured product", "selected deal")
+        )
+        if _is_placeholder_t:
+            is_active = False
+            active_reason = "تعذر جلب اسم المنتج الحقيقي من صفحة المتجر"
+        elif (not live_price_found) and (not is_user_submission) and price is not None and price < 15 and (list_price or 0) >= 100:
+            is_active = False
+            active_reason = "السعر المستخرج غير موثوق (غير مؤكد من صفحة المتجر)"
 
         msg = build_message(
             "Noon", title, price, list_price, discount, canonical_url,

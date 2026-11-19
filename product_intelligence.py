@@ -208,6 +208,7 @@ RAW_BRAND_EN_MAP = {
     "زهران": "Zahran", "zahran": "Zahran",
     "لومينارك": "Luminarc", "luminarc": "Luminarc",
     "بايركس": "Pyrex", "pyrex": "Pyrex",
+    "كوريس": "Kores", "kores": "Kores",
     "ايكيا": "IKEA", "إيكيا": "IKEA", "ikea": "IKEA",
     "سنوز": "Snooze", "snooze": "Snooze",
     "هابي هوم": "Happy Home", "happy home": "Happy Home",
@@ -493,6 +494,7 @@ RAW_BRAND_EN_MAP = {
     "ريجينا": "Regina", "regina": "Regina",
     "الضحى": "El Doha", "الضحي": "El Doha", "el doha": "El Doha",
     "بايركس": "Pyrex", "pyrex": "Pyrex",
+    "كوريس": "Kores", "kores": "Kores",
     "كولدير": "Coldair", "coldair": "Coldair",
     "دايموند هوم": "Diamond Home", "diamond home": "Diamond Home",
     # أشهر ماركات الجمال والمكياج والسكين كير والعطور والفوط الصحية في مصر
@@ -718,7 +720,9 @@ _AR_PRE_TRANSLATE_FIXES = [
     (re.compile(r'\bفيش(?:ة|ه)?\b'), "قابس كهربائي"),
     (re.compile(r'\bمشترك\b'), "مشترك كهربائي"),
     (re.compile(r'\bكبة\b'), "مفرمة طعام"),
-    (re.compile(r'\bمنشر\b'), "حامل تجفيف ملابس"),
+    (re.compile(r'\bمنشر\b'), "ستاند تجفيف ملابس"),
+    (re.compile(r'\bحامل\b'), "ستاند"),
+    (re.compile(r'دلـ?ع\s*موبايلك'), ""),
 ]
 
 def translate_ar_to_en_fast(text, timeout=3.5):
@@ -992,6 +996,12 @@ _APPLE_VERIFY_RE = re.compile(
     re.IGNORECASE,
 )
 
+_AMAZON_VERIFY_RE = re.compile(
+    r'(?:\b(?:amazon\s*basics?|kindle|echo\s*(?:dot|show|pop|studio)?|fire\s*(?:tv|hd|stick)|ring\s*(?:video|doorbell|camera))\b|'
+    r'أمازون\s*بيسكس|امازون\s*بيسكس|كيندل|إيكو\s*دوت|ايكو\s*دوت)',
+    re.IGNORECASE,
+)
+
 
 _AMBIGUOUS_TITLE_BRAND_TOKENS = {
     norm_ar_token(w) for w in (
@@ -999,6 +1009,7 @@ _AMBIGUOUS_TITLE_BRAND_TOKENS = {
         "وايت", "white", "نيكست", "next", "كوين", "queen", "نور", "noor",
         "لونا", "luna", "زينا", "zeina", "روزا", "rosa", "برافو", "bravo",
         "ناو", "now", "ون لايف", "one life", "ايكون", "أيكون", "icon",
+        "امازون", "أمازون", "amazon",
     )
 }
 
@@ -1051,11 +1062,14 @@ def _is_scraped_brand_valid(cand_en, t_primary, en_primary, extra_text="", title
         return False
 
     prim_ctx = f"{t_primary or ''} {en_primary or ''}"
-    # 1. حارس خاص ضد تسرب ماركة Apple من شريط تنقل المتجر (Header Mega-Menu Leak) أو إكسسوارات الطرف الثالث
+    # 1. حارس خاص ضد تسرب ماركة Apple من شريط تنقل المتجر أو إكسسوارات الطرف الثالث، وضد تسرب Amazon من اسم المتجر/البائع
     if c_low == "apple":
         if not _APPLE_VERIFY_RE.search(prim_ctx):
             return False
         if _detect_leading_accessory(t_primary) or _detect_leading_accessory(en_primary) or re.search(r'\b(?:watch\s*band|ocean\s*band|strap\s*for|case\s*for|cover\s*for|compatible\s*with|replacement|240w|100w|65w)\b', prim_ctx, re.I):
+            return False
+    if c_low == "amazon":
+        if not _AMAZON_VERIFY_RE.search(prim_ctx):
             return False
 
     # 2. لو عنوان المنتج الأساسي يذكر ماركة أخرى صراحةً، والماركة المسحوبة غير مذكورة إطلاقاً في العنوان -> الماركة المسحوبة خاطئة
@@ -1454,7 +1468,7 @@ SMART_CATEGORIES = [
      "لوحة مفاتيح (كيبورد)", "Computer Keyboard",
      "لوحة مفاتيح مريحة وهادئة بأزرار متينة سريعة الاستجابة لتجربة كتابة سلسة ومريحة طوال اليوم."),
 
-    ("usb_hub", r'(?:\bموزع\b|محول\s*متعدد\s*المنافذ|محور\s*usb|محول\s*usb\s*متعدد|usb(?:-?c)?\s*hub|type-?c\s*hub|\d+\s*-?\s*port\s*hub|\bhub\s*(?:lite|pro|\d)|docking\s*station|multi-?port\s*(?:hub|adapter))',
+    ("usb_hub", r'(?:موزع\s*(?:منافذ|usb|يو\s*اس\s*بي|تايب\s*سي|type-?c|بيانات|شحن|كمبيوتر|لابتوب)|محول\s*متعدد\s*المنافذ|محور\s*usb|محول\s*usb\s*متعدد|usb(?:-?c)?\s*hub|type-?c\s*hub|\d+\s*-?\s*port\s*hub|\bhub\s*(?:lite|pro|\d)|docking\s*station|multi-?port\s*(?:hub|adapter))',
      "موزع منافذ USB-C متعدد", "Multi-Port USB-C Hub",
      "موزع منافذ متعدد عالي السرعة يوسّع مداخل اللابتوب والموبايل لتوصيل الشاشات والفلاشات والشحن السريع في وقت واحد."),
 
@@ -1486,7 +1500,7 @@ SMART_CATEGORIES = [
      "جراب وحافظة حماية", "Protective Case Cover",
      "جراب حماية متين مقاوم للصدمات والخدوش بحواف مرتفعة لحماية الجهاز والكاميرا مع ملمس مريح وتصميم أنيق."),
 
-    ("screen_protector", r'(?:لاصقة?\s*حماية|سكرين(?:\s*بروتكتور|\s*حماية|\s*زجاجي|\s*موبايل|\s*تابلت|\s*ساعة)?|واقي\s*(?:شاشة|عدسة|كاميرا)|حامي\s*(?:شاشة|كاميرا)|زجاج\s*(?:مقوى|حماية)|screen\s*protector|tempered\s*glass|camera\s*lens\s*protector|hydrogel\s*film)',
+    ("screen_protector", r'(?:لاصقة?\s*حماية|شاش[ةه]\s*حماية|سكرين(?:\s*بروتكتور|\s*حماية|\s*زجاجي|\s*موبايل|\s*تابلت|\s*ساعة)?|واقي\s*(?:شاشة|عدسة|كاميرا)|حامي\s*(?:شاشة|كاميرا)|زجاج\s*(?:مقوى|حماية)|screen\s*protector|tempered\s*glass|camera\s*lens\s*protector|hydrogel\s*film)',
      "لاصقة حماية شاشة زجاجية", "Tempered Glass Screen Protector",
      "لاصقة حماية زجاجية مقواة عالية الشفافية تحمي الشاشة من الخدوش والصدمات مع الحفاظ الكامل على حساسية اللمس."),
 
@@ -1598,7 +1612,7 @@ SMART_CATEGORIES = [
      "مكبر صوت ساوند بار", "Soundbar Speaker",
      "ساوند بار قوي يمنحك تجربة صوت سينمائي محيطي واضح وعميق للتلفزيون والأفلام والألعاب مع توصيل لاسلكي وسلكي سهل."),
 
-    ("speaker", r'(?:مكبر\s*صوت|صب\s*بلوتوث|\bسبيكر\b|bluetooth\s*speaker|portable\s*speaker|wireless\s*speaker|party\s*speaker|\bspeaker\b)',
+    ("speaker", r'(?:مكبر\s*صوت|صب\s*بلوتوث|\bسبيكر\b|\baequr\s*v\d+\b|bluetooth\s*speaker|portable\s*speaker|wireless\s*speaker|party\s*speaker|\bspeaker\b)',
      "مكبر صوت بلوتوث", "Bluetooth Speaker",
      "مكبر صوت محمول بصوت قوي ونقي وباس عميق مع اتصال بلوتوث سريع وبطارية ممتازة للاستخدام في المنزل والرحلات."),
 
@@ -2584,6 +2598,16 @@ def _is_cat_forbidden(cat_key, brand_en="", price=None, breadcrumbs_str="", titl
         if re.search(r'ثنائي\s*الشريحة|dual\s*sim|\b(?:4|6|8|12|16)\s*(?:جيجا(?:بايت)?|gb)\s*(?:رام|ram)|(?:رام|ram)\s*بسعة|\b(?:4g|5g)\b.*?\b(?:رام|ram|روم|rom)\b', t_low, re.I):
             return True
 
+    # حماية السبيكرات المحمولة (مثل Baseus Aequr V2) من التصنيف كسماعة أذن بسبب دعم خاصية TWS stereo
+    if cat_key == "earbuds":
+        if re.search(r'مكبر\s*صوت|\bسبيكر\b|\bspeaker\b|\bsoundbar\b|صب\s*ووفر|\baequr\b|boombox', t_low, re.I):
+            return True
+
+    # حماية موزع USB-C من التصنيف الخاطئ لزجاجات الغراء والصابون والمياه بسبب كلمة "موزع"
+    if cat_key == "usb_hub":
+        if re.search(r'غراء|صمغ|لاصق|خشب|صابون|شامبو|لوشن|زيت|مطبخ|glue|adhesive|wood\s*glue|soap|dispenser|lotion|kores', t_low, re.I):
+            return True
+
     # حماية الكابلات والحوامل من التصنيف الخاطئ للأجهزة المنزلية أو الشواحن الجدارية
     if cat_key in ("charging_cable", "stand_holder", "audio_cable"):
         if re.search(r'غلاية|kettle|مروحة|fan\b|سخان|heater|بوتاجاز|stove|فرن|oven|غسالة|ثلاجة', t_low):
@@ -2967,31 +2991,54 @@ def _extract_rich_specs(title, en_slug="", specs_text="", cat_key="", brand_en="
             spec_en.append(f"({rv}GB RAM)")
         return spec_ar, spec_en
 
-    # 2. اللابتوب (السلسلة الكاملة + المعالج + الرام + الـ SSD)
+    # 2. اللابتوب (السلسلة الكاملة + المعالج + الرام + الـ SSD — يدعم العربي والإنجليزي بالكامل!)
     if cat_key == "laptop":
         m_lap = re.search(
             r'\b(IdeaPad\s*(?:Slim\s*\d*|Gaming\s*\d*|Pro\s*\d*|Flex\s*\d*|\d+)|'
             r'Vivobook\s*(?:Go\s*\d*|Pro\s*\d*|S\s*\d*|\d*)|Zenbook\s*\w*|'
             r'ThinkPad\s*[A-Z]?\d*|ThinkBook\s*\d*|LOQ\s*\d*|Legion\s*(?:Pro\s*\d*|Slim\s*\d*|\d*)|'
-            r'Inspiron\s*\d*|Vostro\s*\d*|Latitude\s*\d*|Victus\s*\d*|Pavilion\s*\w*|OmniBook\s*\w*|'
+            r'Lenovo\s*V1[45]\b|V1[45]\s*G\d|'
+            r'Inspiron\s*\d*|Vostro\s*\d*|Latitude\s*\d*|Victus\s*\d*|Pavilion\s*\w*|ProBook\s*\w*|EliteBook\s*\w*|OmniBook\s*\w*|'
             r'TUF\s*Gaming\s*[AF]?\d*|ROG\s*(?:Strix|Zephyrus)?\s*\w*|'
-            r'MacBook\s*(?:Air|Pro)|Aspire\s*\d*|Nitro\s*[V5]?\s*\d*|MateBook\s*[DX]?\d*)\b',
+            r'MacBook\s*(?:Air|Pro)|Aspire\s*\d*|Nitro\s*[V5]?\s*\d*|MateBook\s*[DX]?\d*)\b|'
+            r'((?:ايديا|أيديا|إيديا)\s*باد\s*(?:سليم\s*\d*|جيمنج\s*\d*|برو\s*\d*|فليكس\s*\d*|\d+)|'
+            r'فيفو\s*بوك\s*\d*|زين\s*بوك\s*\d*|ثينك\s*باد\s*\w*|ثينك\s*بوك\s*\d*|انسبايرون\s*\d*|فيكتوس\s*\d*|ماك\s*بوك\s*(?:اير|برو)?)',
             combined, re.I
         )
         if m_lap:
-            v = re.sub(r'\s+', ' ', m_lap.group(1)).strip()
+            v = re.sub(r'\s+', ' ', (m_lap.group(1) or m_lap.group(2))).strip()
+            for ar_p, en_p in (
+                (r'(?:ايديا|أيديا|إيديا)\s*باد', 'IdeaPad'), (r'سليم', 'Slim'), (r'جيمنج', 'Gaming'),
+                (r'برو', 'Pro'), (r'فليكس', 'Flex'), (r'فيفو\s*بوك', 'Vivobook'), (r'زين\s*بوك', 'Zenbook'),
+                (r'ثينك\s*باد', 'ThinkPad'), (r'ثينك\s*بوك', 'ThinkBook'), (r'انسبايرون', 'Inspiron'),
+                (r'فيكتوس', 'Victus'), (r'ماك\s*بوك', 'MacBook'), (r'اير', 'Air'),
+            ):
+                v = re.sub(ar_p, en_p, v)
+            v = re.sub(r'\s+', ' ', v).strip()
             spec_ar.append(v)
             spec_en.append(v)
         m_cpu = re.search(
-            r'\b(Core\s*Ultra\s*[579]|Core\s*i[3579](?:-\d{4,5}[A-Z]{0,2})?|Core\s*[357]\s*\d{3}[A-Z]?|'
-            r'Ryzen\s*[3579](?:\s*\d{4}[A-Z]{0,2})?|Apple\s*M[1-5](?:\s*Pro|\s*Max)?|Celeron\s*N\d+|Intel\s*N\d{2,3})\b',
+            r'\b(Core\s*Ultra\s*[579]|Core\s*i[3579](?:[\s\-]*\d{4,5}[A-Z]{0,2})?|Core\s*[357]\s*\d{3}[A-Z]?|'
+            r'Ryzen\s*[3579](?:[\s\-]*\d{4}[A-Z]{0,2})?|Apple\s*M[1-5](?:\s*Pro|\s*Max)?|Celeron\s*N\d+|Intel\s*N\d{2,3})\b|'
+            r'(?:كور\s*(?:ألترا|الترا)\s*([579])|كور\s*(?:آي|اي)?\s*i?([3579])(?:[\s\-]*(\d{4,5}[A-Za-z]{0,2}))?|رايزن\s*([3579])(?:[\s\-]*(\d{4}[A-Za-z]{0,2}))?)',
             combined, re.I
         )
         if m_cpu:
-            c = re.sub(r'\s+', ' ', m_cpu.group(1)).strip()
-            spec_ar.append(c)
-            spec_en.append(c)
-        m_ram = re.search(r'\b(8|12|16|24|32|64)\s*(?:GB\s*(?:DDR\d\s*)?RAM|جيجا(?:بايت)?\s*رام|GB\s*Memory)\b', combined, re.I)
+            if m_cpu.group(1):
+                c = re.sub(r'\s+', ' ', m_cpu.group(1)).strip()
+                c = re.sub(r'^(Core\s*i[3579])\s+(\d{4,5}[A-Za-z]{0,2})$', r'\1-\2', c, flags=re.I)
+            elif m_cpu.group(2):
+                c = f"Core Ultra {m_cpu.group(2)}"
+            elif m_cpu.group(3):
+                c = f"Core i{m_cpu.group(3)}" + (f"-{m_cpu.group(4).upper()}" if m_cpu.group(4) else "")
+            elif m_cpu.group(5):
+                c = f"Ryzen {m_cpu.group(5)}" + (f" {m_cpu.group(6).upper()}" if m_cpu.group(6) else "")
+            else:
+                c = ""
+            if c:
+                spec_ar.append(c)
+                spec_en.append(c)
+        m_ram = re.search(r'\b(8|12|16|24|32|64)\s*(?:GB\s*(?:DDR\d[A-Z]?\s*)?(?:RAM|Memory)|GB\s*DDR\d|جيجا(?:بايت)?\s*(?:رام|DDR\d))\b', combined, re.I)
         if m_ram:
             spec_ar.append(f"{m_ram.group(1)} جيجا رام")
             spec_en.append(f"{m_ram.group(1)}GB RAM")
@@ -3069,7 +3116,7 @@ def _extract_rich_specs(title, en_slug="", specs_text="", cat_key="", brand_en="
         r'R50i(?:\s*NC)?|P20i|P30i|P40i|K20i|A20i|A30i|V20i|C30i|C40i|Q20i|H30i|'
         r'WIN\s*6[08]\s*(?:HE)?|F75|F87|F99|K552|K617|K631(?:\s*Pro)?|K673(?:\s*(?:UCAL|Pro|Max))*|G102|G213|G304|G502|M711|M908|'
         r'MR120(?:\s*ARGB)?|X5\d{2}|CD\d{3}|CH-\d{3}|Nexode(?:\s*Pro)?|Zolo|Nano\s*(?:II|\d)?|Super\s*Si(?:\s*Pro)?|'
-        r'OEP[\s\-]?\d{3}|OTW[\s\-]?\d{3}|OCF[\s\-]?\d{3}[A-Z]?|RMF-[A-Z0-9\-]+|'
+        r'OEP[\s\-]?\d{3}|OTW[\s\-]?\d{3}|OCF[\s\-]?\d{3}[A-Z]?|RMF-[A-Z0-9\-]+|Aequr\s*V\d+|'
         r'[Ff][Xx][\s\-]?\d{2,4}[A-Za-z]+|HD\d{4}(?:/\d{2})?|MG\d{4}(?:/\d{2})?|QP\d{4}(?:/\d{2})?|KM\d{4,5}[A-Z]?|'
         r'CR20(?:32|25|16)|UC\d{2}|CX\d{2}|XS[\s\-]?655|'
         r'C\d{3}[A-Z]{1,3}|TC\d{2,3}|GS\d{3}|H\d{3}|M\d{3}|VC\d{3})\b',
@@ -3097,7 +3144,7 @@ def _extract_rich_specs(title, en_slug="", specs_text="", cat_key="", brand_en="
                 "wave": "Wave", "beam": "Beam", "buds": "Buds", "flex": "Flex", "tune": "Tune",
                 "life": "Life", "charge": "Charge", "flip": "Flip", "go": "Go", "select": "Select",
                 "motion": "Motion", "space": "Space", "one": "One", "nexode": "Nexode", "zolo": "Zolo", "nano": "Nano",
-                "super": "Super", "si": "Si", "pro": "Pro", "max": "Max", "ucal": "UCAL",
+                "super": "Super", "si": "Si", "pro": "Pro", "max": "Max", "ucal": "UCAL", "aequr": "Aequr",
             }
             mv = " ".join(_casing_map.get(tok.lower(), tok.upper() if re.match(r'^[A-Za-z]\d+[A-Za-z]*$', tok) else tok) for tok in mv.split())
         if mv.lower() != (brand_en or "").lower():
@@ -3268,8 +3315,9 @@ def _extract_rich_specs(title, en_slug="", specs_text="", cat_key="", brand_en="
             spec_en.append(cv)
 
     if cat_key in ("charging_cable", "audio_cable", "hdmi_cable", "ethernet_cable", "power_strip"):
-        m_len = re.search(r'(?<![\d.])(\d{1,2}(?:\.\d)?)\s*(?:متر|م\b|m\b|meter)', primary_both, re.I)
-        if m_len and 0.2 <= float(m_len.group(1)) <= 50:
+        max_len_m = 5.0 if cat_key in ("charging_cable", "audio_cable") else (15.0 if cat_key in ("hdmi_cable", "power_strip") else 30.0)
+        m_len = re.search(r'(?<![\d.])(\d{1,2}(?:\.\d)?)\s*(?:متر|م(?:\s|$)|m(?:\s|$)|meter)', primary_both, re.I)
+        if m_len and 0.2 <= float(m_len.group(1)) <= max_len_m:
             spec_ar.append(f"طول {m_len.group(1)}م")
             spec_en.append(f"{m_len.group(1)}m")
         if cat_key == "charging_cable" and re.search(r'usb-?c|type-?c|تايب\s*سي|نوع\s*سي', primary_both, re.I):
