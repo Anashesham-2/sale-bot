@@ -262,15 +262,11 @@
     "Hiro",
     "Coldair",
     "Fitbit",
-    "Vileda"
+    "Vileda",
+    "Tank",
+    "Arzum Okka"
   ],
   "queries": [
-    "لانجتو كيبورد العاب",
-    "شاشة شاومي A27i",
-    "لوحة مفاتيح لاسلكية رابو",
-    "كابل إيثرنت يوجرين",
-    "غراء خشب ممتاز فيفيكول",
-    "LDNIO قاعدة شحن اي دينو",
     "دوف قالب صابون دوف سبراي",
     "ثاندروبوت سماعة راس",
     "قاعدة ماوس دمبستر ProbTis",
@@ -344,7 +340,13 @@
     "كرياتين بدون نكهة",
     "ماوس ألعاب سلكي ريدراجون",
     "تلفزيون سامسونج ميني",
-    "ساعة ذكية واتش اورايمو"
+    "ساعة ذكية واتش اورايمو",
+    "موبايل سامسونج جالاكسي Samsung",
+    "ساعة ذكية ريدمي Xiaomi",
+    "فلتر مياه تانك Tank",
+    "يوجرين PB532 باور UGREEN",
+    "ماكينة تحضير اسبريسو Arzum Okka",
+    "ماكينة حلاقة الشعر VGR"
   ],
   "channels": [
     "epichardware",
@@ -1747,6 +1749,25 @@
     "Yo_Ayman/16755",
     "Yo_Ayman/16754",
     "Yo_Ayman/16753",
-    "Yo_Ayman/16752"
+    "Yo_Ayman/16752",
+    "epichardware/4938",
+    "epichardware/4936",
+    "epichardware/4935",
+    "epichardware/4934",
+    "epichardware/4933",
+    "epichardware/4931",
+    "epichardware/4930",
+    "Sal7lyEgypt/40339",
+    "Sal7lyEgypt/40338",
+    "Sal7lyEgypt/40337",
+    "Sal7lyEgypt/40336",
+    "Sal7lyEgypt/40335",
+    "Sal7lyEgypt/40334",
+    "Sal7lyEgypt/40333",
+    "Sal7lyEgypt/40332",
+    "Yo_Ayman/16761",
+    "Yo_Ayman/16760",
+    "Yo_Ayman/16759",
+    "Yo_Ayman/16758"
   ]
 }
