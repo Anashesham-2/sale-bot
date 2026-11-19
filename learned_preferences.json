@@ -275,12 +275,10 @@
     "Lazord",
     "TotalEnergies",
     "Pyrex",
-    "Extra Hygiene"
+    "Extra Hygiene",
+    "Apple"
   ],
   "queries": [
-    "لوحة مفاتيح ألعاب هافيت",
-    "مروحة كهربائية أرضية توشيبا",
-    "فلاش ميموري كينغستون Kingston",
     "مزيج بروتين واي Victor Martinez",
     "مكمل غذائي جلوتامين ريد ريكس",
     "مجموعة جهاز تشذيب VGR",
@@ -357,7 +355,10 @@
     "بايركس طقم اواني Pyrex",
     "سماعة أذن لاسلكية CHOETECH",
     "مناديل مبللة منعشة Extra Hygiene",
-    "Pyrex Excellence Daily"
+    "Pyrex Excellence Daily",
+    "ابل اير تاج،",
+    "ذاكرة فلاش USB هايك فيجون",
+    "فلاش ميموري هيكسيمي هايك فيجون"
   ],
   "channels": [
     "epichardware",
@@ -1859,6 +1860,13 @@
     "Sal7lyEgypt/40381",
     "Sal7lyEgypt/40380",
     "Sal7lyEgypt/40379",
-    "Yo_Ayman/16785"
+    "Yo_Ayman/16785",
+    "epichardware/4964",
+    "epichardware/4963",
+    "epichardware/4962",
+    "epichardware/4961",
+    "Sal7lyEgypt/40384",
+    "Yo_Ayman/16787",
+    "Yo_Ayman/16786"
   ]
 }
