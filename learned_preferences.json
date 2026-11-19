@@ -268,7 +268,6 @@
     "Braes"
   ],
   "queries": [
-    "قاعدة ماوس دمبستر ProbTis",
     "قاعدة ماوس مفرش جينيريك",
     "موبايل انفينيكس هوت",
     "ماوس ألعاب لاسلكي ايجو",
@@ -347,7 +346,8 @@
     "ماكينة تحضير اسبريسو Arzum Okka",
     "ماكينة حلاقة الشعر VGR",
     "بلسم مجدد بحجم Braes",
-    "سماعة أورايمو OEB Oraimo"
+    "سماعة أورايمو OEB Oraimo",
+    "باور بانك أنكر انكر"
   ],
   "channels": [
     "epichardware",
@@ -1771,6 +1771,13 @@
     "Yo_Ayman/16759",
     "Yo_Ayman/16758",
     "Sal7lyEgypt/40341",
-    "Sal7lyEgypt/40340"
+    "Sal7lyEgypt/40340",
+    "epichardware/4939",
+    "Sal7lyEgypt/40343",
+    "Sal7lyEgypt/40342",
+    "Yo_Ayman/16765",
+    "Yo_Ayman/16764",
+    "Yo_Ayman/16763",
+    "Yo_Ayman/16762"
   ]
 }
