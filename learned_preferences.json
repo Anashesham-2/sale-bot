@@ -269,7 +269,6 @@
     "VITA-KYEOL"
   ],
   "queries": [
-    "تلفزيون ذكي جوجل هاير",
     "بساط مكتب للهالوين ProbTis",
     "تلفزيون ذكي بوصة هاير",
     "كلوب نويت أنتولد ارماف",
@@ -348,7 +347,8 @@
     "عطر فخر اللطافة Lattafa",
     "واقي الشمس كوريان VITA-KYEOL",
     "أقراص فيتامينات ومغنيسيوم Centrum",
-    "كرياتين نقي بنسبة Max Muscle"
+    "كرياتين نقي بنسبة Max Muscle",
+    "كيس فاكهة رامي ريد ريكس"
   ],
   "channels": [
     "epichardware",
@@ -1792,6 +1792,7 @@
     "Yo_Ayman/16769",
     "epichardware/4948",
     "epichardware/4946",
-    "Sal7lyEgypt/40349"
+    "Sal7lyEgypt/40349",
+    "epichardware/4949"
   ]
 }
