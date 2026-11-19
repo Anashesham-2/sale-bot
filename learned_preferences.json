@@ -267,11 +267,10 @@
     "Arzum Okka",
     "Braes",
     "VITA-KYEOL",
-    "Braim Tech"
+    "Braim Tech",
+    "Domty"
   ],
   "queries": [
-    "طقم مفكات ايه APT",
-    "كبسولات سباركس دايموند Asperox Sparx",
     "تسوق شاومي وسماعة",
     "تسوق ابل وحزمة",
     "مكمل بروتين غذائي ريد ريكس",
@@ -349,7 +348,9 @@
     "فلتر مياه مراحل Tank",
     "خلاط يدوي وات، Tornado",
     "قلاية هوائية وات Tornado",
-    "تورنيدو مكواة بخار"
+    "تورنيدو مكواة بخار",
+    "مكواة بخار محمولة Tornado",
+    "جبنة فيتا بيضاء Domty"
   ],
   "channels": [
     "epichardware",
@@ -1807,6 +1808,10 @@
     "Sal7lyEgypt/40355",
     "Sal7lyEgypt/40354",
     "Yo_Ayman/16774",
-    "Yo_Ayman/16773"
+    "Yo_Ayman/16773",
+    "Sal7lyEgypt/40358",
+    "Sal7lyEgypt/40357",
+    "Sal7lyEgypt/40356",
+    "Yo_Ayman/16775"
   ]
 }
