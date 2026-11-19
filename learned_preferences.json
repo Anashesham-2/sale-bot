@@ -257,11 +257,10 @@
     "Red Rex",
     "VGR",
     "Nano Trit",
-    "Milkato"
+    "Milkato",
+    "Marsi"
   ],
   "queries": [
-    "زيت عباد الشمس سلايت",
-    "تشالينجر نيوترشن كاربو تشالنجر نيوترشن",
     "قلاية تعمل بدون تورنيدو",
     "سائل غسيل للملابس او اكس اي",
     "قابس USB شاحن أنكر",
@@ -339,7 +338,9 @@
     "Apt طقم مفكات",
     "كيبل ديسبلاي بورت UGREEN",
     "Milkato Speculoos Biscuits",
-    "موبايل جالاكسي A07s"
+    "موبايل جالاكسي A07s",
+    "جهاز تمارين جيم مارسي",
+    "خلاط بلينديو بلس مولينكس"
   ],
   "channels": [
     "epichardware",
@@ -1657,6 +1658,13 @@
     "Yo_Ayman/16729",
     "Yo_Ayman/16728",
     "Yo_Ayman/16727",
-    "Yo_Ayman/16726"
+    "Yo_Ayman/16726",
+    "epichardware/4921",
+    "Sal7lyEgypt/40275",
+    "Sal7lyEgypt/40274",
+    "Sal7lyEgypt/40273",
+    "Sal7lyEgypt/40272",
+    "Sal7lyEgypt/40271",
+    "Sal7lyEgypt/40270"
   ]
 }
