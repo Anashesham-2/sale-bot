@@ -256,12 +256,10 @@
     "Kingston",
     "Red Rex",
     "VGR",
-    "Nano Trit"
+    "Nano Trit",
+    "Milkato"
   ],
   "queries": [
-    "طقم أكواب برطمانات بورجونوفو",
-    "جالاكسي A36 ثنائي سامسونج",
-    "نوت إيدج AI، إنفينيكس",
     "اكياس تخزين للطعام فريش",
     "زيت عباد الشمس سلايت",
     "تشالينجر نيوترشن كاربو تشالنجر نيوترشن",
@@ -338,7 +336,10 @@
     "مجفف شعر شاين بيبي ليس",
     "صابون البحر الميت Imtenan",
     "واقي شمس خفيف نانو تريت",
-    "للتدريج الاستلام والتخزين امازون"
+    "للتدريج الاستلام والتخزين امازون",
+    "Apt طقم مفكات",
+    "كيبل ديسبلاي بورت UGREEN",
+    "Milkato Speculoos Biscuits"
   ],
   "channels": [
     "epichardware",
@@ -1631,6 +1632,16 @@
     "epichardware/4910",
     "epichardware/4920",
     "epichardware/4919",
-    "epichardware/4918"
+    "epichardware/4918",
+    "epichardware/4909",
+    "epichardware/4908",
+    "epichardware/4907",
+    "epichardware/4906",
+    "Sal7lyEgypt/40264",
+    "Sal7lyEgypt/40263",
+    "Sal7lyEgypt/40259",
+    "Sal7lyEgypt/40258",
+    "Sal7lyEgypt/40257",
+    "Sal7lyEgypt/40256"
   ]
 }
