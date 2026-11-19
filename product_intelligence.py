@@ -78,7 +78,10 @@ RAW_BRAND_EN_MAP = {
     "سيلولار لاين": "Cellularline", "cellularline": "Cellularline",
     "ميمو": "Memo", "memo": "Memo",
     "هافيت": "Havit", "havit": "Havit",
-    "اونيكوما": "Onikuma", "أونيكوما": "Onikuma", "onikuma": "Onikuma",
+    "اونيكوما": "Onikuma", "أونيكوما": "Onikuma", "onikuma": "Onikuma", "onkuma": "Onikuma",
+    "تي داجر": "T-Dagger", "t-dagger": "T-Dagger", "tdagger": "T-Dagger",
+    "ني فو": "Ni Fo", "ni fo": "Ni Fo",
+    "هولدكس": "Holdx", "holdx": "Holdx",
     "ريدراجون": "Redragon", "ريد دراجون": "Redragon", "redragon": "Redragon",
     "لوجيتك": "Logitech", "لوجيتيك": "Logitech", "logitech": "Logitech",
     "ريزر": "Razer", "razer": "Razer",
@@ -231,7 +234,8 @@ RAW_BRAND_EN_MAP = {
     # عناية شخصية، تجميل، أطفال، منظفات، سوبرماركت، أزياء
     "راش براش": "Rush Brush", "rush brush": "Rush Brush",
     "بيبي ليس": "BaByliss", "babyliss": "BaByliss",
-    "كيمي": "Kemei", "كامي": "Kemei", "kemei": "Kemei",
+    "كيمي": "Kemei", "kemei": "Kemei",
+    "كاماي": "Camay", "camay": "Camay",
     "في جي ار": "VGR", "في جي آر": "VGR", "vgr": "VGR",
     "دوركو": "Dorco", "dorco": "Dorco",
     "جيليت": "Gillette", "gillette": "Gillette",
@@ -715,23 +719,75 @@ if os.path.exists(_TR_CACHE_FILE):
     except Exception:
         _tr_cache = {}
 
-# تصحيح الكلمات العربية المشتركة لفظياً قبل الترجمة لمنع أخطاء مثل (فيش -> Fish)
+# تصحيح الكلمات العربية المشتركة لفظياً ومصطلحات التجارة الإلكترونية قبل الترجمة لمنع أخطاء مثل (فيش -> Fish، حامل -> pregnant، وسادة ماوس -> mouse pillow)
 _AR_PRE_TRANSLATE_FIXES = [
+    (re.compile(r'وساد[ةه]\s*(?:ماوس|فأرة|للفأرة)|لوح[ةه]\s*ماوس|بساط\s*(?:ماوس|فأرة)|ماوس\s*باد|ماوسباد'), "ماوس باد"),
+    (re.compile(r'مفرش\s*مكتب|حصير[ةه]\s*(?:مكتب|ماوس)|وساد[ةه]\s*مكتب'), "مفرش مكتب"),
+    (re.compile(r'حامل\s*(?:إضاءة|اضاءة)\s*ثلاثي(?:\s*القوائم)?'), "ستاند إضاءة ثلاثي القوائم"),
+    (re.compile(r'حامل\s*ثلاثي(?:\s*القوائم)?'), "ستاند ثلاثي القوائم"),
+    (re.compile(r'شاش[ةه]\s*حماية|واقي\s*(?:ال)?شاش[ةه]|لاصق[ةه]\s*حماية\s*(?:ال)?شاش[ةه]'), "واقي شاشة"),
+    (re.compile(r'قالب\s*صابون'), "صابونة"),
+    (re.compile(r'شاور\s*ج[ي]?ل'), "جل استحمام"),
+    (re.compile(r'مزيل\s*(?:ال)?عرق'), "مزيل عرق"),
+    (re.compile(r'قلاية\s*هوائية'), "قلاية هوائية"),
+    (re.compile(r'هاند\s*بلندر'), "خلاط يدوي"),
+    (re.compile(r'سبيكر'), "مكبر صوت بلوتوث"),
+    (re.compile(r'كيبورد'), "لوحة مفاتيح"),
+    (re.compile(r'لابتوب|لاب\s*توب'), "لابتوب"),
+    (re.compile(r'باور\s*بانك'), "باور بانك"),
+    (re.compile(r'اير\s*تاج|إير\s*تاج|ايرتاج'), "AirTag"),
+    (re.compile(r'كامي(?=\s*(?:قالب\s*)?صابون)'), "Camay"),
     (re.compile(r'\bفيش(?:ة|ه)?\b'), "قابس كهربائي"),
     (re.compile(r'\bمشترك\b'), "مشترك كهربائي"),
     (re.compile(r'\bكبة\b'), "مفرمة طعام"),
     (re.compile(r'\bمنشر\b'), "ستاند تجفيف ملابس"),
     (re.compile(r'\bحامل\b'), "ستاند"),
+    (re.compile(r'\bجراب\b|\bكفر\b'), "جراب حماية"),
+    (re.compile(r'ار\s*جي\s*بي|آر\s*جي\s*بي'), "RGB"),
     (re.compile(r'دلـ?ع\s*موبايلك'), ""),
 ]
 
-def translate_ar_to_en_fast(text, timeout=3.5):
-    """ترجمة سريعة ومخزنة مؤقتاً لتحويل اسم منتج عربي إلى إنجليزي نظيف مع بديل احتياطي مجاني."""
+_EN_TO_AR_POST_FIXES = [
+    (re.compile(r'وساد[ةه]\s*(?:ال)?فأرة|لوح[ةه]\s*(?:ال)?فأرة|وساد[ةه]\s*(?:ال)?ماوس|لوح[ةه]\s*(?:ال)?ماوس'), "ماوس باد"),
+    (re.compile(r'ورق[ةه]\s*غش'), "دليل اختصارات"),
+    (re.compile(r'\bالفأرة\b'), "الماوس"),
+    (re.compile(r'\bفأرة\b'), "ماوس"),
+    (re.compile(r'كمبيوتر\s*محمول|حاسوب\s*محمول'), "لابتوب"),
+    (re.compile(r'سجاد[ةه]\s*(?:ال)?مكتب|بساط\s*(?:ال)?مكتب'), "مفرش مكتب"),
+    (re.compile(r'قابس\s*جداري'), "شاحن حائط"),
+    (re.compile(r'مفتاح\s*اختصار'), "اختصارات"),
+    (re.compile(r'شريط\s*(?:ال)?طاقة'), "مشترك كهربائي"),
+    (re.compile(r'بنك\s*(?:ال)?طاقة'), "باور بانك"),
+]
+
+
+def _replace_ar_brand_aliases_with_en(text, brand_en=""):
+    """يستبدل كتابة الماركة بالعربي باسمها الإنجليزي الصحيح قبل الترجمة للإنجليزية حتى لا يترجمها المحرك دلالياً."""
+    if not text or not brand_en:
+        return text
+    out = text
+    aliases = [
+        k for k, v in RAW_BRAND_EN_MAP.items()
+        if v.lower() == brand_en.lower() and re.search(r'[\u0600-\u06FF]', k)
+    ]
+    aliases.sort(key=len, reverse=True)
+    for ar_k in aliases:
+        out = re.sub(r'(?:^|\s)' + re.escape(ar_k) + r'(?=\s|$)', f' {brand_en} ', out)
+    return re.sub(r'\s+', ' ', out).strip()
+
+
+def translate_ar_to_en_fast(text, timeout=3.5, brand_en=""):
+    """ترجمة سريعة ومخزنة مؤقتاً لتحويل اسم منتج عربي إلى إنجليزي نظيف مع حماية أسماء الماركات وبديل احتياطي مجاني."""
     q = re.sub(r'\s+', ' ', (text or "")).strip()[:160]
     if not q or not re.search(r'[\u0600-\u06FF]', q):
         return q
+    if brand_en:
+        q = _replace_ar_brand_aliases_with_en(q, brand_en)
     for rx_fix, repl_ar in _AR_PRE_TRANSLATE_FIXES:
         q = rx_fix.sub(repl_ar, q)
+    q = re.sub(r'\s+', ' ', q).strip()
+    if not q or not re.search(r'[\u0600-\u06FF]', q):
+        return q
     with _tr_lock:
         if q in _tr_cache:
             return _tr_cache[q]
@@ -774,6 +830,97 @@ def translate_ar_to_en_fast(text, timeout=3.5):
     if res:
         with _tr_lock:
             _tr_cache[q] = res
+            if len(_tr_cache) % 25 == 0:
+                try:
+                    with open(_TR_CACHE_FILE, "w", encoding="utf-8") as f:
+                        json.dump(_tr_cache, f, ensure_ascii=False)
+                except Exception:
+                    pass
+        return res
+    return ""
+
+
+def translate_en_to_ar_fast(text, brand_en="", timeout=3.5):
+    """
+    يترجم عنوان منتج إنجليزي نظيف إلى عربية طبيعية واحترافية مع حماية أسماء الماركات وأكواد الموديلات
+    (مثل UGREEN, ATTACK SHARK, AirTag, G34WQi, X68 HE, 8000Hz, USB-C, GaN, DDR5, SSD) حتى لا تُترجم حرفياً!
+    """
+    q_orig = re.sub(r'\s+', ' ', (text or "")).strip()[:160]
+    if not q_orig or not re.search(r'[A-Za-z]{2,}', q_orig):
+        return q_orig
+
+    cache_key = f"en2ar:{brand_en.lower()}|{q_orig}"
+    with _tr_lock:
+        if cache_key in _tr_cache:
+            return _tr_cache[cache_key]
+
+    # حماية الماركة والموديلات والرموز التقنية داخل رموز محايدة رقمية لا يمسها المترجم
+    protected = []
+    q_work = q_orig
+
+    def _stash(val):
+        idx = len(protected)
+        tok = f"XQZ{idx}ZQ"
+        protected.append((tok, val))
+        return tok
+
+    if brand_en and len(brand_en) >= 2:
+        q_work = re.sub(rf'\b{re.escape(brand_en)}\b', lambda m: _stash(brand_en), q_work, flags=re.I)
+
+    # حماية رموز الموديلات والتقنيات (مثل G34WQi, i5-13420H, X68, 8000Hz, 512GB, SSD, DDR5, USB-C, GaN, RGB, TWS, AirTag, Cat8, WQHD, VA, IPS, OLED, QLED)
+    tech_pat = re.compile(
+        r'\b(?:'
+        r'(?:Core\s+)?i[3579]-\d{4,5}[A-Z]{0,2}|Ryzen\s*[3579]\s*\d{4}[A-Z]{0,2}|'
+        r'RTX\s*\d{4}(?:\s*Ti)?|GTX\s*\d{4}|DDR[45]|NVMe|PCIe|'
+        r'USB-?C|Type-?C|HDMI|DisplayPort|RJ45|Cat\s*[5678][ae]?|GaN|PD\s*\d+W?|'
+        r'AirTag|AirPods|MagSafe|MacBook|iPad|iPhone|ThinkPad|IdeaPad|VivoBook|ZenBook|OneBlade|Soundcore|Nexode|'
+        r'Rapid\s+Trigger|RGB|ARGB|TWS|ANC|ENC|WQHD|QHD|FHD|UHD|OLED|QLED|AMOLED|IPS|VA|LED|LCD|SSD|HDD|RAM|DPI|FPS|'
+        r'\d+(?:\.\d+)?\s*(?:GB|TB|MB|GHz|MHz|Hz|mAh|Wh|W|mm|cm|m)\b|'
+        r'[A-Z]{1,4}\d{2,5}[A-Za-z0-9\-]*|\d{2,4}[A-Z]{1,3}'
+        r')\b',
+        re.I,
+    )
+    q_work = tech_pat.sub(lambda m: _stash(m.group(0)), q_work)
+
+    res = ""
+    try:
+        r = requests.get(
+            "https://translate.googleapis.com/translate_a/single",
+            params={"client": "gtx", "sl": "en", "tl": "ar", "dt": "t", "q": q_work},
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=timeout,
+        )
+        if r.ok:
+            data = r.json()
+            cand = "".join(seg[0] for seg in (data[0] or []) if seg and seg[0]).strip()
+            if cand and re.search(r'[\u0600-\u06FF]', cand):
+                res = cand
+    except Exception:
+        pass
+
+    if not res:
+        try:
+            r2 = requests.get(
+                "https://api.mymemory.translated.net/get",
+                params={"q": q_work[:140], "langpair": "en|ar"},
+                headers={"User-Agent": "Mozilla/5.0"},
+                timeout=timeout,
+            )
+            if r2.ok:
+                cand2 = html.unescape((r2.json().get("responseData") or {}).get("translatedText") or "").strip()
+                if cand2 and re.search(r'[\u0600-\u06FF]', cand2) and "MYMEMORY WARNING" not in cand2.upper():
+                    res = cand2
+        except Exception:
+            pass
+
+    if res:
+        for tok, val in protected:
+            res = re.sub(re.escape(tok), lambda _, v=val: v, res, flags=re.I)
+        for rx_p, repl_p in _EN_TO_AR_POST_FIXES:
+            res = rx_p.sub(repl_p, res)
+        res = re.sub(r'\s+', ' ', res).strip(" -—,:;.")
+        with _tr_lock:
+            _tr_cache[cache_key] = res
             if len(_tr_cache) % 25 == 0:
                 try:
                     with open(_TR_CACHE_FILE, "w", encoding="utf-8") as f:
@@ -946,13 +1093,53 @@ def fetch_amazon_en_metadata(url_or_asin, timeout=5.0):
 # استخراج وتوحيد الماركة بالإنجليزية دائماً (بدون ترجمة دلالية لأسماء العلم!)
 # ---------------------------------------------------------------------------
 COMPAT_SPLIT_RE = re.compile(
-    r'(?:\b(?:متوافق(?:ة)?\s*مع|مناسب(?:ة)?\s*لـ?|مخصص(?:ة)?\s*لـ?|مصمم(?:ة)?\s*لـ?|بديل(?:ة)?\s*لـ?|'
+    r'(?:\b(?:متوافق(?:ة)?\s*مع|مناسب(?:ة)?\s*لـ?|مخصص(?:ة)?\s*لـ?|مصمم(?:ة)?\s*لـ?|خاص(?:ة)?\s*ب(?:جهاز|هاتف|موبايل|ساعة|تابلت)?|بديل(?:ة)?\s*لـ?|'
+    r'بتصميم\s*شعار|مزود(?:ة|ه)?\s*بدلاية|'
     r'لحماية|لسماع(?:ة|ات)|لساع(?:ة|ات)|لتابلت|لأجهزة|لاجهزة|لهواتف|لموبايل|للموبايل|لهاتف|للهاتف|لجهاز|لباور\s*بانك|'
     r'compatible\s+with|designed\s+for|fit\s+for|made\s+for|replacement\s+for|case\s+for|cover\s+for|strap\s+for|protector\s+for)\b|'
     r'\bل(?=ايفون|آيفون|أيفون|ايباد|آيباد|سامسونج|جالكسي|جالاكسي|شاومي|ريدمي|هواوي|سماعة|سماعات|ساعة)|'
     r'\bfor(?=\s+(?:iphone|ipad|ipod|macbook|airpods|apple\s*watch|samsung|galaxy|xiaomi|redmi|huawei|honor|oppo|realme|vivo|infinix|soundcore|anker|jbl|sony|earbuds|headphones|smartwatch|laptop|ps[45]|xbox)\b))',
     re.IGNORECASE,
 )
+
+_ECOSYSTEM_DEVICE_BRANDS = {
+    "apple", "samsung", "xiaomi", "huawei", "honor", "oppo", "realme",
+    "vivo", "infinix", "oneplus", "sony", "nintendo",
+}
+
+_LEADING_ACCESSORY_PREFIX_RE = re.compile(
+    r'^\s*(?:[\w\u0600-\u06FF\-]+\s+){0,2}(?:جراب|كفر|حافظة|واقي\s*(?:ال)?شاش[ةه]|شاش[ةه]\s*حماية|لاصق[ةه]\s*حماية|سكرين|سوار|أستيك|استيك|طوق|غطاء|حامل|case|cover|screen\s*protector|tempered\s*glass|strap|band|collar)\b',
+    re.IGNORECASE,
+)
+
+_NON_BRAND_FIRST_WORDS = {
+    "foldable", "portable", "wireless", "adjustable", "electric", "digital",
+    "rechargeable", "magnetic", "stainless", "waterproof", "multifunctional",
+    "automatic", "professional", "original", "mini", "large", "small", "pack",
+    "set", "pair", "men", "mens", "women", "womens", "kids", "baby", "cotton",
+    "replacement", "universal", "heavy", "smart", "fast", "super", "quick",
+    "excel", "office", "photoshop", "shortcuts", "shortcut", "gaming", "mechanical",
+    "wired", "bluetooth", "optical", "ergonomic", "transparent", "clear", "tempered",
+    "silicone", "leather", "aluminum", "aluminium", "metal", "plastic", "wooden",
+    "wood", "ceramic", "glass", "rubber", "ultra", "extra", "anti", "non", "slip",
+    "desk", "mouse", "mousepad", "keyboard", "laptop", "phone", "mobile", "tablet",
+    "screen", "camera", "cat", "dog", "pet", "car", "home", "kitchen", "bath",
+    "shower", "body", "face", "hair", "skin", "hand", "nail", "lip", "eye",
+    "bar", "soap", "cream", "gel", "oil", "serum", "spray", "lotion", "powder",
+    "mask", "pad", "mat", "stand", "holder", "mount", "tripod", "cable", "charger",
+    "adapter", "plug", "power", "usb", "type", "high", "low", "new", "hot", "pro",
+    "max", "plus", "led", "rgb", "hd", "uhd", "full", "wide", "curved", "round",
+    "flat", "long", "short", "soft", "hard", "multi", "dual", "triple", "single",
+    "double", "black", "white", "red", "blue", "green", "pink", "gray", "grey",
+    "silver", "gold", "brown", "beige", "yellow", "orange", "purple", "colored",
+    "colorful", "reflective", "compatible", "for", "with", "box", "bag", "case",
+    "cover", "strap", "band", "collar", "glue", "adhesive", "tape", "paper",
+    "sheet", "liner", "filter", "classic", "modern", "luxury", "premium",
+    "industrial", "commercial", "household", "outdoor", "indoor", "travel",
+    "sport", "sports", "fitness", "running", "walking", "boys", "girls", "unisex",
+    "adult", "braided", "shielded", "compact", "slim", "thin", "thick", "durable",
+    "shockproof", "protective", "water", "thermal", "stainless", "steel",
+}
 
 def _clean_latin_brand_candidate(cand):
     if not cand:
@@ -1014,8 +1201,45 @@ _AMBIGUOUS_TITLE_BRAND_TOKENS = {
 }
 
 
+def _is_stolen_accessory_device_brand(cand_en, title="", en_title=""):
+    """يمنع سرقة ماركة الجهاز المستهدف (مثل Xiaomi في 'واقي شاشة شاومي 17 تي' أو Apple في 'طوق قطط بدلاية أبل') كماركة مصنّعة للإكسسوار."""
+    if not cand_en or cand_en.lower() not in _ECOSYSTEM_DEVICE_BRANDS:
+        return False
+    c_low = cand_en.lower()
+    aliases = [c_low] + [
+        norm_ar_token(k) for k, v in RAW_BRAND_EN_MAP.items()
+        if v.lower() == c_low and len(norm_ar_token(k)) >= 2
+    ]
+    for src in (title or "", en_title or ""):
+        m_acc = _LEADING_ACCESSORY_PREFIX_RE.match(src)
+        if not m_acc:
+            continue
+        before_acc = norm_ar_token(src[:m_acc.start()])
+        # لو الماركة لم تظهر قبل كلمة الإكسسوار نفسها (مثل: واقي شاشة شاومي، شاشة حماية شاومي، طوق قطط أبل) -> فهي الجهاز المستهدف!
+        acc_word_match = re.search(
+            r'(?:جراب|كفر|حافظة|واقي\s*(?:ال)?شاش[ةه]|شاش[ةه]\s*حماية|لاصق[ةه]\s*حماية|سكرين|سوار|أستيك|استيك|طوق|غطاء|حامل|case|cover|screen\s*protector|tempered\s*glass|strap|band|collar)\b',
+            src, re.I,
+        )
+        prefix_before_acc_word = norm_ar_token(src[:acc_word_match.start()]) if acc_word_match else before_acc
+        brand_before_acc = any(
+            re.search(r'(?:^|\s)' + re.escape(al) + r'(?:\s|$)', prefix_before_acc_word)
+            for al in aliases if al
+        )
+        if not brand_before_acc:
+            return True
+    return False
+
+
 def _extract_brand_from_primary_text(en_primary, t_primary, extra_text=""):
     """يستخرج الماركة المذكورة صراحةً في رأس عنوان المنتج أو عبر بصمة الموديل الحصرية."""
+    # تفريق "كامي" بين صابون Camay وماكينة حلاقة Kemei بناءً على السياق
+    full_ctx = f"{t_primary or ''} {en_primary or ''} {extra_text or ''}"
+    if re.search(r'(?:^|\s)كامي(?:\s|$)', t_primary or ""):
+        if re.search(r'صابون|شاور|غسول|عطر|استحمام|كلاسيك|رومانتيك|soap|shower|bar', full_ctx, re.I):
+            return "Camay"
+        if re.search(r'حلاقة|ماكينة|شعر|تريمير|لحية|km-|trimmer|shaver|clipper', full_ctx, re.I):
+            return "Kemei"
+
     for src_primary in (en_primary, t_primary):
         if not src_primary:
             continue
@@ -1023,10 +1247,12 @@ def _extract_brand_from_primary_text(en_primary, t_primary, extra_text=""):
             phrase = m_from.group(1).strip()
             for candidate in (phrase, phrase.split()[0]):
                 cn = norm_ar_token(candidate)
-                if cn in NORM_BRAND_EN_MAP and cn not in ("جيجابايت", "gigabyte"):
-                    return NORM_BRAND_EN_MAP[cn]
+                if cn in NORM_BRAND_EN_MAP and cn not in ("جيجابايت", "gigabyte", "امازون", "أمازون", "amazon"):
+                    cand_b = NORM_BRAND_EN_MAP[cn]
+                    if not _is_stolen_accessory_device_brand(cand_b, t_primary, en_primary):
+                        return cand_b
                 acr = _try_parse_ar_acronym(candidate)
-                if acr:
+                if acr and acr.lower() != "amazon":
                     return acr
 
         cleaned_src = re.sub(r'\b\d+\s*(?:جيجا\s*بايت|جيجابايت|تيرا\s*بايت|تيرابايت|ميجا\s*بايت|ميجابايت|gigabytes?|terabytes?)\b', ' ', src_primary, flags=re.I)
@@ -1037,6 +1263,8 @@ def _extract_brand_from_primary_text(en_primary, t_primary, extra_text=""):
                 continue
             m_pos = re.search(r'(?:^|\s)(' + re.escape(k_norm) + r')(?:\s|$)', head_words)
             if m_pos:
+                if _is_stolen_accessory_device_brand(v_en, t_primary, en_primary):
+                    continue
                 cand_tuple = (m_pos.start(1), -len(k_norm), v_en)
                 if best_match is None or cand_tuple < best_match:
                     best_match = cand_tuple
@@ -1071,6 +1299,8 @@ def _is_scraped_brand_valid(cand_en, t_primary, en_primary, extra_text="", title
     if c_low == "amazon":
         if not _AMAZON_VERIFY_RE.search(prim_ctx):
             return False
+    if _is_stolen_accessory_device_brand(cand_en, t_primary, en_primary):
+        return False
 
     # 2. لو عنوان المنتج الأساسي يذكر ماركة أخرى صراحةً، والماركة المسحوبة غير مذكورة إطلاقاً في العنوان -> الماركة المسحوبة خاطئة
     if title_brand_en and title_brand_en.lower() != c_low:
@@ -1095,6 +1325,13 @@ def normalize_brand_english(brand_raw, title="", extra_text="", en_brand="", en_
     t_full = f"{title or ''} {en_title or ''} {extra_text or ''}".strip()
     t_primary = COMPAT_SPLIT_RE.split(title or "", maxsplit=1)[0]
     en_primary = COMPAT_SPLIT_RE.split(en_title or "", maxsplit=1)[0]
+
+    # تفريق كامي (Camay صابون vs Kemei ماكينة حلاقة) على الماركة الخام أيضاً
+    if norm_ar_token(brand_raw) == norm_ar_token("كامي"):
+        if re.search(r'صابون|شاور|غسول|عطر|استحمام|كلاسيك|رومانتيك|soap|shower|bar', t_full, re.I):
+            return "Camay"
+        if re.search(r'حلاقة|ماكينة|شعر|تريمير|لحية|km-|trimmer|shaver|clipper', t_full, re.I):
+            return "Kemei"
 
     # استخراج الماركة الصريحة من عنوان المنتج الأساسي أولاً للمقارنة والتحقق
     title_brand_en = _extract_brand_from_primary_text(en_primary, t_primary, extra_text=extra_text)
@@ -1151,7 +1388,7 @@ def normalize_brand_english(brand_raw, title="", extra_text="", en_brand="", en_
     if title_brand_en:
         return title_brand_en
 
-    # لو لدينا عنوان إنجليزي رسمي يبدأ باسم ماركة لاتيني واضح (مثل Looq Strawberry Fluff...)
+    # لو لدينا عنوان إنجليزي رسمي يبدأ باسم ماركة لاتيني واضح (مثل Looq Strawberry Fluff...) وليس صفة أو نوع منتج!
     if en_primary:
         first_tok = re.sub(r'[^\w\+\-&]', '', en_primary.split()[0]) if en_primary.split() else ""
         if (
@@ -1159,17 +1396,12 @@ def normalize_brand_english(brand_raw, title="", extra_text="", en_brand="", en_
             and re.match(r'^[A-Z][A-Za-z0-9\+\-&]{2,18}$', first_tok)
             and first_tok.lower() not in _NON_BRAND_LATIN
             and first_tok.lower() not in _GENERIC_BRAND_SET
+            and first_tok.lower() not in _NON_BRAND_FIRST_WORDS
             and not re.search(r'^\d', first_tok)
         ):
-            _en_adj_not_brand = {
-                "foldable", "portable", "wireless", "adjustable", "electric", "digital",
-                "rechargeable", "magnetic", "stainless", "waterproof", "multifunctional",
-                "automatic", "professional", "original", "mini", "large", "small", "pack",
-                "set", "pair", "men", "mens", "women", "womens", "kids", "baby", "cotton",
-                "replacement", "universal", "heavy", "smart", "fast", "super", "quick",
-            }
-            if first_tok.lower() not in _en_adj_not_brand:
-                return NORM_BRAND_EN_MAP.get(first_tok.lower(), first_tok)
+            cand_first = NORM_BRAND_EN_MAP.get(first_tok.lower(), first_tok)
+            if _is_scraped_brand_valid(cand_first, t_primary, en_primary, extra_text, title_brand_en):
+                return cand_first
 
     # 3. لو الماركة المعطاة بالعربي ولم نجدها في القاموس: نطابق هيكلها الصوتي مع أي اسم لاتيني في العنوان أو الوصف أولاً!
     if b and re.search(r'[\u0600-\u06FF]', b):
@@ -1177,15 +1409,20 @@ def normalize_brand_english(brand_raw, title="", extra_text="", en_brand="", en_
         b_skel = _phonetic_skeleton(b)
         for lat in re.findall(r'[A-Za-z][A-Za-z0-9\+\-]{2,20}', f"{en_primary} {t_primary} {extra_text}"):
             lat_low = lat.lower()
-            if lat_low not in _NON_BRAND_LATIN and lat_low not in _GENERIC_BRAND_SET and not re.search(r'\d', lat):
+            if lat_low not in _NON_BRAND_LATIN and lat_low not in _GENERIC_BRAND_SET and lat_low not in _NON_BRAND_FIRST_WORDS and not re.search(r'\d', lat):
                 if lat_low in NORM_BRAND_EN_MAP:
-                    return NORM_BRAND_EN_MAP[lat_low]
+                    cand_m = NORM_BRAND_EN_MAP[lat_low]
+                    if _is_scraped_brand_valid(cand_m, t_primary, en_primary, extra_text, title_brand_en):
+                        return cand_m
                 lat_skel = _phonetic_skeleton(lat)
                 if (b_skel and len(b_skel) >= 2 and lat_skel == b_skel) or (
                     b_translit and len(b_translit) >= 3 and lat_low[:3] == b_translit.lower()[:3]
                 ):
-                    return lat if not lat.islower() else lat.title()
-        return b_translit[:35]
+                    cand_t = lat if not lat.islower() else lat.title()
+                    if _is_scraped_brand_valid(cand_t, t_primary, en_primary, extra_text, title_brand_en):
+                        return cand_t
+        if _is_scraped_brand_valid(b_translit[:35], t_primary, en_primary, extra_text, title_brand_en):
+            return b_translit[:35]
 
     return ""
 
@@ -1239,6 +1476,7 @@ VISION_PROMPTS = [
     ("watch_strap", "a product photo of a replacement watch band strap without watch"),
     ("laptop", "a product photo of an open laptop notebook computer with keyboard"),
     ("tablet", "a product photo of a tablet screen or Kindle e-reader"),
+    ("mouse_pad", "a product photo of a flat rectangular computer desk mat mouse pad"),
     ("mouse", "a product photo of a computer mouse or gaming mouse"),
     ("keyboard", "a product photo of a computer keyboard"),
     ("shaver", "a product photo of an electric hair clipper trimmer or shaver"),
@@ -1448,7 +1686,7 @@ SMART_CATEGORIES = [
      "طقم كيبورد وماوس", "Keyboard & Mouse Combo",
      "طقم كيبورد وماوس عملي متكامل بتصميم مريح واستجابة سلسة وسريعة للعمل المكتبي والاستخدام اليومي."),
 
-    ("mouse_pad", r'(?:ماوس\s*باد|بساط\s*(?:ماوس|فأرة|للفأرة)|لوحة\s*ماوس|mouse\s*pad|desk\s*mat)',
+    ("mouse_pad", r'(?:ماوس\s*باد|ماوسباد|وساد[ةه]\s*(?:ماوس|فأرة|للفأرة|مكتب)|لوح[ةه]\s*ماوس|بساط\s*(?:ماوس|فأرة|للفأرة|مكتب)|مفرش\s*مكتب|حصير[ةه]\s*(?:مكتب|ماوس)|mouse\s*pad|mousepad|desk\s*(?:mat|pad))',
      "ماوس باد", "Gaming & Desk Mouse Pad",
      "ماوس باد بسطح ناعم عالي الدقة وقاعدة مطاطية ثابتة مضادة للانزلاق لتحكم سلس ومريح في الألعاب والعمل."),
 
@@ -1536,7 +1774,7 @@ SMART_CATEGORIES = [
      "شاحن سريع", "Fast Wall Charger",
      "شاحن حائط سريع يدعم تقنيات الشحن الذكي لتزويد هاتفك وأجهزتك بأعلى سرعة شحن آمنة مع حماية ضد السخونة."),
 
-    ("ethernet_cable", r'(?:كابل\s*(?:إيثرنت|ايثرنت|انترنت|إنترنت|شبكة|لان|cat\s*[5678])|سلك\s*(?:نت|انترنت|إنترنت|شبكة|لان)|وصلة\s*(?:نت|انترنت|لان)|ethernet\s*(?:network\s*|patch\s*)?cable|\bcat\s*[5678][ae]?\b.*?\bcable\b|\brj45\b.*?\bcable\b|lan\s*cable)',
+    ("ethernet_cable", r'(?:(?:كابل|كيبل|سلك|وصلة)\s*[^\n،,]{0,55}?(?:إيثرنت|ايثرنت|انترنت|إنترنت|شبكة|لان|(?:كات|cat)\s*[5678][ae]?\b|rj45)|(?:إيثرنت|ايثرنت|ethernet|lan|rj45|(?:كات|cat)\s*[5678][ae]?\b)\s*[^\n،,]{0,40}?(?:كابل|كيبل|سلك|cable)|ethernet\s*(?:network\s*|patch\s*)?cable|\bcat\s*[5678][ae]?\b.*?\bcable\b|\brj45\b.*?\bcable\b|lan\s*cable)',
      "كابل إنترنت وشبكة Ethernet", "High-Speed Ethernet LAN Cable",
      "كابل شبكة إيثرنت عالي السرعة لنقل الإنترنت والبيانات بثبات فائق واستجابة فورية بدون تقطيع للألعاب والراوتر والكمبيوتر."),
 
@@ -1864,7 +2102,7 @@ SMART_CATEGORIES = [
      "قهوة ومشروبات", "Coffee & Beverages",
      "قهوة ومشروبات بمذاق غني ورائحة محمصة مميزة تمنحك كوباً متوازناً ومنعشاً في كل صباح."),
 
-    ("grocery", r'(?:زيت\s*(?:دوار\s*الشمس|عباد\s*الشمس|ذرة|زيتون|طهي|قلي|مخلوط|جوز\s*الهند)|\bسمن\b|\bزبدة\b|كريمة\s*فول\s*سوداني|زبدة\s*فول\s*سوداني|\bدقيق\b|\bأرز\b|\bارز\b|\bمكرونة\b|\bمكرونه\b|\bعسل\b|\bمربى\b|\bشوكولاتة\b|\bشيكولاتة\b|\bبسكويت\b|\bكيك\b|\bكعك\b|\bبراوني\b|\bمولتو\b|\bكرواسون\b|\bباتيه\b|\bويفر\b|\bشيبسي\b|\bشيبس\b|مقرمشات|\bسناكس\b|\bتونة\b|\bصلصة\b|\bمكسرات\b|\bتوابل\b|\bبهارات\b|بذور\s*خردل|sunflower\s*oil|cooking\s*oil|olive\s*oil|peanut\s*butter|\bseasoning\b|\bspices\b|\bbrownie\b|\bcake\b|\bcroissant\b|\bwafer\b|\bbiscuit\b|\bcookies\b|\bchocolate\b|\bchips\b|\bsnacks\b)',
+    ("grocery", r'(?:زيت\s*(?:دوار\s*الشمس|عباد\s*الشمس|ذرة|زيتون|طهي|قلي|مخلوط|جوز\s*الهند)|\bسمن\b|\bزبدة\b|كريمة\s*فول\s*سوداني|زبدة\s*فول\s*سوداني|دقيق\s*(?:أبيض|ابيض|فاخر|قمح|ذرة|شوفان|مخبوزات|كيك|الضحى|السنبلة|كيلو|\d+\s*كجم)|\bأرز\b|\bارز\b|\bمكرونة\b|\bمكرونه\b|\bعسل\b|\bمربى\b|\bشوكولاتة\b|\bشيكولاتة\b|\bبسكويت\b|\bكيك\b|\bكعك\b|\bبراوني\b|\bمولتو\b|\bكرواسون\b|\bباتيه\b|\bويفر\b|\bشيبسي\b|\bشيبس\b|مقرمشات|\bسناكس\b|\bتونة\b|\bصلصة\b|\bمكسرات\b|\bتوابل\b|\bبهارات\b|بذور\s*خردل|sunflower\s*oil|cooking\s*oil|olive\s*oil|peanut\s*butter|\bseasoning\b|\bspices\b|\bbrownie\b|\bcake\b|\bcroissant\b|\bwafer\b|\bbiscuit\b|\bcookies\b|\bchocolate\b|\bchips\b|\bsnacks\b)',
      "منتجات غذائية وسوبرماركت", "Grocery & Food Essentials",
      "منتج غذائي عالي الجودة بمكونات مختارة بعناية ومذاق رائع للاستخدام اليومي."),
 
@@ -2736,31 +2974,55 @@ def _score_text_categories(title, en_slug="", breadcrumbs="", features_text="", 
         if sc > 0:
             scores[cat_key] = sc
 
-    # تقييم الفئات المكتشفة ديناميكياً التي تعلمها البوت ذاتياً
-    for ckey, data in _DYNAMIC_CATEGORIES.items():
-        pat = data.get("regex")
-        if not pat:
-            continue
-        sc = 0.0
-        if c_head and re.search(pat, c_head, re.I):
-            sc += 55.0
-            head_matched_cats.add(ckey)
-        elif c_en_head and re.search(pat, c_en_head, re.I):
-            sc += 50.0
-            head_matched_cats.add(ckey)
-        elif c_crumbs and re.search(pat, c_crumbs, re.I):
-            sc += 25.0
-        elif c_body and re.search(pat, c_body, re.I):
-            sc += 20.0
-        if sc > 0:
-            scores[ckey] = sc
-
-    # قواعد حسم التضارب المنطقي السياقي:
+    # قواعد حسم التضارب المنطقي السياقي (حارس الأسماء المركّبة والإكسسوارات):
     # 0) قواعد منطق الماركة والسعر وقسم الإكسسوارات
     for k_chk in list(scores.keys()):
         if _is_cat_forbidden(k_chk, brand_en=brand_en, price=price, breadcrumbs_str=c_crumbs, title_str=title):
             scores.pop(k_chk, None)
             head_matched_cats.discard(k_chk)
+
+    full_head_txt = f"{title or ''} {en_clean}"
+    # 0-ب) حارس الأسماء المركبة الشامل: الملحق/المستهلك يلغي الجهاز الأساسي فوراً (ماوس باد ≠ ماوس، ورق قلاية ≠ قلاية، فلتر قهوة ≠ ماكينة قهوة...)
+    if "mouse_pad" in scores or re.search(r'ماوس\s*باد|ماوسباد|وساد[ةه]\s*(?:ماوس|فأرة|مكتب)|لوح[ةه]\s*ماوس|بساط\s*(?:ماوس|فأرة|مكتب)|مفرش\s*مكتب|حصير[ةه]\s*(?:مكتب|ماوس)|mouse\s*pad|mousepad|desk\s*(?:mat|pad)', full_head_txt, re.I):
+        scores["mouse_pad"] = max(scores.get("mouse_pad", 0.0), 75.0)
+        head_matched_cats.add("mouse_pad")
+        scores.pop("mouse", None)
+        scores.pop("gaming_mouse", None)
+        head_matched_cats.discard("mouse")
+        head_matched_cats.discard("gaming_mouse")
+    if "ethernet_cable" in scores or re.search(r'إيثرنت|ايثرنت|\bethernet\b|\brj45\b|(?:كات|cat)\s*[5678][ae]?\b', full_head_txt, re.I):
+        if "ethernet_cable" in scores or re.search(r'كابل|كيبل|سلك|cable', full_head_txt, re.I):
+            scores["ethernet_cable"] = max(scores.get("ethernet_cable", 0.0), 75.0)
+            head_matched_cats.add("ethernet_cable")
+            scores.pop("charging_cable", None)
+            head_matched_cats.discard("charging_cable")
+    if "speaker" in scores and re.search(r'سبيكر|مكبر\s*صوت|\bspeaker\b|\baequr\b', full_head_txt, re.I):
+        scores["speaker"] += 30.0
+        scores.pop("earbuds", None)
+        scores.pop("headphones", None)
+    if "keyboard_mouse_combo" in scores:
+        scores["keyboard_mouse_combo"] += 30.0
+        for k_rm in ("mouse", "gaming_mouse", "keyboard", "gaming_keyboard"):
+            scores.pop(k_rm, None)
+    if "screen_protector" in scores or re.search(r'شاش[ةه]\s*حماية|واقي\s*(?:ال)?شاش[ةه]|لاصق[ةه]\s*حماية|screen\s*protector|tempered\s*glass', full_head_txt, re.I):
+        for k_rm in ("gaming_monitor", "smart_tv", "smartphone", "tablet", "smartwatch"):
+            scores.pop(k_rm, None)
+    if re.search(r'حامل\s*(?:إضاءة|اضاءة|كاميرا|ثلاثي)|ترايبود|\btripod\b|light\s*stand', full_head_txt, re.I):
+        scores.pop("camera_photo", None)
+    if re.search(r'ورق\s*(?:قلاية|زبدة|خبز)|بطان[ةه]\s*(?:قلاية|سيليكون)|air\s*fryer\s*(?:liner|paper|tray|parchment)', full_head_txt, re.I):
+        scores.pop("air_fryer", None)
+    if re.search(r'فلتر\s*(?:قهوة|مكنسة)|أكياس\s*مكنسة|كيس\s*مكنسة|coffee\s*filter|vacuum\s*(?:bag|filter)', full_head_txt, re.I):
+        scores.pop("coffee_maker", None)
+        scores.pop("vacuum", None)
+    if re.search(r'غطاء\s*(?:غسالة|ثلاجة|تكييف|ميكروويف)|(?:washing\s*machine|fridge|refrigerator|ac)\s*cover', full_head_txt, re.I):
+        for k_rm in ("washing_machine", "refrigerator", "air_conditioner", "microwave"):
+            scores.pop(k_rm, None)
+    if re.search(r'ذراع\s*شاشة|حامل\s*(?:شاشة|تلفزيون)|monitor\s*(?:arm|mount|stand)|tv\s*(?:wall\s*)?mount', full_head_txt, re.I):
+        scores.pop("gaming_monitor", None)
+        scores.pop("smart_tv", None)
+    if re.search(r'وساد[ةه]\s*(?:معصم|يد)|wrist\s*rest|\bkeycaps?\b|أغطية\s*مفاتيح', full_head_txt, re.I):
+        scores.pop("keyboard", None)
+        scores.pop("gaming_keyboard", None)
 
     # قدرة كهربائية >= 1000W أو مشترك iLock بمنافذ متعددة مستحيل يكون شاحن موبايل حائط -> مشترك كهربائي!
     if "wall_charger" in scores:
@@ -3455,52 +3717,167 @@ def _dedupe_brand_prefix(text, brand_en=""):
         return f"{brand_en} {s}".strip()
     return s
 
-def _clean_natural_ar_fallback(title, brand_en="", extra_specs_ar=None):
-    t = str(title or "")
-    # الاحتفاظ بالمعلومات المهمة داخل الأقواس مثل (12 قطعة) أو (50 جم) وإزالة الحشو الآخر
+def _title_contains_brand(text, brand_en):
+    """يتحقق هل الماركة مذكورة بالفعل في العنوان (سواء بالإنجليزية أو بأي كتابة عربية معروفة لها) لمنع تكرارها."""
+    if not text or not brand_en:
+        return False
+    b_low = brand_en.lower().strip()
+    if not b_low:
+        return False
+    t_low = text.lower()
+    if re.search(rf'(?:^|[\s\-—,/(\[])({re.escape(b_low)})(?:$|[\s\-—,/)\]])', t_low):
+        return True
+    b_comp = re.sub(r'[^a-z0-9]', '', b_low)
+    t_comp = re.sub(r'[^a-z0-9]', '', t_low)
+    if len(b_comp) >= 4 and b_comp in t_comp:
+        return True
+    t_norm = norm_ar_token(text)
+    for ar_k, en_v in RAW_BRAND_EN_MAP.items():
+        if en_v.lower() == b_low and re.search(r'[\u0600-\u06FF]', ar_k):
+            kn = norm_ar_token(ar_k)
+            if kn and re.search(r'(?:^|\s)' + re.escape(kn) + r'(?:\s|$)', t_norm):
+                return True
+    if b_low in ("camay", "kemei") and re.search(r'(?:^|\s)كامي(?:\s|$)', t_norm):
+        return True
+    if b_low == "ni fo" and re.search(r'(?:^|\s)ني\s*فو(?:\s|$)', t_norm):
+        return True
+    return False
+
+
+_AR_CLAUSE_FLUFF_RE = re.compile(
+    r'^(?:مثالي[ةه]?\s*ل|مناسب[ةه]?\s*ل|هدية\s*(?:مثالية|رائعة)|متعدد(?:ة)?\s*الاستخدامات|'
+    r'قد\s*تختلف\s*(?:العبوة|الألوان|الشكل)|مقاسات?\s*معيارية|ضمان\s*(?:عام|سنة|سنتين|وكيل)|'
+    r'جودة\s*عالية|سهل\s*الاستخدام|مريح\s*للغاية|تصميم\s*(?:عصري|أنيق|مريح)|'
+    r'أصلي\s*100|اصلي\s*100|شحن\s*مجاني|توصيل\s*سريع)',
+    re.IGNORECASE,
+)
+
+_EN_CLAUSE_FLUFF_RE = re.compile(
+    r'^(?:ideal\s+for|perfect\s+(?:for|gift)|great\s+for|suitable\s+for|easy\s+to\s+|'
+    r'compatible\s+with|for\s+(?:pc|mac|home|office|work|gaming|men|women|kids|travel|home\s*&\s*office)|'
+    r'package\s+may\s+vary|color\s+may\s+vary|gift\s+for|warranty|anti-?ghosting|plug\s*(?:&|and)\s*play)',
+    re.IGNORECASE,
+)
+
+
+def _trim_at_word_boundary(text, max_len, is_ar=True):
+    s = re.sub(r'\s+', ' ', (text or "")).strip(" -—,:;.|/،؛")
+    if len(s) <= max_len:
+        return s
+    cut = s[:max_len].rsplit(" ", 1)[0].strip(" -—,:;.|/،؛")
+    if not cut:
+        cut = s[:max_len].strip()
+    if is_ar:
+        norm_dangling = {norm_ar_token(d) for d in _DANGLING_AR_WORDS} | {
+            norm_ar_token(w) for w in (
+                "من", "مع", "في", "على", "إلى", "الى", "و", "أو", "او", "ذو", "ذات",
+                "خاصة", "بجهاز", "لهاتف", "متوافق", "متوافقة", "بـ", "لـ",
+                "بمفاتيح", "بقاعدة", "بتقنية", "بقوة", "بسعة", "بدقة", "بمعدل",
+                "بنظام", "بشاشة", "بإضاءة", "باضاءة", "بألوان", "بالوان", "بمقاس", "بوزن", "بطول", "بسمك",
+            )
+        }
+        toks = cut.split()
+        while len(toks) > 2 and (norm_ar_token(toks[-1]) in norm_dangling or toks[-1] in ("-", "—", "+", "×")):
+            toks.pop()
+        cut = " ".join(toks).strip(" -—,:;.|/،؛")
+    else:
+        toks = cut.split()
+        while len(toks) > 2 and toks[-1].lower().strip(",.;:-") in ("for", "with", "and", "or", "in", "to", "of", "by", "the", "a", "an", "&", "-"):
+            toks.pop()
+        cut = " ".join(toks).strip(" -—,:;.|/")
+    return cut
+
+
+def _smart_clean_ar_title(title, brand_en="", extra_specs_ar=None, max_len=84):
+    """
+    ينظف العنوان العربي الحقيقي للمنتج مع الحفاظ الكامل على هويته وموديله ومواصفاته (Real-Title-First V3):
+    - يزيل التكرارات والحشو التسويقي وعبارات التملص (قد تختلف العبوة) دون حذف نوع المنتج أو موديله.
+    - لا يحقن الماركة وسط الجملة أبداً ولا يكررها إذا كانت مكتوبة بالفعل بالعربي أو الإنجليزي.
+    - لا يقص الكلمات العربية من المنتصف ولا يترك حروف جر معلقة.
+    """
+    t = re.sub(r'[\u200b-\u200f\ufeff]', '', str(title or ""))
+    t = re.sub(r'\s+', ' ', t).strip()
+    if not t:
+        return ""
+
+    # 1. إصلاحات شائعة لعناوين نون وأمازون مصر
+    t = re.sub(r'^\s*متوافق(?:ة)?\s*مع\s+(?=(?:واقي|شاش[ةه]\s*حماية|لاصق[ةه]|جراب|كفر|حافظة|سوار))', '', t)
+    t = re.sub(r'\bواقي\s*شاش[ةه]\s+متوافق\s+مع\s+واقي\s*(?:ال)?شاش[ةه]\s*', 'واقي شاشة ', t)
+    t = re.sub(r'(\d+)\s+م(?=\s+(?:لوفة|لوفه|للاستحمام|شاور|غسول|شامبو|كريم|سيروم|زيت|بخاخ|اسبراي|مع|من|لل))', r'\1 مل', t)
+    t = re.sub(r'(?:قد\s*تختلف\s*(?:العبوة|الألوان|الالوان|الشكل)[^،,|—]*)', '', t)
+    t = re.sub(r'(?:أصلي|اصلي)\s*100%?', '', t)
+    t = re.sub(r'\bار\s*جي\s*بي\b|\bآر\s*جي\s*بي\b', 'RGB', t)
+    t = re.sub(r'\b(?:دي\s*ال\s*3)\b', 'DL3', t)
+
+    # الاحتفاظ بالمعلومات المهمة داخل الأقواس مثل (12 قطعة) أو (الجيل الثاني) أو (50 جم)
     def _keep_useful_parens(m):
         inner = m.group(1).strip()
-        if re.search(r'\d+\s*(?:قطعة|قطعه|قطع|جم|جرام|مل|لتر|كجم|سم|متر|وات|واط|عبوة|باكيت|كيس)', inner):
-            return f" {inner} "
+        if re.search(r'(?:\d+\s*(?:قطعة|قطعه|قطع|جم|جرام|مل|لتر|كجم|سم|متر|مم|وات|واط|عبوة|باكيت|كيس|بوصة|انش|مفتاح)|الجيل\s*(?:الأول|الاول|الثاني|الثالث|الرابع)|2nd|3rd|4th|\d+(?:GB|TB|Hz|W|mAh))', inner, re.I):
+            return f" ({inner}) "
         return " "
     t = re.sub(r'[\(\[\{]([^\)\]\}]*)[\)\]\}]', _keep_useful_parens, t)
-    t = re.sub(r'[,،؛|–—]+', ' ', t)
-    t = re.sub(r'\s*-\s*', ' ', t)
-    if brand_en:
-        # إزالة الماركة بالعربي أو الإنجليزي لتجنب تكرارها ثم وضعها بشكل منسق
-        t = re.sub(rf'(?:\bمن\s+)?\b{re.escape(brand_en)}\b', ' ', t, flags=re.I)
-        b_comp = re.sub(r'[^a-z0-9]', '', brand_en.lower())
-        if len(b_comp) >= 4:
-            t = re.sub(rf'\b{re.escape(b_comp)}\b', ' ', t, flags=re.I)
-        for ar_k, en_v in RAW_BRAND_EN_MAP.items():
-            if en_v.lower() == brand_en.lower() and re.search(r'[\u0600-\u06FF]', ar_k):
-                t = re.sub(rf'(?:\bمن\s+)?\b{re.escape(ar_k)}\b', ' ', t)
-    all_words = [
-        w for w in t.split()
-        if (len(w) > 1 or w.isdigit()) and w.lower() not in ("أصلي", "اصلي", "جديد", "عرض", "خصم", "الاصلي", "الأصلي")
-    ]
-    limit = 8
-    words = all_words[:limit]
-    # لو انتهى الاقتطاع عند رقم صِرف والكلمة التالية مباشرة هي وحدة قياس (مثل 30 قطعة)، نضم الوحدة
-    if words and words[-1].isdigit() and len(all_words) > limit:
-        nxt = all_words[limit]
-        if norm_ar_token(nxt) in {norm_ar_token(u) for u in _AR_UNIT_NEXT_WORDS}:
-            words.append(nxt)
-    norm_dangling = {norm_ar_token(d) for d in _DANGLING_AR_WORDS}
-    while words and (norm_ar_token(words[-1]) in norm_dangling or words[-1].isdigit()):
-        words.pop()
-    res = " ".join(words).strip()
-    if brand_en and brand_en.lower() not in res.lower():
-        res = f"{res} {brand_en}".strip()
-    # إلحاق أي مواصفة جوهرية ناقصة (مثل الوزن أو عدد القطع) دون تكرار
-    for sp in (extra_specs_ar or []):
-        sp_clean = sp.strip()
-        sp_digits = re.findall(r'\d+(?:\.\d+)?', sp_clean)
-        if sp_clean and sp_clean.lower() not in res.lower():
-            if not (sp_digits and all(d in res for d in sp_digits)):
-                if len(res) + len(sp_clean) + 1 <= 85:
-                    res = f"{res} {sp_clean}".strip()
-    return res[:85]
+    t = re.sub(r'\s+', ' ', t).strip()
+
+    # 2. تقسيم الجُمل وتجميع الجُمل المفيدة (بدون القص الأعمى عند 8 كلمات)
+    raw_clauses = [c.strip(" -—,:;.|/،؛") for c in re.split(r'\s*(?:،|,|\||—|–|؛|\s-\s)\s*', t) if c.strip(" -—,:;.|/،؛")]
+    if not raw_clauses:
+        raw_clauses = [t]
+
+    picked_parts = []
+    cur_len = 0
+    for idx, cl in enumerate(raw_clauses):
+        if idx > 0 and _AR_CLAUSE_FLUFF_RE.match(cl):
+            continue
+        # إزالة تكرار نفس الكلمة/العبارة في بداية العنوان (مثل: "لوحة ماوس كبيرة لوحة ماوس ألعاب كبيرة" أو "فريش خلاط فريش شبح")
+        cl_toks = cl.split()
+        if len(cl_toks) >= 4:
+            # تكرار عبارة من كلمتين (مثل "لوحة ماوس ... لوحة ماوس")
+            for k_span in (3, 2):
+                if len(cl_toks) >= k_span * 2:
+                    p1 = [norm_ar_token(x) for x in cl_toks[:k_span]]
+                    for j in range(k_span, min(len(cl_toks) - k_span + 1, k_span + 3)):
+                        p2 = [norm_ar_token(x) for x in cl_toks[j:j + k_span]]
+                        if p1 == p2 and all(p1):
+                            cl_toks = cl_toks[j:]
+                            break
+            # تكرار أول كلمة (الماركة) بعد كلمة واحدة (مثل: "فريش خلاط فريش شبح" -> "خلاط فريش شبح")
+            if len(cl_toks) >= 3 and norm_ar_token(cl_toks[0]) == norm_ar_token(cl_toks[2]) and len(cl_toks[0]) >= 3:
+                cl_toks = cl_toks[1:]
+        cl = " ".join(cl_toks)
+
+        if idx == 0:
+            picked_parts.append(cl)
+            cur_len = len(cl)
+        elif cur_len < 58 and (cur_len + len(cl) + 2) <= max_len + 12:
+            picked_parts.append(cl)
+            cur_len += len(cl) + 2
+        elif cur_len < 42:
+            picked_parts.append(cl)
+            cur_len += len(cl) + 2
+            break
+        else:
+            break
+
+    res = "، ".join(picked_parts)
+    # إزالة الحشو اللفظي العام فقط في نهاية أو حواف الجملة
+    res = re.sub(r'\s+', ' ', res).strip(" -—,:;.|/،؛")
+
+    # 3. قص آمن عند حدود الكلمات بدون قطع أي كلمة أو ترك حرف جر معلق
+    res = _trim_at_word_boundary(res, max_len=max_len, is_ar=True)
+
+    # 4. إضافة الماركة فقط لو كانت غائبة تماماً عن العنوان العربي (لا تكرار أبداً ولا حقن وسط الجملة!)
+    if brand_en and not _title_contains_brand(res, brand_en):
+        suffix = f" — {brand_en}"
+        if len(res) + len(suffix) <= max_len + 4:
+            res = res + suffix
+        else:
+            res = _trim_at_word_boundary(res, max_len=max_len - len(suffix), is_ar=True) + suffix
+
+    return res[:88].strip(" -—,:;.|/،؛")
+
+
+def _clean_natural_ar_fallback(title, brand_en="", extra_specs_ar=None):
+    return _smart_clean_ar_title(title, brand_en=brand_en, extra_specs_ar=extra_specs_ar, max_len=84)
 
 
 _EN_TYPO_FIXES = {
@@ -3516,12 +3893,13 @@ _EN_TYPO_FIXES = {
     "wirless": "Wireless",
     "chargar": "Charger",
     "freeclip": "FreeClip",
+    "onkuma": "Onikuma",
 }
 
 _EN_SEO_FLUFF = {
     "groundbreaking", "aesthetic", "feather", "featherlight", "wearing", "revolutionary",
     "amazing", "best", "authentic", "ultimate", "perfect", "newest", "latest", "upgraded",
-    "frz", "ref", "big", "box", "stylish", "elegant", "ergonomic", "comfortable",
+    "frz", "ref", "stylish", "elegant", "ergonomic", "comfortable",
     "high-quality", "heavy-duty", "premium", "luxury", "superb", "awesome",
 }
 
@@ -3543,31 +3921,40 @@ def _strip_en_seo_fluff(words):
     return cleaned
 
 
-def _clean_en_official_title(en_title, brand_en=""):
-    """ينظف العنوان الإنجليزي الرسمي للمتجر ليكون أنيقاً ومختصراً بدون حشو SEO."""
+def _clean_en_official_title(en_title, brand_en="", max_len=84):
+    """ينظف العنوان الإنجليزي الرسمي للمتجر بذكاء (Real-Title-First V3) فيحافظ على الموديل والمواصفات الأساسية بدون حشو SEO."""
     if not en_title:
         return ""
-    s = re.sub(r'[\u0600-\u06FF]+', ' ', str(en_title))
+    s = re.sub(r'[\u200b-\u200f\ufeff]', '', str(en_title))
+    s = re.sub(r'[\u0600-\u06FF]+', ' ', s)
     s = re.sub(r'\s+', ' ', s).strip()
     if len(s) < 5:
         return ""
-    # قص الحشو الدعائي الطويل بعد الفاصلة أو الشرطة إذا كان الجزء الأول وافياً
-    clauses = re.split(r'\s*(?:\||–|—|\s-\s|,)\s*', s)
-    picked = clauses[0].strip()
-    if len(picked.split()) < 4 and len(clauses) > 1:
-        picked = f"{picked} {clauses[1].strip()}".strip()
-    fluff_cleaned = _strip_en_seo_fluff(picked.split())
-    words = fluff_cleaned[:7]
-    # لو انتهى الاقتطاع عند "Pack" أو "Set" وبعدها "of 12" نضمها حتى لا تنقطع العبارة
-    if words and words[-1].lower() in ("pack", "set", "box") and len(fluff_cleaned) >= 9 and fluff_cleaned[7].lower() == "of":
-        words.extend(fluff_cleaned[7:9])
-    while words and words[-1].lower() in ("for", "with", "and", "or", "in", "to", "of", "by", "the", "a", "an", "pack", "set", "box"):
-        words.pop()
-    out = " ".join(words).strip(" ,.-—|")
+    clauses = [c.strip(" ,.-—|") for c in re.split(r'\s*(?:\||–|—|\s-\s|,)\s*', s) if c.strip(" ,.-—|")]
+    if not clauses:
+        return ""
+    picked = []
+    cur_len = 0
+    for idx, cl in enumerate(clauses):
+        if idx > 0 and _EN_CLAUSE_FLUFF_RE.match(cl):
+            continue
+        cl_clean = " ".join(_strip_en_seo_fluff(cl.split()))
+        if not cl_clean:
+            continue
+        if idx == 0:
+            picked.append(cl_clean)
+            cur_len = len(cl_clean)
+        elif cur_len < 54 and (cur_len + len(cl_clean) + 2) <= max_len:
+            picked.append(cl_clean)
+            cur_len += len(cl_clean) + 2
+        else:
+            break
+    out = ", ".join(picked).strip(" ,.-—|")
     if not out:
         return ""
     out = _dedupe_brand_prefix(out, brand_en)
-    return out[:85]
+    out = _trim_at_word_boundary(out, max_len=max_len, is_ar=False)
+    return out
 
 
 def _clean_en_slug_title(en_slug, brand_en=""):
@@ -3586,26 +3973,57 @@ def _clean_en_slug_title(en_slug, brand_en=""):
     s = re.sub(r'[-_]+', ' ', s).strip()
     if not s or re.search(r'[\u0600-\u06FF]', s):
         return ""
-    words = _strip_en_seo_fluff(s.split())[:7]
+    words = _strip_en_seo_fluff(s.split())[:10]
     while words and words[-1].lower() in ("for", "with", "and", "or", "in", "to", "of", "by", "the", "a", "an"):
         words.pop()
     titled = []
     for w in words:
         if w in _EN_TYPO_FIXES.values():
             titled.append(w)
-        elif w.upper() in ("USB", "HDMI", "LED", "LCD", "QLED", "OLED", "UHD", "FHD", "HD", "ANC", "ENC", "TWS", "RGB", "ARGB", "PWM", "SSD", "RAM", "5G", "4K", "3K", "2K", "PD", "GAN"):
+        elif w.upper() in ("USB", "HDMI", "LED", "LCD", "QLED", "OLED", "UHD", "FHD", "HD", "ANC", "ENC", "TWS", "RGB", "ARGB", "PWM", "SSD", "RAM", "5G", "4K", "3K", "2K", "PD", "GAN", "VA", "IPS", "QHD", "WQHD"):
             titled.append(w.upper())
-        elif re.match(r'^\d+(?:gb|tb|mah|w|l|ml|kg|hz|mp|mm)$', w, re.I):
-            titled.append(w.upper().replace("MAH", "mAh").replace("ML", "ml").replace("KG", "kg").replace("HZ", "Hz").replace("MM", "mm"))
+        elif re.match(r'^\d+(?:gb|tb|mah|w|l|ml|kg|hz|mp|mm|cm)$', w, re.I):
+            titled.append(w.upper().replace("MAH", "mAh").replace("ML", "ml").replace("KG", "kg").replace("HZ", "Hz").replace("MM", "mm").replace("CM", "cm"))
         else:
             titled.append(w.capitalize())
     out = " ".join(titled)
     out = _dedupe_brand_prefix(out, brand_en)
-    return out[:85].strip()
+    return _trim_at_word_boundary(out, max_len=84, is_ar=False)
 
 
-# الفئات الواسعة (السوبرماركت، المكملات، الملابس، التجميل، الأواني، العدد...)
-# التي لا يكفي اسم القسم العام لوصف المنتج، فيُحتفظ باسم المنتج الحقيقي النظيف بدل استبداله باسم القسم!
+# أزواج الفئات المتعارضة مادياً بصورة قاطعة (تُستخدم لاكتشاف الترجمة العربية التالفة على أمازون دون إفساد العناوين الصحيحة)
+_STRICT_INCOMPATIBLE_CAT_PAIRS = {
+    frozenset(("wall_charger", "charging_cable")),
+    frozenset(("wall_charger", "power_strip")),
+    frozenset(("ethernet_cable", "charging_cable")),
+    frozenset(("mouse_pad", "mouse")),
+    frozenset(("mouse_pad", "gaming_mouse")),
+    frozenset(("speaker", "earbuds")),
+    frozenset(("speaker", "headphones")),
+    frozenset(("protective_case", "smartphone")),
+    frozenset(("protective_case", "tablet")),
+    frozenset(("protective_case", "earbuds")),
+    frozenset(("protective_case", "smartwatch")),
+    frozenset(("screen_protector", "smartphone")),
+    frozenset(("screen_protector", "tablet")),
+    frozenset(("screen_protector", "smartwatch")),
+    frozenset(("screen_protector", "gaming_monitor")),
+    frozenset(("screen_protector", "smart_tv")),
+    frozenset(("watch_strap", "smartwatch")),
+    frozenset(("laptop_bag", "laptop")),
+    frozenset(("laptop_cooler", "laptop")),
+    frozenset(("laptop_charger", "laptop")),
+    frozenset(("coffee_drink", "coffee_maker")),
+    frozenset(("ironing_board", "steam_iron")),
+    frozenset(("appliance_stand", "washing_machine")),
+    frozenset(("appliance_stand", "refrigerator")),
+    frozenset(("tv_stick", "smart_tv")),
+    frozenset(("remote_control", "smart_tv")),
+    frozenset(("usb_hub", "stationery")),
+    frozenset(("usb_hub", "tools")),
+}
+
+# الفئات الواسعة (مُحتفظ بها للتوافق الخلفي مع أي استيراد خارجي)
 _BROAD_CATEGORIES_KEEP_TITLE = {
     "grocery", "supplements", "cookware", "dinnerware", "clothing", "shoes",
     "skin_care", "hair_care", "personal_care", "makeup", "sanitary_pads",
@@ -3633,25 +4051,25 @@ def analyze_product(
     en_breadcrumbs=None,
 ):
     """
-    المحلل الذكي ثلاثي المصادر للمنتج (Tri-Modal Consensus V2):
-    يجمع ويقارن بين:
-      1) النسخة الإنجليزية الرسمية للمتجر (en_title + en_brand + en_breadcrumbs من /-/en/dp/ أو /egypt-en/)
-      2) النسخة العربية الكاملة (العنوان + الوصف + المواصفات + مسار الفئة + السعر)
-      3) الرؤية الحاسوبية لصورة المنتج الحقيقية (CLIP Vision ONNX)
-    فيكتشف فوراً أي ترجمة عربية آلية تالفة في أمازون/نون (مثل تسمية شاحن حائط UGREEN كابلاً!)
-    ويمنع تماماً ظهور "Featured Product" أو ترجمة أسماء الماركات دلالياً.
+    المحلل الذكي ثنائي اللغة (Real-Title-First Bilingual Intelligence V3):
+    - يحتفظ دائماً بهوية المنتج الحقيقية (موديله ومقاسه ومواصفاته) ولا يستبدل العنوان أبداً بقالب قسم عام خاطئ
+      (فلا يتحول ماوس باد إلى "ماوس كمبيوتر"، ولا كابل Cat8 إلى "كابل شحن"، ولا لابتوب IdeaPad إلى "لابتوب 512GB"!).
+    - يجمع بين النسخة الإنجليزية الرسمية للمتجر (/-/en/dp/) + النسخة العربية + الرؤية الحاسوبية (CLIP)
+      لكشف الترجمة العربية الآلية التالفة فقط (عند وجود تعارض مادي صريح)، وعندها يترجم العنوان الإنجليزي الرسمي
+      باحترافية مع حماية أسماء الماركات وأكواد الموديلات.
     """
-    t_clean = re.sub(r'\s+', ' ', str(title or "")).strip()
+    t_clean = re.sub(r'[\u200b-\u200f\ufeff]', '', str(title or ""))
+    t_clean = re.sub(r'\s+', ' ', t_clean).strip()
     feats_list = [str(f).strip() for f in (features or []) if f and str(f).strip()]
     specs_list = [str(s).strip() for s in (specs or []) if s and str(s).strip()]
     crumbs_str = " > ".join(breadcrumbs) if isinstance(breadcrumbs, (list, tuple)) else str(breadcrumbs or "")
     full_context_text = " | ".join(feats_list + specs_list + ([str(extra_desc)] if extra_desc else []))
 
     # 0. جلب الحقيقة الرسمية بالإنجليزية من المتجر تلقائياً لأي رابط أمازون مصر عندما لا تكون ممررة مسبقاً
-    en_t_clean = re.sub(r'\s+', ' ', str(en_title or "")).strip()
+    en_t_clean = re.sub(r'[\u200b-\u200f\ufeff]', '', str(en_title or ""))
+    en_t_clean = re.sub(r'\s+', ' ', en_t_clean).strip()
     en_b_clean = str(en_brand or "").strip()
     en_bc_list = list(en_breadcrumbs) if isinstance(en_breadcrumbs, (list, tuple)) else ([en_breadcrumbs] if en_breadcrumbs else [])
-    # لو الصفحة الإنجليزية أعادت نصاً عربياً بسبب كوكيز الجلسة نتجاهله ونجلب النسخة الإنجليزية النقية
     if en_t_clean and len(re.findall(r'[\u0600-\u06FF]', en_t_clean)) > len(re.findall(r'[A-Za-z]', en_t_clean)):
         en_t_clean = ""
     if en_b_clean and re.search(r'[\u0600-\u06FF]', en_b_clean):
@@ -3672,7 +4090,7 @@ def analyze_product(
     en_crumbs_str = " > ".join(str(x).strip() for x in en_bc_list if x)
     all_crumbs_str = f"{crumbs_str} > {en_crumbs_str}".strip(" >")
 
-    # 1. استخراج الماركة بالإنجليزية دائماً (بأولوية النسخة الإنجليزية الرسمية للمتجر + القاموس الموسع)
+    # 1. استخراج الماركة بالإنجليزية دائماً (بأولوية النسخة الإنجليزية الرسمية + حراس منع سرقة ماركة الجهاز ومنع تداخل Camay/Kemei)
     brand_en = normalize_brand_english(
         brand,
         title=t_clean,
@@ -3685,7 +4103,7 @@ def analyze_product(
     slug_en_title = _clean_en_slug_title(en_slug, brand_en=brand_en)
     en_official_clean = _clean_en_official_title(en_t_clean, brand_en=brand_en) or slug_en_title
 
-    # 2-أ. تقييم المصدر الإنجليزي الرسمي بمفرده (غير متأثر بأي ترجمة عربية آلية مكسورة!)
+    # 2-أ. تقييم الفئة الداخلية (cat_key) من المصدر الإنجليزي الرسمي
     en_ref_for_cat = en_t_clean or slug_en_title
     en_scores = {}
     en_head_matched = set()
@@ -3706,11 +4124,11 @@ def analyze_product(
     en_best_cat = ranked_en[0][0] if ranked_en else None
     en_best_score = ranked_en[0][1] if ranked_en else 0.0
 
-    # 2-ب. تقييم المصدر العربي بمفرده
+    # 2-ب. تقييم الفئة الداخلية (cat_key) من المصدر العربي بمفرده (بدون خلط مسار الإنجليزي حتى نكتشف أي تعارض حقيقي!)
     ar_scores, ar_head_matched = _score_text_categories(
         t_clean,
         en_slug="" if en_t_clean else (en_slug or ""),
-        breadcrumbs=all_crumbs_str,
+        breadcrumbs=crumbs_str,
         features_text=full_context_text,
         brand_en=brand_en,
         price=price,
@@ -3722,108 +4140,68 @@ def analyze_product(
     ar_best_cat = ranked_ar[0][0] if ranked_ar else None
     ar_best_score = ranked_ar[0][1] if ranked_ar else 0.0
 
-    # 3. التحقق البصري عبر صورة المنتج (CLIP Vision) وحسم التعارض بين المصادر الثلاثة
-    has_ar_en_conflict = bool(en_best_cat and ar_best_cat and en_best_cat != ar_best_cat)
+    is_placeholder_title = (
+        not t_clean
+        or len(t_clean) < 6
+        or any(ph in t_clean for ph in ("منتج على نون", "منتج على أمازون", "منتج مميز على"))
+    )
+
+    # 3. التحقق البصري عبر صورة المنتج (CLIP Vision) وحسم التعارض المادي الصريح فقط
+    strict_conflict = bool(
+        en_best_cat and ar_best_cat and en_best_cat != ar_best_cat
+        and frozenset((en_best_cat, ar_best_cat)) in _STRICT_INCOMPATIBLE_CAT_PAIRS
+    )
     vision_res = None
     should_check_vision = use_vision and bool(image_url) and (
-        has_ar_en_conflict
-        or (ar_best_cat is None and en_best_cat is None)
-        or (not en_best_cat and (ar_best_cat in _AMBIGUOUS_TEXT_CATS or ar_best_score < 52.0 or ar_best_cat not in ar_head_matched))
+        strict_conflict
+        or is_placeholder_title
+        or (not en_t_clean and ar_best_cat in _AMBIGUOUS_TEXT_CATS and ar_best_score < 55.0)
     )
     if should_check_vision:
         vision_res = classify_product_image(image_url)
 
-    ar_title_corrupted = False
+    ar_title_corrupted = is_placeholder_title
     chosen_cat = ar_best_cat
 
-    # حسم الإجماع الثلاثي (Tri-Modal Consensus):
+    # حسم الفئة الداخلية واكتشاف الترجمة العربية التالفة بدقة جراحية:
     if en_best_cat and en_best_score >= 48.0:
-        if ar_best_cat is None:
+        if ar_best_cat is None or ar_best_cat == en_best_cat:
             chosen_cat = en_best_cat
-        elif ar_best_cat == en_best_cat:
-            chosen_cat = en_best_cat
-        else:
-            # تعارض صريح بين العنوان العربي والنسخة الإنجليزية الرسمية (مثل: كابل يوجرين vs UGREEN 30W GaN Wall Charger)!
+        elif strict_conflict:
+            # تعارض مادي صريح بين النسخة الإنجليزية الرسمية والعنوان العربي (مثل Wall Charger vs كابل شحن، أو Mouse Pad vs ماوس!)
             v_probs = (vision_res or {}).get("probs") or {}
             v_en = v_probs.get(en_best_cat, 0.0)
             v_ar = v_probs.get(ar_best_cat, 0.0)
-            if en_best_score >= 60.0 or v_en > v_ar + 0.08 or ar_best_cat in _AMBIGUOUS_TEXT_CATS:
+            if en_best_score >= 58.0 or v_en > v_ar + 0.08:
                 chosen_cat = en_best_cat
                 ar_title_corrupted = True
             else:
                 chosen_cat = ar_best_cat
+        else:
+            # مجرد فرق فئة فرعية (مثلاً gaming_keyboard vs keyboard) -> نأخذ الأدق دون إفساد العنوان العربي
+            chosen_cat = en_best_cat if en_best_score >= ar_best_score else ar_best_cat
 
-    # في حال عدم توفر حسم إنجليزي (أو لمزيد من التدقيق البصري عندما يغيب النص الإنجليزي)
-    is_placeholder_title = (
-        not t_clean
-        or len(t_clean) < 8
-        or any(ph in t_clean for ph in ("منتج على نون", "منتج على أمازون", "منتج مميز على"))
-    )
-    if vision_res and not (en_best_cat and en_best_score >= 60.0 and chosen_cat == en_best_cat):
+    # التدقيق البصري الاحتياطي فقط في حال غياب عنوان إنجليزي رسمي أو وجود عنوان placeholder
+    if vision_res and not en_t_clean:
         v_cat = vision_res["top_cat"]
         v_prob = vision_res["top_prob"]
         v_cos = vision_res.get("max_cos", 0.0)
-        v_sec_prob = vision_res.get("second_prob", 0.0)
         v_probs = vision_res.get("probs") or {}
-
         if v_cat in CATEGORY_BY_KEY and not _is_cat_forbidden(v_cat, brand_en, price, all_crumbs_str, title_str=t_clean):
-            if chosen_cat is None:
-                non_device_ar_hint = bool(re.search(r'كتاب|رواية|قلم|أقلام|شامبو|كريم|غسول|صابون|عطر|شاي|قهوة|زيت|مكرونة|بسكويت', t_clean))
-                # شرط صارم: الرؤية الحاسوبية لا تفرض فئة وتلغي النص أبداً إلا لو كان العنوان شكلياً (placeholder) أو النص يؤيد فئة الرؤية
-                has_semantic_support = _vision_is_semantically_supported(v_cat, t_clean, all_crumbs_str)
-                if (is_placeholder_title and v_prob >= 0.45) or (
-                    not non_device_ar_hint
-                    and has_semantic_support
-                    and v_cat in _HIGH_PRECISION_VISION_CATS
-                    and v_prob >= 0.50
-                    and v_cos >= 0.28
-                    and v_prob >= max(0.50, v_sec_prob * 2.0)
-                ):
-                    chosen_cat = v_cat
-                    ar_title_corrupted = True
-            elif v_cat != chosen_cat and chosen_cat in _AMBIGUOUS_TEXT_CATS and v_prob >= 0.46 and v_cos >= 0.27:
-                # الجرابات ولاصقات الحماية تظهر بصرياً كموبايل في صور المتاجر، فلا نلغيها لو مكتوبة صراحةً في أول العنوان
-                is_case_or_glass = (
-                    chosen_cat in ("protective_case", "screen_protector")
-                    and re.match(r'^\s*(?:[\w\u0600-\u06FF]+\s+)?(?:جراب|كفر|حافظة|واقي|لاصقة|سكرين)', t_clean)
-                )
-                # لو الصورة تؤكد بقوة عالية (>52%) أنها منتج مختلف تماماً (مثل شاحن حائط أو غلاية) واحتمال الفئة النصية في الصورة ضئيل (<12%) -> نصحح الفئة فوراً!
-                strong_visual_contradiction = (v_prob >= 0.52 and v_probs.get(chosen_cat, 0.0) < 0.12)
-                if not is_case_or_glass and (strong_visual_contradiction or chosen_cat not in ar_head_matched):
+            if is_placeholder_title and v_prob >= 0.48:
+                chosen_cat = v_cat
+                ar_title_corrupted = True
+            elif chosen_cat and v_cat != chosen_cat and frozenset((v_cat, chosen_cat)) in _STRICT_INCOMPATIBLE_CAT_PAIRS:
+                if v_prob >= 0.65 and v_cos >= 0.29 and v_probs.get(chosen_cat, 0.0) < 0.08:
                     chosen_cat = v_cat
                     ar_title_corrupted = True
 
-    # 3.5. محرك الاكتشاف التلقائي للفئات الجديدة (Open-World Dynamic Category Discovery):
-    # إذا لم يكن المنتج ضمن الفئات الثابتة (منتج جديد بالكامل مثل: درون، بروجكتور، منفاخ إطارات، دراجة رياضية...)
-    # يتعرف البوت على نوعه من مسار القسم الرسمي في المتجر أو من رأس العنوان وينشئ له فئة ذكية جديدة فوراً!
-    if chosen_cat is None and not is_placeholder_title:
-        dyn_cat = discover_open_world_category(
-            title=t_clean,
-            en_title=en_official_clean or slug_en_title,
-            breadcrumbs=breadcrumbs,
-            en_breadcrumbs=en_bc_list,
-            brand_en=brand_en,
-            features_text=full_context_text,
-            price=price,
-        )
-        if dyn_cat:
-            chosen_cat = dyn_cat["cat_key"]
-
-    # 3.6. حارس أسبقية الإكسسوار: لو العنوان (عربي أو إنجليزي) بيبدأ باسم إكسسوار (جراب/حافظة/كفر/Case for...)
-    # يبقى المنتج هو الإكسسوار نفسه مش الجهاز المذكور بعده (جراب سماعة ≠ سماعة) مهما قالت الصورة أو باقي النص.
+    # حارس أسبقية الإكسسوار للفئة الداخلية فقط
     acc_cat = _detect_leading_accessory(t_clean) or _detect_leading_accessory(en_t_clean or slug_en_title)
     if acc_cat and chosen_cat != acc_cat and (chosen_cat is None or chosen_cat in _DEVICE_CATS_FOR_ACCESSORY_GUARD):
         chosen_cat = acc_cat
-    accessory_target = _extract_accessory_target(f"{t_clean} {en_t_clean or ''} {slug_en_title or ''}") if chosen_cat in ("protective_case", "screen_protector", "watch_strap") else None
-    if accessory_target:
-        _, _, tgt_maker = accessory_target
-        if tgt_maker and brand_en and brand_en.lower() == tgt_maker.lower():
-            explicit_b_en = normalize_brand_english(brand, title="", extra_text="", en_brand=en_b_clean, en_title="", allow_network=False) if (brand or en_b_clean) else ""
-            is_explicit_maker = bool(explicit_b_en and explicit_b_en.lower() == tgt_maker.lower())
-            if not (is_explicit_maker and price is not None and price >= 400):
-                brand_en = ""
 
-    # 4. بناء الاسم العربي والاسم الإنجليزي بذكاء ودقة (مع استبعاد العنوان العربي التالف من استخراج المواصفات!)
+    # 4. استخراج المواصفات الداعمة للوصف الذكي
     title_for_specs = "" if ar_title_corrupted else t_clean
     specs_ar_list, specs_en_list = _extract_rich_specs(
         title_for_specs,
@@ -3833,131 +4211,72 @@ def analyze_product(
         brand_en=brand_en,
         en_title=en_t_clean or (slug_en_title if ar_title_corrupted else ""),
     )
-    spec_ar_str = " ".join(specs_ar_list).strip()
-    spec_en_str = " ".join(specs_en_list).strip()
 
+    cat_ar, cat_en, cat_fallback_desc = None, None, None
     if chosen_cat and chosen_cat in CATEGORY_BY_KEY:
         _, _, cat_ar, cat_en, cat_fallback_desc = CATEGORY_BY_KEY[chosen_cat]
 
-        # للفئات الواسعة (السوبرماركت، المكملات، التجميل، الأواني، الملابس، العدد...):
-        # نعرض اسم المنتج الحقيقي النظيف (مثل: كيك براوني تودو Edita / زيت عباد شمس Slite) بدل اسم القسم العام!
-        if chosen_cat in _BROAD_CATEGORIES_KEEP_TITLE and not ar_title_corrupted and re.search(r'[\u0600-\u06FF]', t_clean):
-            specific_ar = _clean_natural_ar_fallback(t_clean, brand_en=brand_en, extra_specs_ar=specs_ar_list)
-            if len(specific_ar) >= 6:
-                name_ar = specific_ar
-            elif brand_en and brand_en.lower() not in spec_ar_str.lower() and brand_en.lower() not in cat_ar.lower():
-                name_ar = f"{cat_ar} {brand_en} {spec_ar_str}".strip()
-            else:
-                name_ar = f"{cat_ar} {spec_ar_str}".strip()
+    # 5. بناء الاسم العربي والإنجليزي وفق معمارية (Real-Title-First V3):
+    #    الاسم الحقيقي للمنتج هو المصدر الأول دائماً؛ ولا يُستخدم قالب القسم العام إلا لو كان العنوان فارغاً/شكلياً بالكامل!
+    ar_letter_count = len(re.findall(r'[\u0600-\u06FF]', t_clean))
+    en_letter_count = len(re.findall(r'[A-Za-z]', t_clean))
+    t_is_arabic = ar_letter_count >= 3 and ar_letter_count >= en_letter_count * 0.25
+    t_is_mostly_english = en_letter_count >= 5 and ar_letter_count < 3
 
-            if en_official_clean and len(en_official_clean) >= 6:
-                built_en = _dedupe_brand_prefix(en_official_clean, brand_en)
-            elif not re.search(r'[\u0600-\u06FF]', t_clean) and len(t_clean) >= 6:
-                built_en = _dedupe_brand_prefix(" ".join(t_clean.split()[:7]).strip(" ,.-"), brand_en)
-            else:
-                tr_en_broad = translate_ar_to_en_fast(name_ar, timeout=3.5) if allow_network_translate else ""
-                if tr_en_broad and len(tr_en_broad) >= 5:
-                    built_en = _dedupe_brand_prefix(tr_en_broad, brand_en)
-                elif brand_en and brand_en.lower() not in spec_en_str.lower() and brand_en.lower() not in cat_en.lower():
-                    built_en = f"{brand_en} {spec_en_str} {cat_en}".strip()
-                else:
-                    built_en = f"{spec_en_str} {cat_en}".strip()
-            name_en = built_en
-        else:
-            # للفئات الديناميكية المكتشفة تلقائياً: لو لم تتوفر مواصفات محددة، نضيف الكلمات المميزة من العنوان
-            if chosen_cat.startswith("dyn_") and not spec_ar_str:
-                t_rem = re.sub(r'[\(\[\{].*?[\)\]\}]', ' ', title_for_specs)
-                norm_cat_tokens = {norm_ar_token(w) for w in cat_ar.split()}
-                dyn_words = []
-                for raw_w in t_rem.split():
-                    w_norm = norm_ar_token(raw_w)
-                    if (len(raw_w) > 1 or raw_w.isdigit()) and w_norm not in norm_cat_tokens and raw_w.lower() not in _OPEN_WORLD_DANGLING_AR:
-                        if not brand_en or raw_w.lower() != brand_en.lower():
-                            dyn_words.append(raw_w)
-                if dyn_words:
-                    spec_ar_str = " ".join(dyn_words[:4]).strip()
-
-            if brand_en and brand_en.lower() not in spec_ar_str.lower() and brand_en.lower() not in cat_ar.lower():
-                name_ar = f"{cat_ar} {brand_en} {spec_ar_str}".strip()
-            else:
-                name_ar = f"{cat_ar} {spec_ar_str}".strip()
-
-            if brand_en and brand_en.lower() not in spec_en_str.lower() and brand_en.lower() not in cat_en.lower():
-                built_en = f"{brand_en} {spec_en_str} {cat_en}".strip()
-            else:
-                built_en = f"{spec_en_str} {cat_en}".strip()
-
-            # لو لم نستخرج موديل محدد وكان لدينا عنوان إنجليزي رسمي أنيق من المتجر، نحتفظ به ليكون غنياً ودقيقاً
-            if not spec_en_str and en_official_clean and len(en_official_clean) >= 10:
-                built_en = _dedupe_brand_prefix(en_official_clean, brand_en)
-            elif not re.search(r'[\u0600-\u06FF]', t_clean) and len(t_clean) >= 8 and not spec_en_str:
-                short_orig_en = " ".join(t_clean.split()[:7]).strip(" ,.-")
-                built_en = _dedupe_brand_prefix(short_orig_en, brand_en)
-
-            name_en = built_en
+    # 5-أ. بناء الاسم الإنجليزي الحقيقي أولاً (الأدق لأن عناوين أمازون الإنجليزية الرسمية لا تعاني من أخطاء الترجمة الآلية)
+    if en_official_clean and len(en_official_clean) >= 6:
+        name_en = en_official_clean
+    elif t_is_mostly_english and not is_placeholder_title:
+        name_en = _clean_en_official_title(t_clean, brand_en=brand_en)
     else:
-        cat_fallback_desc = None
-        if re.search(r'[\u0600-\u06FF]', t_clean) and not ar_title_corrupted:
-            name_ar = _clean_natural_ar_fallback(t_clean, brand_en=brand_en)
-        else:
-            src_en_for_ar = en_official_clean or t_clean
-            tr_to_ar = ""
-            if allow_network_translate and src_en_for_ar:
-                try:
-                    r_ar = requests.get(
-                        "https://translate.googleapis.com/translate_a/single",
-                        params={"client": "gtx", "sl": "en", "tl": "ar", "dt": "t", "q": src_en_for_ar[:120]},
-                        timeout=3.0,
-                    )
-                    if r_ar.ok:
-                        tr_to_ar = "".join(seg[0] for seg in (r_ar.json()[0] or []) if seg and seg[0]).strip()
-                except Exception:
-                    pass
-            name_ar = _clean_natural_ar_fallback(tr_to_ar or src_en_for_ar, brand_en=brand_en)
+        name_en = ""
 
-        if en_official_clean:
-            name_en = en_official_clean
-        elif not re.search(r'[\u0600-\u06FF]', t_clean) and len(t_clean) >= 6:
-            short_en = " ".join(t_clean.split()[:8]).strip(" ,.-")
-            name_en = f"{brand_en} {short_en}".strip() if (brand_en and brand_en.lower() not in short_en.lower()) else short_en
+    # 5-ب. بناء الاسم العربي الحقيقي:
+    if t_is_arabic and not ar_title_corrupted:
+        name_ar = _smart_clean_ar_title(t_clean, brand_en=brand_en, extra_specs_ar=specs_ar_list)
+    elif name_en:
+        # العنوان العربي غير متوفر أو كان بالإنجليزية فقط أو ثبت تلف ترجمته الآلية -> نترجم العنوان الإنجليزي الرسمي بدقة مع حماية الماركة والموديل!
+        tr_ar = translate_en_to_ar_fast(name_en, brand_en=brand_en, timeout=3.5) if allow_network_translate else ""
+        if tr_ar and len(tr_ar) >= 5:
+            name_ar = _smart_clean_ar_title(tr_ar, brand_en=brand_en, extra_specs_ar=specs_ar_list)
+        elif cat_ar:
+            spec_ar_str = " ".join(specs_ar_list).strip()
+            name_ar = f"{cat_ar} {brand_en} {spec_ar_str}".strip() if (brand_en and brand_en.lower() not in spec_ar_str.lower()) else f"{cat_ar} {spec_ar_str}".strip()
         else:
-            tr_en = translate_ar_to_en_fast(name_ar, timeout=3.5) if allow_network_translate else ""
-            if tr_en:
-                name_en = f"{brand_en} {tr_en}".strip() if (brand_en and brand_en.lower() not in tr_en.lower()) else tr_en
-            else:
-                tr_translit = transliterate_ar_to_en(name_ar)
-                name_en = tr_translit if len(tr_translit) >= 5 else (f"{brand_en} Product".strip() if brand_en else "Selected Deal")
+            name_ar = name_en
+    elif cat_ar:
+        spec_ar_str = " ".join(specs_ar_list).strip()
+        name_ar = f"{cat_ar} {brand_en} {spec_ar_str}".strip() if (brand_en and brand_en.lower() not in spec_ar_str.lower()) else f"{cat_ar} {spec_ar_str}".strip()
+    else:
+        name_ar = _smart_clean_ar_title(t_clean, brand_en=brand_en)
 
-    # أسماء الإكسسوارات تذكر الجهاز المستهدف بوضوح (جراب سماعة AirPods Pro 2 / Protective Case for Galaxy Buds2 Pro)
-    if accessory_target:
-        tgt_ar_kind, tgt_model, tgt_maker = accessory_target
-        acc_ar = {"protective_case": "جراب حماية", "screen_protector": "لاصقة حماية شاشة", "watch_strap": "سوار"}[chosen_cat]
-        acc_en = {"protective_case": "Protective Case", "screen_protector": "Screen Protector", "watch_strap": "Strap"}[chosen_cat]
-        show_brand = bool(brand_en) and brand_en.lower() not in tgt_model.lower() and brand_en.lower() != (tgt_maker or "").lower()
-        if not tgt_maker and tgt_model in ("Earbuds", "Smartphone", "Tablet", "Smartwatch"):
-            name_ar = f"{acc_ar} {tgt_ar_kind}".strip()
-            name_en = f"{tgt_model} {acc_en}".strip()
-        else:
-            name_ar = f"{acc_ar} {tgt_ar_kind} {tgt_model}".strip()
-            name_en = f"{acc_en} for {tgt_model}".strip()
-        if show_brand:
-            name_ar += f" من {brand_en}"
-            name_en = f"{brand_en} {name_en}"
+    # 5-ج. استكمال الاسم الإنجليزي (لمنتجات نون العربية الصرفة التي لا تملك عنواناً إنجليزياً رسمياً)
+    if not name_en:
+        if allow_network_translate and name_ar and re.search(r'[\u0600-\u06FF]', name_ar):
+            ar_for_tr = re.sub(r'\s*—\s*' + re.escape(brand_en) + r'\s*$', '', name_ar, flags=re.I) if brand_en else name_ar
+            tr_en = translate_ar_to_en_fast(ar_for_tr, timeout=3.5, brand_en=brand_en)
+            if tr_en and len(tr_en) >= 5:
+                name_en = _clean_en_official_title(tr_en, brand_en=brand_en)
+        if not name_en and cat_en:
+            spec_en_str = " ".join(specs_en_list).strip()
+            name_en = f"{brand_en} {spec_en_str} {cat_en}".strip() if (brand_en and brand_en.lower() not in spec_en_str.lower()) else f"{spec_en_str} {cat_en}".strip()
+        if not name_en:
+            tr_translit = transliterate_ar_to_en(name_ar)
+            name_en = tr_translit if len(tr_translit) >= 5 else (f"{brand_en} Product".strip() if brand_en else "Selected Deal")
 
-    # تنظيف صارم يضمن عدم وجود أي حرف عربي في السطر الإنجليزي أبداً
+    # تنظيف صارم يضمن عدم وجود أي حرف عربي في السطر الإنجليزي أبداً وعدم قطع الكلمات
     name_en = re.sub(r'[\u0600-\u06FF]+', ' ', name_en)
-    name_en = re.sub(r'\s+', ' ', name_en).strip(" -—,:;.")
+    name_en = _trim_at_word_boundary(name_en, max_len=86, is_ar=False)
     if len(re.findall(r'[A-Za-z]{2,}', name_en)) == 0:
         name_en = en_official_clean or (f"{brand_en} Product".strip() if brand_en else "Selected Deal")
 
-    name_ar = re.sub(r'\s+', ' ', name_ar).strip(" -—,:;.")[:88]
-    name_en = name_en[:88]
+    name_ar = _trim_at_word_boundary(name_ar, max_len=88, is_ar=True)
 
-    # 5. بناء الوصف العربي الدقيق (مع تجاهل نقاط الوصف العربية إن كان العنوان العربي للصفحة تالفاً، ودمج المواصفات الحقيقية)
+    # 6. بناء الوصف العربي الدقيق (متطابق دائماً مع المنتج الحقيقي ولا يعارضه أبداً)
     safe_feats = [] if ar_title_corrupted else feats_list
     safe_extra = None if ar_title_corrupted else extra_desc
     description = build_smart_description(
-        name_ar if ar_title_corrupted else t_clean,
+        name_ar,
         features=safe_feats,
         extra_desc=safe_extra,
         brand_en=brand_en,
