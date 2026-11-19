@@ -37,16 +37,22 @@ if MAIN_CHANNEL_ID not in CHAT_IDS and MAIN_CHANNEL_USERNAME not in CHAT_IDS:
 # الـ Chat ID الخاص بصاحب البوت لاستقبال أي لينك في الخاص وتحويله لأفلييت القناة ونشره فوراً
 OWNER_CHAT_ID = int(os.getenv("OWNER_CHAT_ID", "6725805788"))
 MIN_DISCOUNT = 30
-MAX_PER_CYCLE = int(os.getenv("MAX_PER_CYCLE", "10"))  # الحد الأقصى الافتراضي للدورة
-# توازن طبيعي حسب قوة العروض مع أفضلية لأمازون (10 أمازون مقابل 6 نون للعروض العادية، و8 لنون في العروض اللقطة جداً)
-AMAZON_MAX_PER_CYCLE = int(os.getenv("AMAZON_MAX_PER_CYCLE", "10"))
-NOON_MAX_PER_CYCLE = int(os.getenv("NOON_MAX_PER_CYCLE", "6"))
-NOON_MIN_PER_CYCLE = int(os.getenv("NOON_MIN_PER_CYCLE", "4"))
+MAX_PER_CYCLE = int(os.getenv("MAX_PER_CYCLE", "6"))  # الحد الأقصى الافتراضي للدورة
+# معدل نشر راقي وذكي (Anti-Spam): ~6 عروض بالساعة كحد أقصى للعروض العادية مع أفضلية لأمازون
+# وعروض «ببلاش» و«نص السعر» تنزل فوراً بدون أي تقييد!
+AMAZON_MAX_PER_CYCLE = int(os.getenv("AMAZON_MAX_PER_CYCLE", "4"))
+NOON_MAX_PER_CYCLE = int(os.getenv("NOON_MAX_PER_CYCLE", "3"))
+NOON_MIN_PER_CYCLE = int(os.getenv("NOON_MIN_PER_CYCLE", "2"))
+HOURLY_DEAL_CAP = int(os.getenv("HOURLY_DEAL_CAP", "6"))
+# ساعات الهدوء الليلي بتوقيت القاهرة (UTC+2): من 3 فجراً إلى 8 صباحاً لا تنزل إلا اللقطات القوية (ببلاش/نص السعر)
+QUIET_HOURS_START = int(os.getenv("QUIET_HOURS_START", "3"))
+QUIET_HOURS_END = int(os.getenv("QUIET_HOURS_END", "8"))
 # تنويع الفئات: أقصى عدد منتجات من نفس الفئة في الدورة الواحدة لكل متجر (إلا عروض ببلاش)
 MAX_SAME_CAT_PER_CYCLE = int(os.getenv("MAX_SAME_CAT_PER_CYCLE", "2"))
 _cycle_amazon_sent = 0
 _last_built_cat_key = ""
 _last_built_name_ar = ""
+_history_dirty = False
 _msg_button_meta = {}  # يربط نص كل بوست برابط الشراء المباشر ليعمل الزر بدون إظهار الرابط النصي
 _recent_name_ar_sent = {}  # يمنع تكرار نفس الاسم الموحّد خلال 24 ساعة حتى لو اختلف الرابط أو اللون
 HASHTAG = "#عروض_لقطة"
@@ -233,9 +239,92 @@ if os.path.exists(HISTORY_FILE):
     except Exception:
         price_history = {}
 
+def _compact_price_points(pts, cutoff):
+    """يضغط نقاط السعر المتتالية المتطابقة (يحتفظ فقط بتغيرات السعر + أول وآخر نقطة) ويقرّب التوقيت لتوفير 90% من حجم الملف."""
+    cleaned = []
+    for p in (pts or []):
+        if not isinstance(p, (list, tuple)) or len(p) < 2 or p[0] is None or p[1] is None:
+            continue
+        ts = int(p[0])
+        val = round(float(p[1]), 2)
+        if ts < cutoff or val <= 0:
+            continue
+        if len(cleaned) >= 2 and abs(cleaned[-1][1] - val) < 0.01 and abs(cleaned[-2][1] - val) < 0.01:
+            # نفس السعر متكرر: حدّث توقيت آخر نقطة فقط بدل إضافة مئات النقاط المتطابقة
+            cleaned[-1][0] = ts
+        else:
+            cleaned.append([ts, val])
+    return cleaned[-60:]
+
+
+def compact_price_history():
+    """ينظّف ويضغط كامل price_history في الذاكرة ويحفظه بحجم مصغّر جداً بدون فقدان أي أعلى/أقل سعر."""
+    now = time.time()
+    cutoff = int(now - HISTORY_DAYS * 86400)
+    to_del = []
+    for k, ent in list(price_history.items()):
+        if not isinstance(ent, dict):
+            to_del.append(k)
+            continue
+        pts = _compact_price_points(ent.get("prices"), cutoff)
+        last_at = ent.get("last_sent_at") or ent.get("last_sent") or 0
+        if not pts and (now - last_at) > HISTORY_DAYS * 86400:
+            to_del.append(k)
+            continue
+        ent["prices"] = pts
+        if ent.get("last_sent"):
+            ent["last_sent"] = int(ent["last_sent"])
+        if ent.get("last_sent_at"):
+            ent["last_sent_at"] = int(ent["last_sent_at"])
+    for k in to_del:
+        price_history.pop(k, None)
+    save_history()
+
+
 def save_history():
+    global _history_dirty
     with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-        json.dump(price_history, f, ensure_ascii=False)
+        json.dump(price_history, f, ensure_ascii=False, separators=(",", ":"))
+    _history_dirty = False
+
+
+def flush_history():
+    """يحفظ سجل الأسعار على القرص فقط عند وجود تغييرات (بدل حفظه مئات المرات في الدورة)."""
+    if _history_dirty:
+        save_history()
+
+
+def _cairo_now():
+    """يرجع الوقت الحالي بتوقيت القاهرة (UTC+2) كـ struct_time."""
+    return time.gmtime(time.time() + 2 * 3600)
+
+
+def count_deals_sent_in_window(seconds=3600):
+    now = time.time()
+    return sum(1 for ent in price_history.values() if (ent.get("last_sent_at") or 0) > now - seconds)
+
+
+def is_quiet_hours():
+    h = _cairo_now().tm_hour
+    if QUIET_HOURS_START < QUIET_HOURS_END:
+        return QUIET_HOURS_START <= h < QUIET_HOURS_END
+    return h >= QUIET_HOURS_START or h < QUIET_HOURS_END
+
+
+def can_post_now(tier_rank=0):
+    """
+    حارس معدل النشر الذكي وساعات الهدوء الليلي:
+    - عروض «ببلاش» (tier_rank >= 3) تنزل دائماً 24/7 بدون أي تأخير.
+    - عروض «نص السعر / التوفير الضخم» (tier_rank >= 2) تنزل حتى في ساعات الهدوء الليلي.
+    - العروض العادية تلتزم بسقف الساعة (HOURLY_DEAL_CAP) وساعات الهدوء الليلي (3–8 صباحاً).
+    """
+    if tier_rank >= 3:
+        return True
+    if is_quiet_hours() and tier_rank < 2:
+        return False
+    if tier_rank < 2 and count_deals_sent_in_window(3600) >= HOURLY_DEAL_CAP:
+        return False
+    return True
 
 # ---------------------------------------------------------------------------
 # ذاكرة التعلم الذاتي (تتعلم من الروابط المرسلة ومن القنوات المراقبة)
@@ -393,8 +482,8 @@ def should_send_deal(link, title, current_price, promo_sig=""):
 
     return True, None
 
-def mark_deal_sent(link, title=None, effective_price=None, promo_sig="", norm_name_ar=None):
-    now = time.time()
+def mark_deal_sent(link, title=None, effective_price=None, promo_sig="", norm_name_ar=None, list_price=None, discount=None, store=None):
+    now = int(time.time())
     if link not in sent_deals:
         sent_deals.add(link)
         with open(SENT_DEALS_FILE, "a", encoding="utf-8") as f:
@@ -403,7 +492,13 @@ def mark_deal_sent(link, title=None, effective_price=None, promo_sig="", norm_na
     entry["last_sent"] = now
     entry["last_sent_at"] = now
     if effective_price is not None:
-        entry["last_sent_price"] = effective_price
+        entry["last_sent_price"] = round(float(effective_price), 2)
+    if list_price is not None:
+        entry["last_sent_list_price"] = round(float(list_price), 2)
+    if discount is not None:
+        entry["last_sent_discount"] = round(float(discount), 1)
+    if store:
+        entry["last_sent_store"] = store
     entry["last_sent_promo"] = promo_sig or ""
     t_key = normalize_title_key(title)
     if t_key:
@@ -413,6 +508,7 @@ def mark_deal_sent(link, title=None, effective_price=None, promo_sig="", norm_na
             if prev_tp is None or effective_price < prev_tp:
                 sent_title_prices[t_key] = effective_price
     if norm_name_ar:
+        entry["last_sent_name_ar"] = norm_name_ar[:90]
         nk = _normalize_ar(norm_name_ar)
         if len(nk) >= 8:
             entry["norm_name_ar"] = nk
@@ -445,19 +541,26 @@ def is_duplicate_unified_name(name_ar, current_price):
     return False
 
 def record_price(link, price):
-    """يسجّل السعر الحالي ويرجع (أقل سعر سابق، أعلى سعر، أقل سعر) خلال آخر 90 يوم."""
-    now = time.time()
+    """يسجّل السعر الحالي بذكاء (بدون تكرار نفس السعر كل 3 دقائق) ويرجع (أقل سعر سابق، أعلى سعر، أقل سعر) خلال آخر 90 يوم."""
+    global _history_dirty
+    now = int(time.time())
+    price = round(float(price), 2)
     entry = price_history.setdefault(link, {"prices": [], "last_sent": None})
-    cutoff = now - HISTORY_DAYS * 86400
-    # تنظيف أي أسعار خاطئة قديمة (أقل من 10 جنيه لمنتج سعره فوق 50 جنيه)
-    entry["prices"] = [
-        p for p in entry["prices"]
-        if p[0] >= cutoff and not (price >= 50 and p[1] < 10)
+    cutoff = int(now - HISTORY_DAYS * 86400)
+    pts = [
+        [int(p[0]), round(float(p[1]), 2)]
+        for p in (entry.get("prices") or [])
+        if p and len(p) >= 2 and p[0] >= cutoff and not (price >= 50 and p[1] < 10)
     ]
-    prev_min = min((p[1] for p in entry["prices"]), default=None)
-    entry["prices"].append([now, price])
+    pts = _compact_price_points(pts, cutoff)
+    prev_min = min((p[1] for p in pts), default=None)
+    if len(pts) >= 2 and abs(pts[-1][1] - price) < 0.01 and abs(pts[-2][1] - price) < 0.01:
+        pts[-1][0] = now
+    else:
+        pts.append([now, price])
+    entry["prices"] = pts[-60:]
     all_prices = [p[1] for p in entry["prices"]]
-    save_history()
+    _history_dirty = True
     return prev_min, max(all_prices), min(all_prices)
 
 def is_deal_already_sent(link, title=None, current_price=None, promo_sig=""):
@@ -1475,7 +1578,7 @@ def send_telegram_msg(text, image=None, target_chat_ids=None, reply_markup=None)
                 headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"},
                 timeout=12,
             )
-            if r_img.ok and len(r_img.content) > 500:
+            if r_img.ok and len(r_img.content) > 1200 and not r_img.content[:32].lstrip().startswith((b"<", b"{")):
                 img_bytes = r_img.content
         except Exception as dl_e:
             print(f"تعذر تحميل بايتات الصورة من {img_url}: {dl_e}")
@@ -2022,6 +2125,8 @@ async def scrape_amazon_eg(page):
     for tier_rank, famous, _, discount, full_link, card, info, prev_min, max_p, min_p in candidates:
         if amazon_sent >= AMAZON_MAX_PER_CYCLE:
             break
+        if not can_post_now(tier_rank):
+            continue
         try:
             seller, brand, pdp_rating, pdp_reviews, features, image, rev_snippets, page_promos, promo_links, extra_ctx = None, None, None, None, [], None, [], [], [], {}
             if consecutive_blocks < 3 and pdp_Lookups < 28:
@@ -2081,7 +2186,11 @@ async def scrape_amazon_eg(page):
             if cat_k:
                 amz_cat_counts[cat_k] = amz_cat_counts.get(cat_k, 0) + 1
 
-            mark_deal_sent(full_link, full_title_amz, eff_price, promo_sig, norm_name_ar=_last_built_name_ar)
+            mark_deal_sent(
+                full_link, full_title_amz, eff_price, promo_sig,
+                norm_name_ar=_last_built_name_ar, list_price=info["list_price"],
+                discount=discount, store="Amazon",
+            )
             amazon_sent += 1
             _cycle_amazon_sent = amazon_sent
             is_free_now = is_almost_free(eff_price, info["list_price"], discount)
@@ -2492,6 +2601,8 @@ async def scrape_noon_eg(page):
     for tier_rank, famous, _, discount, full_link, card, info, prev_min, max_p, min_p in candidates:
         if noon_sent >= noon_hard_max or (noon_sent >= noon_cap and tier_rank < 2):
             break
+        if not can_post_now(tier_rank):
+            continue
         try:
             card_title = card.get("name") or noon_title(card["text"])
             full_title, pdp_brand, seller, features, image, page_promos, rev_snippets, extra_ctx = None, None, None, [], None, [], [], {}
@@ -2561,7 +2672,11 @@ async def scrape_noon_eg(page):
             if cat_k:
                 noon_cat_counts[cat_k] = noon_cat_counts.get(cat_k, 0) + 1
 
-            mark_deal_sent(full_link, title, eff_price, promo_sig, norm_name_ar=_last_built_name_ar)
+            mark_deal_sent(
+                full_link, title, eff_price, promo_sig,
+                norm_name_ar=_last_built_name_ar, list_price=info["list_price"],
+                discount=discount, store="Noon",
+            )
             noon_sent += 1
             is_free_now = is_almost_free(eff_price, info["list_price"], discount)
             await pace_and_send(msg, image=chosen_img_noon, is_freebie=is_free_now)
@@ -3846,10 +3961,20 @@ async def scan_monitored_channels(context, target_channel=None, specific_post_id
                         break
 
             try:
+                # في الفحص التلقائي للقنوات المراقبة نمنع تمرير صورة القناة (قد تكون سكرين شوت مجمّعة) ونشترط صورة منتج رسمية من المتجر!
+                fb_img_for_mon = p_photo if specific_post_id else None
                 deal_msg, deal_img, orig_url, our_short_url, title, eff_p, promo_sig, is_active, active_reason, brand = await scrape_single_product(
-                    context, target_url, fallback_text=p_text, fallback_image=p_photo, is_user_submission=False
+                    context, target_url, fallback_text=p_text, fallback_image=fb_img_for_mon, is_user_submission=False
                 )
                 if not deal_msg or not title:
+                    continue
+                if not specific_post_id and not ("/dp/" in orig_url or "/p/" in orig_url):
+                    print(f"⚠️ تخطي رابط تجميعي/غير مباشر من @{ch}: {orig_url}")
+                    continue
+                if not specific_post_id and (not deal_img or not any(d in str(deal_img).lower() for d in ("media-amazon.com", "ssl-images-amazon.com", "nooncdn.com"))):
+                    print(f"⚠️ تخطي عرض بدون صورة منتج رسمية من @{ch}: {str(deal_img)[:60]}")
+                    continue
+                if not specific_post_id and not can_post_now(tier_rank=1):
                     continue
 
                 # 1) التحقق الصارم أن العرض لسه متاح وساري على المتجر حالياً (مش منتهي أو مخلص أو نافد)
@@ -3863,7 +3988,11 @@ async def scan_monitored_channels(context, target_channel=None, specific_post_id
                     print(f"⏩ تخطي نشر العرض من @{ch} لأنه منشور سابقاً في القناة ومحصلش فيه أي تغيير: {title[:50]}")
                     continue
 
-                mark_deal_sent(orig_url, title, eff_p, promo_sig)
+                mark_deal_sent(
+                    orig_url, title, eff_p, promo_sig,
+                    norm_name_ar=_last_built_name_ar,
+                    store=("Amazon" if "amazon." in orig_url.lower() else "Noon"),
+                )
                 channel_only_ids = [cid for cid in CHAT_IDS if str(cid) != str(notify_chat_id)]
                 if not channel_only_ids:
                     channel_only_ids = [MAIN_CHANNEL_ID]
@@ -4022,6 +4151,11 @@ async def poll_private_chat_once(context):
             continue
 
         if user_chat_id != OWNER_CHAT_ID:
+            continue
+
+        if text.lower().startswith("/stats") or text in ("احصائيات", "إحصائيات", "الاحصائيات", "الإحصائيات"):
+            report = build_owner_stats_report()
+            await asyncio.to_thread(send_telegram_msg, report, None, [user_chat_id])
             continue
 
         all_urls = extract_urls_from_message(msg)
@@ -4253,6 +4387,118 @@ async def private_chat_listener_loop(context, stop_event):
         except asyncio.TimeoutError:
             pass
 
+def build_owner_stats_report():
+    """يبني تقرير إحصائيات فوري لصاحب البوت عند إرسال /stats في الخاص."""
+    now = time.time()
+    amz_24, noon_24, sent_1h = 0, 0, 0
+    top_today = []
+    for u, ent in price_history.items():
+        ts = ent.get("last_sent_at") or 0
+        if ts > now - 3600:
+            sent_1h += 1
+        if ts > now - 86400:
+            is_amz = "amazon." in u.lower()
+            if is_amz:
+                amz_24 += 1
+            else:
+                noon_24 += 1
+            disc = float(ent.get("last_sent_discount") or 0)
+            pr = ent.get("last_sent_price")
+            lp = ent.get("last_sent_list_price")
+            sav = (lp - pr) if (lp and pr and lp > pr) else 0
+            nm = ent.get("last_sent_name_ar") or ent.get("title_key") or u
+            if pr and (disc >= 15 or sav >= 500):
+                top_today.append((disc + min(sav / 150.0, 25.0), nm, pr, disc, "أمازون" if is_amz else "نون"))
+    top_today.sort(key=lambda x: x[0], reverse=True)
+    hist_kb = (os.path.getsize(HISTORY_FILE) / 1024.0) if os.path.exists(HISTORY_FILE) else 0.0
+    total_pts = sum(len(e.get("prices") or []) for e in price_history.values())
+    ct = _cairo_now()
+    quiet_txt = "🌙 مفعّل الآن (لقطات قوية فقط)" if is_quiet_hours() else "☀️ وضع النشر العادي"
+    lines = [
+        f"📊 <b>تقرير حالة بوت «لقطة» ({MAIN_CHANNEL_USERNAME})</b>",
+        f"🕒 وقت القاهرة: <code>{ct.tm_hour:02d}:{ct.tm_min:02d}</code> | {quiet_txt}",
+        "",
+        f"📨 <b>العروض المنشورة آخر 24 ساعة:</b> {amz_24 + noon_24}",
+        f"   • 🔥 أمازون: <b>{amz_24}</b> | 🟡 نون: <b>{noon_24}</b>",
+        f"⏱️ <b>آخر ساعة:</b> {sent_1h} / {HOURLY_DEAL_CAP} (الحد الساعي للعروض العادية)",
+        f"💾 <b>سجل الأسعار:</b> {len(price_history):,} منتج ({total_pts:,} نقطة — {hist_kb/1024:.2f} MB)",
+    ]
+    if top_today:
+        lines += ["", "🏆 <b>أقوى 3 لقطات اليوم:</b>"]
+        for idx, (_, nm, pr, disc, st) in enumerate(top_today[:3], 1):
+            lines.append(f"{idx}️⃣ {html.escape(nm[:55])} — <b>{fmt(pr)} ج.م</b> ({disc:.0f}% على {st})")
+    return "\n".join(lines)
+
+
+def maybe_send_daily_top5_digest():
+    """يرسل بوست «🔥 أقوى 5 لقطات اليوم» مرة واحدة يومياً الساعة 9 مساءً بتوقيت القاهرة بأزرار شراء مباشرة."""
+    ct = _cairo_now()
+    if ct.tm_hour != 21:
+        return False
+    today_str = f"{ct.tm_year:04d}-{ct.tm_mon:02d}-{ct.tm_mday:02d}"
+    if learned_prefs.get("last_digest_date") == today_str:
+        return False
+
+    now = time.time()
+    cands = []
+    seen_names = set()
+    for u, ent in price_history.items():
+        ts = ent.get("last_sent_at") or 0
+        if ts < now - 86400:
+            continue
+        pr = ent.get("last_sent_price")
+        lp = ent.get("last_sent_list_price")
+        disc = float(ent.get("last_sent_discount") or 0)
+        nm = (ent.get("last_sent_name_ar") or ent.get("title_key") or "").strip()
+        if not pr or not nm or len(nm) < 6:
+            continue
+        nk = _normalize_ar(nm)
+        if nk in seen_names:
+            continue
+        seen_names.add(nk)
+        sav = (lp - pr) if (lp and lp > pr) else 0
+        if disc < 15 and sav < 500:
+            continue
+        is_amz = "amazon." in u.lower()
+        score = disc + min(sav / 120.0, 30.0) + (8.0 if is_amz else 0.0)
+        cands.append((score, u, nm, pr, lp, disc, is_amz))
+
+    if len(cands) < 3:
+        return False
+
+    cands.sort(key=lambda x: x[0], reverse=True)
+    top5 = cands[:5]
+    nums = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
+    lines = [
+        "🏆🔥 <b>ملخص أقوى 5 لقطات اليوم في قناة «لقطة»!</b>",
+        "<i>لو فاتك أي عرض النهارده، دي أقوى الخصومات اللي نزلناها:</i>",
+        "",
+    ]
+    kb_rows = []
+    for idx, (_, u, nm, pr, lp, disc, is_amz) in enumerate(top5):
+        st_lbl = "أمازون" if is_amz else "نون"
+        old_s = f"<s>{fmt(lp)}</s> ← " if (lp and lp > pr) else ""
+        disc_s = f" (خصم {disc:.0f}%)" if disc >= 5 else ""
+        lines.append(f"{nums[idx]} <b>{html.escape(nm[:62])}</b>\n   💰 {old_s}<b>{fmt(pr)} ج.م</b>{disc_s} — {st_lbl}")
+        btn_nm = nm[:26].rsplit(" ", 1)[0] if len(nm) > 26 and " " in nm[:26] else nm[:26]
+        kb_rows.append([{"text": f"🛒 {idx+1}. اطلب {btn_nm} ({fmt(pr)} ج.م)", "url": branded_url(u)}])
+
+    share_url = "https://t.me/share/url?url=" + quote_plus(f"https://t.me/{MAIN_CHANNEL_USERNAME.lstrip('@')}") + "&text=" + quote_plus("ملخص أقوى 5 لقطات اليوم على أمازون ونون مصر 🔥🏆")
+    kb_rows.append([{"text": "📢 شارك ملخص اليوم مع صحابك", "url": share_url}])
+    lines += [
+        "",
+        "👇 <i>اضغط على رقم أي عرض بالأسفل للطلب المباشر قبل انتهاء الخصم</i>",
+        "",
+        "#أقوى_عروض_اليوم #عروض_لقطة",
+    ]
+    ok = send_telegram_msg("\n".join(lines), image=None, target_chat_ids=[MAIN_CHANNEL_ID], reply_markup={"inline_keyboard": kb_rows})
+    if ok:
+        learned_prefs["last_digest_date"] = today_str
+        save_learned_prefs()
+        print(f"🏆 تم إرسال ملخص أقوى 5 لقطات اليوم ({today_str}) بنجاح!")
+    return ok
+
+
 async def run_cycle(p, listen_only_seconds=0):
     launch_args = ["--disable-blink-features=AutomationControlled"]
     if sys.platform == "win32":
@@ -4292,6 +4538,10 @@ async def run_cycle(p, listen_only_seconds=0):
                     await scraper(page)
                 except Exception as e:
                     print(f"Scraping error ({scraper.__name__}): {e}")
+            try:
+                maybe_send_daily_top5_digest()
+            except Exception as de:
+                print(f"Daily digest error: {de}")
     finally:
         stop_event.set()
         if listener_task:
@@ -4300,6 +4550,7 @@ async def run_cycle(p, listen_only_seconds=0):
             except Exception:
                 pass
         try:
+            flush_history()
             pi.save_tr_cache()
         except Exception:
             pass
