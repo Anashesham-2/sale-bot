@@ -1,5 +1,5 @@
 {
-  "query_idx": 16,
+  "query_idx": 4,
   "last_tt_cat": "",
   "recent_names": {
     "كونسيلر فيت مي للعيون من ميبيلين": 1795131404,
@@ -110,7 +110,10 @@
     "ماسكارا فوليوم اكسبرس ذه كولوسال من": 1795201231,
     "عطر للنساء سبلاش للجسم من افوفا": 1795202936,
     "عطر سوفت من الرحاب": 1795203994,
-    "ماسكارا قطيفه m016": 1795204000
+    "ماسكارا قطيفه m016": 1795204000,
+    "لوحه احمر خدود زهريه مكونه من": 1795204975,
+    "كونسيلر فيت مي من ميبيلين نيويورك": 1795204981,
+    "l023 احمر شفاه كريمي من مونايا": 1795204987
   },
   "price_history": {},
   "sent_timestamps": [
@@ -222,40 +225,13 @@
     1795201231,
     1795202936,
     1795203994,
-    1795204000
+    1795204000,
+    1795204975,
+    1795204981,
+    1795204987
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795147570,
-      "link": "https://www.noon.com/egypt-ar/Z6EE1F476DFC43843D421Z/p/",
-      "name_ar": "فلفيت روز بودي سبلاش نسائي، 250 مللي",
-      "price": 204.0,
-      "list_price": 960.0,
-      "discount": 78.8,
-      "store": "Noon",
-      "v_score": 70.0
-    },
-    {
-      "ts": 1795149645,
-      "link": "https://www.noon.com/egypt-ar/Z8883C3BD6DF95A8AE05FZ/p/",
-      "name_ar": "ملمع شفاه وردي نعناعي",
-      "price": 125.0,
-      "list_price": 400.0,
-      "discount": 68.8,
-      "store": "Noon",
-      "v_score": 53.4
-    },
-    {
-      "ts": 1795150061,
-      "link": "https://www.noon.com/egypt-ar/Z6C3904449A6F0C8EF025Z/p/",
-      "name_ar": "كوزمو آبي بروشيلد صن بلوك جل كريم SPF 50+ بحجم 60 مل، ملمس خفي ومطفي",
-      "price": 149.61,
-      "list_price": 350.0,
-      "discount": 57.3,
-      "store": "Noon",
-      "v_score": 63.6
-    },
     {
       "ts": 1795152930,
       "link": "https://www.noon.com/egypt-ar/ZC3EA7493A9465E62ABE6Z/p/",
@@ -1025,6 +1001,36 @@
       "discount": 35.1,
       "store": "Amazon",
       "v_score": 52.6
+    },
+    {
+      "ts": 1795204975,
+      "link": "https://www.noon.com/egypt-ar/N70084352V/p/",
+      "name_ar": "لوحة أحمر خدود زهرية مكونة من 6 ألوان عالية الصبغة لا تبهت وتدوم طويلاً — Sheglam",
+      "price": 557.07,
+      "list_price": 1200.0,
+      "discount": 53.6,
+      "store": "Noon",
+      "v_score": 83.8
+    },
+    {
+      "ts": 1795204981,
+      "link": "https://www.noon.com/egypt-ar/N11031272A/p/",
+      "name_ar": "كونسيلر فيت مي من ميبيلين نيويورك، 10 لايت لايت 10",
+      "price": 307.0,
+      "list_price": 496.0,
+      "discount": 38.1,
+      "store": "Noon",
+      "v_score": 68.1
+    },
+    {
+      "ts": 1795204987,
+      "link": "https://www.noon.com/egypt-ar/ZD3DBFE235D6858B4382CZ/p/",
+      "name_ar": "L023 أحمر شفاه كريمي من مونايا، لون شفاه ناعم ومرطب بصبغة غنية",
+      "price": 153.3,
+      "list_price": 465.96,
+      "discount": 67.1,
+      "store": "Noon",
+      "v_score": 64.6
     }
   ],
   "last_digest_date": "2026-11-20",
