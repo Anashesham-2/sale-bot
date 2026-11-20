@@ -1,5 +1,5 @@
 {
-  "query_idx": 1,
+  "query_idx": 6,
   "last_tt_cat": "",
   "recent_names": {
     "كونسيلر فيت مي للعيون من ميبيلين": 1795131404,
@@ -91,7 +91,10 @@
     "عطر او دو بارفان بوليت دايفر": 1795186342,
     "جل هيدرو لتنظيف الوجه من فاكيشن": 1795189960,
     "بخاخ معطر جسم برائحه الفانيليا المحمصه": 1795191389,
-    "طقم اكسسوارات من الفولاذ المقاوم للصدا": 1795191746
+    "طقم اكسسوارات من الفولاذ المقاوم للصدا": 1795191746,
+    "بودره خدود سموث ان وير من": 1795192085,
+    "فلورمار قلم تحديد شفاه مقاوم للماء": 1795192091,
+    "فوطه صحيه ناعمه ومضغوطه وطويله للغايه": 1795192097
   },
   "price_history": {},
   "sent_timestamps": [
@@ -184,40 +187,13 @@
     1795186342,
     1795189960,
     1795191389,
-    1795191746
+    1795191746,
+    1795192085,
+    1795192091,
+    1795192097
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795139156,
-      "link": "https://www.noon.com/egypt-ar/ZE46D4D65AC6803A7A0DDZ/p/",
-      "name_ar": "مجفف شعر ومكثف حجم، تجفيف سريع وتصفيف يمنح كثافة ولمعان للشعر — One Step",
-      "price": 375.0,
-      "list_price": 1200.0,
-      "discount": 68.8,
-      "store": "Noon",
-      "v_score": 63.4
-    },
-    {
-      "ts": 1795139162,
-      "link": "https://www.noon.com/egypt-ar/Z7584DB6ED73D26B63314Z/p/",
-      "name_ar": "معطر جسم برائحة الفانيليا من مدغشقر، 200 مل",
-      "price": 132.6,
-      "list_price": 300.0,
-      "discount": 55.8,
-      "store": "Noon",
-      "v_score": 50.9
-    },
-    {
-      "ts": 1795140368,
-      "link": "https://www.noon.com/egypt-ar/ZC2A1BB1489123A24C13EZ/p/",
-      "name_ar": "عطر جميل يدوم طويلاً للجسم جولدن آور 250 مل — Bobana",
-      "price": 129.0,
-      "list_price": 330.0,
-      "discount": 60.9,
-      "store": "Noon",
-      "v_score": 79.5
-    },
     {
       "ts": 1795140374,
       "link": "https://www.noon.com/egypt-ar/Z5A16B37CE3A60B306625Z/p/",
@@ -987,6 +963,36 @@
       "discount": 30.0,
       "store": "Amazon",
       "v_score": 33.0
+    },
+    {
+      "ts": 1795192085,
+      "link": "https://www.amazon.eg/dp/B0FF7NJ58R",
+      "name_ar": "بودرة خدود سموث ان وير من سيبيل، درجة لون رقم 19 خوخي",
+      "price": 207.0,
+      "list_price": 275.0,
+      "discount": 24.7,
+      "store": "Amazon",
+      "v_score": 66.4
+    },
+    {
+      "ts": 1795192091,
+      "link": "https://www.amazon.eg/dp/B086DTP966",
+      "name_ar": "فلورمار قلم تحديد شفاه مقاوم للماء، 244 شوكولاتة فوندو",
+      "price": 111.0,
+      "list_price": 150.0,
+      "discount": 26.0,
+      "store": "Amazon",
+      "v_score": 59.0
+    },
+    {
+      "ts": 1795192097,
+      "link": "https://www.amazon.eg/dp/B0GJTDVGTY",
+      "name_ar": "فوطة صحية ناعمة ومضغوطة وطويلة للغاية للتدفق الثقيل من الويز — Always",
+      "price": 35.0,
+      "list_price": 47.0,
+      "discount": 25.5,
+      "store": "Amazon",
+      "v_score": 55.8
     }
   ],
   "last_digest_date": "",
