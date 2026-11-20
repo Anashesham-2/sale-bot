@@ -281,10 +281,10 @@
     "Pacroban",
     "Puritan's Pride",
     "Hoover",
-    "GR"
+    "GR",
+    "Raslan"
   ],
   "queries": [
-    "تلفزيون سامسونج ميني",
     "ساعة ذكية واتش اورايمو",
     "موبايل سامسونج جالاكسي Samsung",
     "ساعة ذكية ريدمي Xiaomi",
@@ -363,7 +363,8 @@
     "SOKANY Retro Breakfast",
     "مجموعة جهاز تشذيب في جي ار",
     "تلفزيون ذكي ميني Samsung",
-    "سخان نار واط Fresh"
+    "سخان نار واط Fresh",
+    "مدفأة زيت مستويات Raslan"
   ],
   "channels": [
     "epichardware",
@@ -2124,6 +2125,9 @@
     "Sal7lyEgypt/40532",
     "Sal7lyEgypt/40531",
     "Sal7lyEgypt/40534",
-    "epichardware/5019"
+    "epichardware/5019",
+    "epichardware/5020",
+    "Sal7lyEgypt/40536",
+    "Sal7lyEgypt/40535"
   ]
 }
