@@ -282,7 +282,6 @@
     "Puritan's Pride"
   ],
   "queries": [
-    "جهاز تمارين جيم مارسي",
     "خلاط بلينديو بلس مولينكس",
     "سنتروم سيلفر، قرص Centrum",
     "اكس لافندر كجم او اكس اي",
@@ -361,7 +360,8 @@
     "كابل باكروبان بطول Pacroban",
     "مكمل غذائي نباتي Puritan's Pride",
     "موبايل سامسونج جالكسي",
-    "ماكينة تحضير القهوة Tornado"
+    "ماكينة تحضير القهوة Tornado",
+    "ماكينة انيسيا ايروسينو3 Nespresso"
   ],
   "channels": [
     "epichardware",
@@ -2012,6 +2012,9 @@
     "epichardware/4984",
     "Yo_Ayman/16814",
     "Sal7lyEgypt/40482",
-    "Yo_Ayman/16815"
+    "Yo_Ayman/16815",
+    "epichardware/4985",
+    "Sal7lyEgypt/40483",
+    "Yo_Ayman/16816"
   ]
 }
