@@ -1,5 +1,5 @@
 {
-  "query_idx": 5,
+  "query_idx": 10,
   "last_tt_cat": "",
   "recent_names": {
     "كونسيلر فيت مي للعيون من ميبيلين": 1795131404,
@@ -88,7 +88,8 @@
     "بخاخ للجسم سينسيز للعنايه بالبشره من": 1795186324,
     "فوط صحيه ناعمه وسميكه فائقه الامتصاص": 1795186330,
     "ماسكارا بيج ايز اكستندد ذا ثيك": 1795186336,
-    "عطر او دو بارفان بوليت دايفر": 1795186342
+    "عطر او دو بارفان بوليت دايفر": 1795186342,
+    "جل هيدرو لتنظيف الوجه من فاكيشن": 1795189960
   },
   "price_history": {},
   "sent_timestamps": [
@@ -178,20 +179,11 @@
     1795186324,
     1795186330,
     1795186336,
-    1795186342
+    1795186342,
+    1795189960
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795138634,
-      "link": "https://www.noon.com/egypt-ar/N70298457V/p/",
-      "name_ar": "5 PDRN Collagen Intense Vitalizing Serum، مصل شد كوري للترطيب",
-      "price": 649.0,
-      "list_price": 2500.0,
-      "discount": 74.0,
-      "store": "Noon",
-      "v_score": 70.0
-    },
     {
       "ts": 1795139144,
       "link": "https://www.noon.com/egypt-ar/Z93B3EA4FF817F4D2AB1AZ/p/",
@@ -981,6 +973,16 @@
       "discount": 20.9,
       "store": "Amazon",
       "v_score": 34.4
+    },
+    {
+      "ts": 1795189960,
+      "link": "https://www.amazon.eg/dp/B0BXB2CNQ3",
+      "name_ar": "جل هيدرو لتنظيف الوجه من فاكيشن، 200 مل، ابيض/اخضر",
+      "price": 146.48,
+      "list_price": 276.0,
+      "discount": 46.9,
+      "store": "Amazon",
+      "v_score": 62.5
     }
   ],
   "last_digest_date": "",
