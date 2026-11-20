@@ -287,7 +287,6 @@
     "DY"
   ],
   "queries": [
-    "فلتر مياه تانك Tank",
     "يوجرين PB532 باور UGREEN",
     "ماكينة تحضير اسبريسو Arzum Okka",
     "ماكينة حلاقة الشعر VGR",
@@ -366,7 +365,8 @@
     "مدفأة زيت مستويات Raslan",
     "ماكينة قهوة كبسولات FRUSTA",
     "مسحوق بروتين مصل DY Nutrition",
-    "قطونيل طقم بوكسرات Cottonil"
+    "قطونيل طقم بوكسرات Cottonil",
+    "موزع HDMI USB UGREEN"
   ],
   "channels": [
     "epichardware",
@@ -2144,6 +2144,8 @@
     "epichardware/5027",
     "Sal7lyEgypt/40541",
     "Sal7lyEgypt/40542",
-    "epichardware/5029"
+    "epichardware/5029",
+    "epichardware/5030",
+    "Sal7lyEgypt/40543"
   ]
 }
