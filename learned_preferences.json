@@ -283,7 +283,6 @@
     "Hoover"
   ],
   "queries": [
-    "مجموعة ممسحة مسطحة فيليدا",
     "مروحة تبريد بإضاءة havit",
     "كرياتين بدون نكهة",
     "ماوس ألعاب سلكي ريدراجون",
@@ -362,7 +361,8 @@
     "تكييف سبليت بروفيشنال Fresh",
     "هاتف HONOR X9d",
     "سوكاني خلاط محمول Sokany",
-    "تلفزيون ايه برو Xiaomi"
+    "تلفزيون ايه برو Xiaomi",
+    "SOKANY Retro Breakfast"
   ],
   "channels": [
     "epichardware",
@@ -2101,7 +2101,10 @@
     "Sal7lyEgypt/40519",
     "Sal7lyEgypt/40518",
     "Sal7lyEgypt/40517",
-    "Yo_Ayman/16845"
+    "Yo_Ayman/16845",
+    "epichardware/5011",
+    "Sal7lyEgypt/40523",
+    "Sal7lyEgypt/40522"
   ],
   "last_digest_date": "2026-11-20"
 }
