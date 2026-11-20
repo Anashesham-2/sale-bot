@@ -283,10 +283,10 @@
     "Hoover",
     "GR",
     "Raslan",
-    "FRUSTA"
+    "FRUSTA",
+    "DY"
   ],
   "queries": [
-    "موبايل سامسونج جالاكسي Samsung",
     "ساعة ذكية ريدمي Xiaomi",
     "فلتر مياه تانك Tank",
     "يوجرين PB532 باور UGREEN",
@@ -365,7 +365,8 @@
     "تلفزيون ذكي ميني Samsung",
     "سخان نار واط Fresh",
     "مدفأة زيت مستويات Raslan",
-    "ماكينة قهوة كبسولات FRUSTA"
+    "ماكينة قهوة كبسولات FRUSTA",
+    "مسحوق بروتين مصل DY Nutrition"
   ],
   "channels": [
     "epichardware",
@@ -2135,6 +2136,8 @@
     "Sal7lyEgypt/40538",
     "Yo_Ayman/16850",
     "epichardware/5022",
-    "Yo_Ayman/16851"
+    "Yo_Ayman/16851",
+    "epichardware/5023",
+    "Sal7lyEgypt/40539"
   ]
 }
