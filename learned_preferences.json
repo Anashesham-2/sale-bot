@@ -282,7 +282,6 @@
     "Puritan's Pride"
   ],
   "queries": [
-    "سنتروم سيلفر، قرص Centrum",
     "اكس لافندر كجم او اكس اي",
     "طقم لوحة مفاتيح يوجرين",
     "ساعة لايت الذكية اورايمو",
@@ -361,7 +360,8 @@
     "موبايل سامسونج جالكسي",
     "ماكينة تحضير القهوة Tornado",
     "ماكينة انيسيا ايروسينو3 Nespresso",
-    "مكملات غذائية متعددة Centrum"
+    "مكملات غذائية متعددة Centrum",
+    "شاشة شاومي A27i Xiaomi"
   ],
   "channels": [
     "epichardware",
@@ -2034,6 +2034,11 @@
     "Yo_Ayman/16824",
     "Yo_Ayman/16823",
     "Yo_Ayman/16822",
-    "Yo_Ayman/16821"
+    "Yo_Ayman/16821",
+    "epichardware/4989",
+    "Sal7lyEgypt/40495",
+    "Sal7lyEgypt/40494",
+    "Yo_Ayman/16826",
+    "Yo_Ayman/16825"
   ]
 }
