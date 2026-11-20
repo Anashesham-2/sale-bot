@@ -284,7 +284,6 @@
     "GR"
   ],
   "queries": [
-    "ماوس ألعاب سلكي ريدراجون",
     "تلفزيون سامسونج ميني",
     "ساعة ذكية واتش اورايمو",
     "موبايل سامسونج جالاكسي Samsung",
@@ -363,7 +362,8 @@
     "تلفزيون ايه برو Xiaomi",
     "SOKANY Retro Breakfast",
     "مجموعة جهاز تشذيب في جي ار",
-    "تلفزيون ذكي ميني Samsung"
+    "تلفزيون ذكي ميني Samsung",
+    "سخان نار واط Fresh"
   ],
   "channels": [
     "epichardware",
@@ -2115,6 +2115,9 @@
     "Yo_Ayman/16847",
     "epichardware/5015",
     "Sal7lyEgypt/40529",
-    "Sal7lyEgypt/40528"
+    "Sal7lyEgypt/40528",
+    "epichardware/5016",
+    "Sal7lyEgypt/40530",
+    "Yo_Ayman/16848"
   ]
 }
