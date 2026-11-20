@@ -282,10 +282,10 @@
     "Puritan's Pride",
     "Hoover",
     "GR",
-    "Raslan"
+    "Raslan",
+    "FRUSTA"
   ],
   "queries": [
-    "ساعة ذكية واتش اورايمو",
     "موبايل سامسونج جالاكسي Samsung",
     "ساعة ذكية ريدمي Xiaomi",
     "فلتر مياه تانك Tank",
@@ -364,7 +364,8 @@
     "مجموعة جهاز تشذيب في جي ار",
     "تلفزيون ذكي ميني Samsung",
     "سخان نار واط Fresh",
-    "مدفأة زيت مستويات Raslan"
+    "مدفأة زيت مستويات Raslan",
+    "ماكينة قهوة كبسولات FRUSTA"
   ],
   "channels": [
     "epichardware",
@@ -2132,6 +2133,8 @@
     "Sal7lyEgypt/40537",
     "Yo_Ayman/16849",
     "Sal7lyEgypt/40538",
-    "Yo_Ayman/16850"
+    "Yo_Ayman/16850",
+    "epichardware/5022",
+    "Yo_Ayman/16851"
   ]
 }
