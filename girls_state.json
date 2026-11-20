@@ -1,5 +1,5 @@
 {
-  "query_idx": 10,
+  "query_idx": 15,
   "last_tt_cat": "",
   "recent_names": {
     "كونسيلر فيت مي للعيون من ميبيلين": 1795131404,
@@ -9,7 +9,11 @@
     "مجموعه سيروم فيتامين سي ملليلتر مع": 1795131793,
     "بخاخ ديلايت للجسم للنساء من اوسوم": 1795133949,
     "سيروم فيتامين سي من انفينيتي 40مل": 1795138627,
-    "pdrn collagen intense vitalizing serum": 1795138634
+    "pdrn collagen intense vitalizing serum": 1795138634,
+    "برايفت فوط نسائيه رفيعه للغايه بملمس": 1795139144,
+    "اولويز فوط صحيه دائما بارده وجافه": 1795139150,
+    "مجفف شعر ومكثف حجم": 1795139156,
+    "معطر جسم برائحه الفانيليا من مدغشقر": 1795139162
   },
   "price_history": {},
   "sent_timestamps": [
@@ -20,7 +24,11 @@
     1795131793,
     1795133949,
     1795138627,
-    1795138634
+    1795138634,
+    1795139144,
+    1795139150,
+    1795139156,
+    1795139162
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
@@ -103,6 +111,46 @@
       "discount": 74.0,
       "store": "Noon",
       "v_score": 70.0
+    },
+    {
+      "ts": 1795139144,
+      "link": "https://www.noon.com/egypt-ar/Z93B3EA4FF817F4D2AB1AZ/p/",
+      "name_ar": "برايفت فوط نسائية رفيعة للغاية بملمس القطن الطبيعي مع أجنحة",
+      "price": 71.0,
+      "list_price": 219.0,
+      "discount": 67.6,
+      "store": "Noon",
+      "v_score": 79.8
+    },
+    {
+      "ts": 1795139150,
+      "link": "https://www.noon.com/egypt-ar/ZD6914C3DDC32D2E7689EZ/p/",
+      "name_ar": "اولويز فوط صحية دائما باردة وجافة، لا تشعر بالحرارة، طويلة وسميكة مع أجنحة",
+      "price": 100.0,
+      "list_price": 202.0,
+      "discount": 50.5,
+      "store": "Noon",
+      "v_score": 67.2
+    },
+    {
+      "ts": 1795139156,
+      "link": "https://www.noon.com/egypt-ar/ZE46D4D65AC6803A7A0DDZ/p/",
+      "name_ar": "مجفف شعر ومكثف حجم، تجفيف سريع وتصفيف يمنح كثافة ولمعان للشعر — One Step",
+      "price": 375.0,
+      "list_price": 1200.0,
+      "discount": 68.8,
+      "store": "Noon",
+      "v_score": 63.4
+    },
+    {
+      "ts": 1795139162,
+      "link": "https://www.noon.com/egypt-ar/Z7584DB6ED73D26B63314Z/p/",
+      "name_ar": "معطر جسم برائحة الفانيليا من مدغشقر، 200 مل",
+      "price": 132.6,
+      "list_price": 300.0,
+      "discount": 55.8,
+      "store": "Noon",
+      "v_score": 50.9
     }
   ],
   "last_digest_date": "",
