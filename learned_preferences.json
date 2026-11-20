@@ -280,10 +280,10 @@
     "HyperX",
     "Pacroban",
     "Puritan's Pride",
-    "Hoover"
+    "Hoover",
+    "GR"
   ],
   "queries": [
-    "مروحة تبريد بإضاءة havit",
     "كرياتين بدون نكهة",
     "ماوس ألعاب سلكي ريدراجون",
     "تلفزيون سامسونج ميني",
@@ -362,7 +362,8 @@
     "هاتف HONOR X9d",
     "سوكاني خلاط محمول Sokany",
     "تلفزيون ايه برو Xiaomi",
-    "SOKANY Retro Breakfast"
+    "SOKANY Retro Breakfast",
+    "مجموعة جهاز تشذيب في جي ار"
   ],
   "channels": [
     "epichardware",
@@ -2104,7 +2105,12 @@
     "Yo_Ayman/16845",
     "epichardware/5011",
     "Sal7lyEgypt/40523",
-    "Sal7lyEgypt/40522"
+    "Sal7lyEgypt/40522",
+    "epichardware/5013",
+    "Sal7lyEgypt/40526",
+    "Sal7lyEgypt/40525",
+    "Sal7lyEgypt/40524",
+    "Yo_Ayman/16846"
   ],
   "last_digest_date": "2026-11-20"
 }
