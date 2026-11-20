@@ -282,7 +282,6 @@
     "Puritan's Pride"
   ],
   "queries": [
-    "خلاط بلينديو بلس مولينكس",
     "سنتروم سيلفر، قرص Centrum",
     "اكس لافندر كجم او اكس اي",
     "طقم لوحة مفاتيح يوجرين",
@@ -361,7 +360,8 @@
     "مكمل غذائي نباتي Puritan's Pride",
     "موبايل سامسونج جالكسي",
     "ماكينة تحضير القهوة Tornado",
-    "ماكينة انيسيا ايروسينو3 Nespresso"
+    "ماكينة انيسيا ايروسينو3 Nespresso",
+    "مكملات غذائية متعددة Centrum"
   ],
   "channels": [
     "epichardware",
@@ -2024,6 +2024,16 @@
     "Yo_Ayman/16818",
     "Sal7lyEgypt/40488",
     "Yo_Ayman/16819",
-    "Yo_Ayman/16820"
+    "Yo_Ayman/16820",
+    "epichardware/4988",
+    "Sal7lyEgypt/40493",
+    "Sal7lyEgypt/40492",
+    "Sal7lyEgypt/40491",
+    "Sal7lyEgypt/40490",
+    "Sal7lyEgypt/40489",
+    "Yo_Ayman/16824",
+    "Yo_Ayman/16823",
+    "Yo_Ayman/16822",
+    "Yo_Ayman/16821"
   ]
 }
