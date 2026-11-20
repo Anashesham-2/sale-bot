@@ -287,7 +287,6 @@
     "DY"
   ],
   "queries": [
-    "ساعة ذكية ريدمي Xiaomi",
     "فلتر مياه تانك Tank",
     "يوجرين PB532 باور UGREEN",
     "ماكينة تحضير اسبريسو Arzum Okka",
@@ -366,7 +365,8 @@
     "سخان نار واط Fresh",
     "مدفأة زيت مستويات Raslan",
     "ماكينة قهوة كبسولات FRUSTA",
-    "مسحوق بروتين مصل DY Nutrition"
+    "مسحوق بروتين مصل DY Nutrition",
+    "قطونيل طقم بوكسرات Cottonil"
   ],
   "channels": [
     "epichardware",
@@ -2140,6 +2140,8 @@
     "epichardware/5023",
     "Sal7lyEgypt/40539",
     "epichardware/5025",
-    "Sal7lyEgypt/40540"
+    "Sal7lyEgypt/40540",
+    "epichardware/5027",
+    "Sal7lyEgypt/40541"
   ]
 }
