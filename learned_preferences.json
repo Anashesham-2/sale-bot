@@ -279,10 +279,10 @@
     "Apple",
     "HyperX",
     "Pacroban",
-    "Puritan's Pride"
+    "Puritan's Pride",
+    "Hoover"
   ],
   "queries": [
-    "كاميرا مراقبة تابو Tapo",
     "ايريال سائل منظف Ariel",
     "بروتين تشالنجر نيوتريشن",
     "هيرو عسل زهور",
@@ -361,7 +361,8 @@
     "ماوس الألعاب السلكي شاومي",
     "فرن مايكرو أوريمو Oraimo",
     "ماكينة تحضير قهوة سوكاني",
-    "ماوس ألعاب لاسلكي Razer"
+    "ماوس ألعاب لاسلكي Razer",
+    "غسالة صحون فرد هوفر"
   ],
   "channels": [
     "epichardware",
@@ -2055,6 +2056,7 @@
     "Sal7lyEgypt/40501",
     "Yo_Ayman/16828",
     "Sal7lyEgypt/40502",
-    "Yo_Ayman/16829"
+    "Yo_Ayman/16829",
+    "epichardware/4998"
   ]
 }
