@@ -241,11 +241,25 @@ RAW_BRAND_EN_MAP = {
     "جيليت": "Gillette", "gillette": "Gillette",
     "أورال بي": "Oral-B", "اورال بي": "Oral-B", "oral-b": "Oral-B",
     "نيفيا": "Nivea", "nivea": "Nivea",
-    "لوريال": "L'Oreal Paris", "لوريال باريس": "L'Oreal Paris", "loreal": "L'Oreal Paris", "l'oreal": "L'Oreal Paris",
+    "لوريال": "L'Oreal Paris", "لوريال باريس": "L'Oreal Paris", "loreal": "L'Oreal Paris", "l'oreal": "L'Oreal Paris", "l’oréal": "L'Oreal Paris", "l'oréal": "L'Oreal Paris",
     "غارنييه": "Garnier", "جارنييه": "Garnier", "garnier": "Garnier",
     "دوف": "Dove", "دوف سبراي": "Dove", "dove": "Dove",
     "سيرافي": "CeraVe", "cerave": "CeraVe",
-    "لاروش": "La Roche-Posay", "لا روش بوزيه": "La Roche-Posay", "la roche": "La Roche-Posay", "la roche-posay": "La Roche-Posay",
+    "لاروش": "La Roche-Posay", "لا روش بوزيه": "La Roche-Posay", "لاروش بوزيه": "La Roche-Posay", "لاروش بوزاي": "La Roche-Posay", "لا روش بوزاي": "La Roche-Posay", "la roche": "La Roche-Posay", "la roche-posay": "La Roche-Posay", "la roche posay": "La Roche-Posay",
+    "بيوتي اوف جوسون": "Beauty of Joseon", "بيوتي أوف جوسون": "Beauty of Joseon", "بيوتي اوف جوسيون": "Beauty of Joseon", "بيوتى اوف جوسون": "Beauty of Joseon", "بيوتي اوف جوسيهون": "Beauty of Joseon", "beauty of joseon": "Beauty of Joseon",
+    "كيرفري": "Carefree", "كير فري": "Carefree", "carefree": "Carefree",
+    "أولويز": "Always", "اولويز": "Always", "always": "Always",
+    "برايفت": "Private", "برايفيت": "Private", "private": "Private",
+    "انفينيتي كير": "Infinity Care", "إنفينيتي كير": "Infinity Care", "انفينيتي": "Infinity Care", "إنفينيتي": "Infinity Care", "infinity care": "Infinity Care",
+    "كوزمو ابي": "Cosmo Appe", "كوزمو آبي": "Cosmo Appe", "cosmo appe": "Cosmo Appe",
+    "روت تو اند": "Root To End", "رووت تو اند": "Root To End", "root to end": "Root To End",
+    "بليس": "Bless", "bless": "Bless",
+    "مونايا": "Monaya", "monaya": "Monaya",
+    "ليفز": "LEAVES", "leaves": "LEAVES",
+    "اوسوم": "OSSUM", "أوسوم": "OSSUM", "ossum": "OSSUM",
+    "لطافة": "Lattafa", "لطافه": "Lattafa", "lattafa": "Lattafa",
+    "بورجوا": "Bourjois", "bourjois": "Bourjois",
+    "ون ستيب": "One Step", "وان ستيب": "One Step", "one step": "One Step",
     "يوسيرين": "Eucerin", "eucerin": "Eucerin",
     "بيوديرما": "Bioderma", "بايوديرما": "Bioderma", "bioderma": "Bioderma",
     "فيتشي": "Vichy", "فيشي": "Vichy", "vichy": "Vichy",
@@ -1196,9 +1210,15 @@ _AMBIGUOUS_TITLE_BRAND_TOKENS = {
         "وايت", "white", "نيكست", "next", "كوين", "queen", "نور", "noor",
         "لونا", "luna", "زينا", "zeina", "روزا", "rosa", "برافو", "bravo",
         "ناو", "now", "ون لايف", "one life", "ايكون", "أيكون", "icon",
-        "امازون", "أمازون", "amazon",
+        "امازون", "أمازون", "amazon", "فينش", "فينيش", "finish",
+        "بليس", "bless", "ليفز", "leaves", "برايفت", "private", "أولويز", "اولويز", "always",
     )
 }
+
+_FINISH_VERIFY_RE = re.compile(
+    r'(?:غسال[ةه]\s*(?:أطباق|اطباق|صحون)|أقراص\s*(?:غسالة|تنظيف)|جل\s*غسالات|ملمع\s*(?:أطباق|صحون)|ملح\s*غسال|dishwasher|rinse\s*aid|powerball|quantum)',
+    re.IGNORECASE,
+)
 
 
 def _is_stolen_accessory_device_brand(cand_en, title="", en_title=""):
@@ -1298,6 +1318,9 @@ def _is_scraped_brand_valid(cand_en, t_primary, en_primary, extra_text="", title
             return False
     if c_low == "amazon":
         if not _AMAZON_VERIFY_RE.search(prim_ctx):
+            return False
+    if c_low == "finish":
+        if not _FINISH_VERIFY_RE.search(f"{prim_ctx} {extra_text or ''}"):
             return False
     if _is_stolen_accessory_device_brand(cand_en, t_primary, en_primary):
         return False
@@ -1421,8 +1444,8 @@ def normalize_brand_english(brand_raw, title="", extra_text="", en_brand="", en_
                     cand_t = lat if not lat.islower() else lat.title()
                     if _is_scraped_brand_valid(cand_t, t_primary, en_primary, extra_text, title_brand_en):
                         return cand_t
-        if _is_scraped_brand_valid(b_translit[:35], t_primary, en_primary, extra_text, title_brand_en):
-            return b_translit[:35]
+        # لا نرجع كتابة صوتية حرفية مشوهة (مثل Siliktif Kolikshn أو Bioti Aof Gosihon) إذا لم تطابق اسماً إنجليزياً حقيقياً!
+        return ""
 
     return ""
 
@@ -3691,34 +3714,44 @@ _AR_UNIT_NEXT_WORDS = {
     "سم", "مم", "متر", "وات", "واط", "بوصة", "حنفية", "حنفيات", "أدوار", "ادوار", "علبة", "عبوة", "باكيت", "زجاجة",
 }
 
+def _ascii_fold_compact(s):
+    import unicodedata
+    nf = unicodedata.normalize("NFKD", str(s or ""))
+    no_acc = "".join(ch for ch in nf if not unicodedata.combining(ch))
+    return re.sub(r'[^a-z0-9]', '', no_acc.lower())
+
+
 def _dedupe_brand_prefix(text, brand_en=""):
-    """يمنع تكرار اسم الماركة في بداية العنوان الإنجليزي حتى مع اختلاف المسافات/الشرط (مثل Red Rex Redrex-)."""
+    """يمنع تكرار اسم الماركة في بداية العنوان الإنجليزي حتى مع اختلاف المسافات/الشرط/الهمزات (مثل La Roche-Posay LA ROCHE POSAY أو L'Oreal Paris L’Oréal Paris)."""
     if not text or not brand_en:
         return text
     s = str(text).strip()
-    b_compact = re.sub(r'[^a-z0-9]', '', brand_en.lower())
+    s = re.sub(r'^\s*\[([^\]]{2,30})\]\s*', r'\1 ', s).strip()
+    b_compact = _ascii_fold_compact(brand_en)
     if len(b_compact) < 2:
         return s
-    # إزالة أي تكرار لاسم الماركة في أول العنوان
     toks = s.split()
-    if len(toks) >= 2:
-        first_compact = re.sub(r'[^a-z0-9]', '', toks[0].lower())
-        if first_compact == b_compact:
-            rest = " ".join(toks[1:]).lstrip(" -—:;,.")
-            return f"{brand_en} {rest}".strip() if rest else brand_en
-    if len(toks) >= 3:
-        two_compact = re.sub(r'[^a-z0-9]', '', (toks[0] + toks[1]).lower())
-        third_compact = re.sub(r'[^a-z0-9]', '', toks[2].lower())
-        if two_compact == b_compact and third_compact == b_compact:
-            rest = " ".join(toks[3:]).lstrip(" -—:;,.")
-            return f"{brand_en} {rest}".strip() if rest else brand_en
-    s_compact = re.sub(r'[^a-z0-9]', '', s.lower())
+    # فحص ما إذا كانت أول 1..4 كلمات هي نفس الماركة (مع احتمال تكرارها مرتين متتاليتين)
+    for k in (4, 3, 2, 1):
+        if len(toks) >= k:
+            head_c = _ascii_fold_compact(" ".join(toks[:k]))
+            if head_c == b_compact:
+                rest_toks = toks[k:]
+                # لو تكررت الماركة مرة ثانية مباشرة بعدها نحذف التكرار الثاني أيضاً!
+                for k2 in (4, 3, 2, 1):
+                    if len(rest_toks) >= k2 and _ascii_fold_compact(" ".join(rest_toks[:k2])) == b_compact:
+                        rest_toks = rest_toks[k2:]
+                        break
+                rest = " ".join(rest_toks).lstrip(" -—:;,.")
+                return f"{brand_en} {rest}".strip() if rest else brand_en
+    s_compact = _ascii_fold_compact(s)
     if b_compact not in s_compact:
         return f"{brand_en} {s}".strip()
     return s
 
+
 def _title_contains_brand(text, brand_en):
-    """يتحقق هل الماركة مذكورة بالفعل في العنوان (سواء بالإنجليزية أو بأي كتابة عربية معروفة لها) لمنع تكرارها."""
+    """يتحقق هل الماركة مذكورة بالفعل في العنوان (سواء بالإنجليزية أو بأي كتابة عربية معروفة أو هيكل صوتي مطابق) لمنع تكرارها."""
     if not text or not brand_en:
         return False
     b_low = brand_en.lower().strip()
@@ -3727,8 +3760,8 @@ def _title_contains_brand(text, brand_en):
     t_low = text.lower()
     if re.search(rf'(?:^|[\s\-—,/(\[])({re.escape(b_low)})(?:$|[\s\-—,/)\]])', t_low):
         return True
-    b_comp = re.sub(r'[^a-z0-9]', '', b_low)
-    t_comp = re.sub(r'[^a-z0-9]', '', t_low)
+    b_comp = _ascii_fold_compact(b_low)
+    t_comp = _ascii_fold_compact(t_low)
     if len(b_comp) >= 4 and b_comp in t_comp:
         return True
     t_norm = norm_ar_token(text)
@@ -3737,6 +3770,16 @@ def _title_contains_brand(text, brand_en):
             kn = norm_ar_token(ar_k)
             if kn and re.search(r'(?:^|\s)' + re.escape(kn) + r'(?:\s|$)', t_norm):
                 return True
+    # مطابقة الهيكل الصوتي للكلمات العربية في العنوان مع اسم الماركة الإنجليزي (يمنع تكرار مثلاً: كيرفري ... — Carefree أو روت تو اند ... — Root To End)
+    b_skel = _phonetic_skeleton(brand_en)
+    if b_skel and len(b_skel) >= 3:
+        ar_words = [w for w in t_norm.split() if len(w) >= 2]
+        for idx_w in range(len(ar_words)):
+            for span in (1, 2, 3):
+                if idx_w + span <= len(ar_words):
+                    phrase_skel = _phonetic_skeleton(" ".join(ar_words[idx_w:idx_w + span]))
+                    if phrase_skel == b_skel or (len(b_skel) >= 4 and phrase_skel[:4] == b_skel[:4]):
+                        return True
     if b_low in ("camay", "kemei") and re.search(r'(?:^|\s)كامي(?:\s|$)', t_norm):
         return True
     if b_low == "ni fo" and re.search(r'(?:^|\s)ني\s*فو(?:\s|$)', t_norm):
@@ -3774,6 +3817,7 @@ def _trim_at_word_boundary(text, max_len, is_ar=True):
                 "خاصة", "بجهاز", "لهاتف", "متوافق", "متوافقة", "بـ", "لـ",
                 "بمفاتيح", "بقاعدة", "بتقنية", "بقوة", "بسعة", "بدقة", "بمعدل",
                 "بنظام", "بشاشة", "بإضاءة", "باضاءة", "بألوان", "بالوان", "بمقاس", "بوزن", "بطول", "بسمك",
+                "جميع", "انواع", "أنواع", "لنوع", "لزيادة", "ومستخرج", "تتميز", "بقدرتها", "الفائقة",
             )
         }
         toks = cut.split()
@@ -3785,7 +3829,14 @@ def _trim_at_word_boundary(text, max_len, is_ar=True):
         while len(toks) > 2 and toks[-1].lower().strip(",.;:-") in ("for", "with", "and", "or", "in", "to", "of", "by", "the", "a", "an", "&", "-"):
             toks.pop()
         cut = " ".join(toks).strip(" -—,:;.|/")
-    return cut
+    # إزالة أي قوس مفتوح غير مغلق في نهاية العنوان بعد الاقتطاع (مثل "(30ml")
+    if cut.count("(") > cut.count(")"):
+        last_open = cut.rfind("(")
+        cut = (cut[:last_open] + " " + cut[last_open + 1:]).strip()
+    if cut.count("[") > cut.count("]"):
+        last_open_b = cut.rfind("[")
+        cut = (cut[:last_open_b] + " " + cut[last_open_b + 1:]).strip()
+    return re.sub(r'\s+', ' ', cut).strip(" -—,:;.|/،؛")
 
 
 def _smart_clean_ar_title(title, brand_en="", extra_specs_ar=None, max_len=84):
@@ -3805,6 +3856,8 @@ def _smart_clean_ar_title(title, brand_en="", extra_specs_ar=None, max_len=84):
     t = re.sub(r'\bواقي\s*شاش[ةه]\s+متوافق\s+مع\s+واقي\s*(?:ال)?شاش[ةه]\s*', 'واقي شاشة ', t)
     t = re.sub(r'(\d+)\s+م(?=\s+(?:لوفة|لوفه|للاستحمام|شاور|غسول|شامبو|كريم|سيروم|زيت|بخاخ|اسبراي|مع|من|لل))', r'\1 مل', t)
     t = re.sub(r'(?:قد\s*تختلف\s*(?:العبوة|الألوان|الالوان|الشكل)[^،,|—]*)', '', t)
+    t = re.sub(r'\s*لنوع\s*البشرة\s*(?:كل|عادية|جميع|دهنية|جافة|مختلطة)?\b', '', t)
+    t = re.sub(r'\s*اوف\s*جوسيهون\b', '', t)
     t = re.sub(r'(?:أصلي|اصلي)\s*100%?', '', t)
     t = re.sub(r'\bار\s*جي\s*بي\b|\bآر\s*جي\s*بي\b', 'RGB', t)
     t = re.sub(r'\b(?:دي\s*ال\s*3)\b', 'DL3', t)

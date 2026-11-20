@@ -210,11 +210,17 @@ def _save_state(st):
 
 
 def _norm_name_key(name_ar):
-    s = re.sub(r'[أإآا]', 'ا', (name_ar or "").lower())
+    """مفتاح موحّد لاسم المنتج الأساسي (يتجاهل درجة اللون أو رقم العبوة بعد الفاصلة لمنع تكرار نفس المنتج بدرجتين في نفس اليوم)."""
+    raw = str(name_ar or "").split("—")[0]
+    head_clause = re.split(r'[،,:]', raw)[0].strip()
+    if len(head_clause) >= 14:
+        raw = head_clause
+    s = re.sub(r'[أإآا]', 'ا', raw.lower())
     s = re.sub(r'[ةه]', 'ه', s)
     s = re.sub(r'[يى]', 'ي', s)
     s = re.sub(r'[^\w\u0600-\u06FF]+', ' ', s).strip()
-    return s[:60]
+    words = [w for w in s.split() if not w.isdigit()]
+    return " ".join(words[:6])[:55]
 
 
 # ---------------------------------------------------------------------------
@@ -284,6 +290,59 @@ async def scrape_girls_amazon(page, queries_batch, url_offset=0):
     return list(items.values())
 
 
+def _parse_noon_card_strict(raw_text, price_text=None, badge_discount=None):
+    """
+    يستخرج السعر الحقيقي والسعر القديم من كارت نون بدقة 100% (مطابق لـ bot.py):
+    - يقرأ أولاً من عنصر السعر المخصص [data-qa="plp-product-box-price"].
+    - عند القراءة من أسطر الكارت، يبدأ فقط من سطر كلمة (جنيه / EGP) للأمام، فلا يقرأ أبداً رقم التقييم أو عدد المراجعات الذي يسبق كلمة (جنيه)!
+    - لا يخترع سعراً قديماً وهمياً بالقسمة على نسبة الخصم.
+    """
+    t = (raw_text or "").translate(_AR_DIGITS)
+    lines = [l.strip() for l in t.split("\n") if l.strip()]
+    price = list_price = rating = reviews = None
+
+    if price_text:
+        pt = re.sub(r'خصم\s*\d+\s*%|\d+\s*%', ' ', str(price_text).translate(_AR_DIGITS))
+        nums = [to_float(x) for x in re.findall(r'\d[\d,]*(?:\.\d+)?', pt)]
+        nums = [n for n in nums if n and n >= 15]
+        if nums:
+            price = nums[0]
+        if len(nums) > 1 and nums[1] > price:
+            list_price = nums[1]
+
+    if price is None:
+        for i, l in enumerate(lines):
+            if "جنيه" in l or "EGP" in l or "ج.م" in l:
+                # نأخذ النص بدءاً من كلمة (جنيه) وما بعدها فقط لتجنب قراءة عدد التقييمات الذي يسبقها!
+                after_curr = re.split(r'(?:جنيه|EGP|ج\.م)', l, maxsplit=1)[-1]
+                window = " ".join([after_curr] + lines[i + 1:i + 4])
+                window = re.sub(r'خصم\s*\d+\s*%|\d+\s*%', ' ', window)
+                nums = [to_float(x) for x in re.findall(r'\d[\d,]*(?:\.\d+)?', window)]
+                nums = [n for n in nums if n and n >= 15]
+                if nums:
+                    price = nums[0]
+                if len(nums) > 1 and nums[1] > price:
+                    list_price = nums[1]
+                break
+
+    for j, l in enumerate(lines):
+        if re.fullmatch(r'[345]\.\d', l):
+            rating = l
+            if j + 1 < len(lines):
+                m_rv = re.search(r'\(?([\d.,]+K?)\)?', lines[j + 1])
+                if m_rv:
+                    reviews = m_rv.group(1)
+            break
+
+    # إذا لم يظهر سعر قديم صريح، أو كان الفرق مع شارة الخصم كبيراً جداً (>18%)، نرفض السعر المشتبه به حتى يتم تأكيده من صفحة المنتج PDP
+    if price and list_price and badge_discount:
+        calc_d = (1.0 - price / list_price) * 100.0
+        if abs(calc_d - badge_discount) > 18:
+            list_price = None
+
+    return {"price": price, "list_price": list_price, "rating": rating, "reviews": reviews}
+
+
 async def scrape_girls_noon(page, queries_batch, url_offset=0):
     items = {}
     noon_pool = list(ge.GIRLS_NOON_DEAL_URLS)
@@ -297,12 +356,15 @@ async def scrape_girls_noon(page, queries_batch, url_offset=0):
             await page.wait_for_timeout(2400)
             cards = await page.evaluate("""() => [...document.querySelectorAll('a[href*="/p/"]')].slice(0, 26).map(a => {
                 const href = a.getAttribute('href') || '';
+                const qaImg = a.querySelector('[data-qa^="productImagePLP_"]');
+                const qaName = qaImg ? qaImg.getAttribute('data-qa').replace('productImagePLP_', '').trim() : '';
+                const boxName = a.querySelector('[data-qa="plp-product-box-name"], [data-qa="product-name"]')?.innerText?.replace(/\\s+/g, ' ')?.trim() || '';
                 const imgEl = a.querySelector('img[src*="nooncdn"], img');
                 const img = imgEl ? (imgEl.currentSrc || imgEl.src || '') : '';
-                const title = a.querySelector('[data-qa="product-name"]')?.innerText
-                    || imgEl?.getAttribute('alt') || '';
+                const title = [boxName, qaName, a.getAttribute('title') || '', imgEl?.getAttribute('alt') || ''].filter(Boolean).sort((x, y) => y.length - x.length)[0] || '';
+                const price_text = a.querySelector('[data-qa="plp-product-box-price"]')?.innerText || '';
                 const text = a.innerText || '';
-                return {href, img, title, text};
+                return {href, img, title, price_text, text};
             })""")
             for sc in cards:
                 href = sc.get("href") or ""
@@ -312,26 +374,22 @@ async def scrape_girls_noon(page, queries_batch, url_offset=0):
                 if not full_u or full_u in items:
                     continue
                 raw_t = clean_txt(sc.get("title") or "")
-                txt = clean_txt(sc.get("text") or "")
+                raw_lines_txt = sc.get("text") or ""
+                txt_flat = clean_txt(raw_lines_txt)
                 if not raw_t or len(raw_t) < 8:
                     continue
                 if not ge.is_girls_product_text_safe(raw_t):
                     continue
-                m_disc = re.search(r'(?:خصم\s*(\d+)%|(\d+)%\s*(?:خصم|OFF))', txt, re.I)
+                m_disc = re.search(r'(?:خصم\s*(\d+)%|(\d+)%\s*(?:خصم|OFF))', txt_flat, re.I)
                 badge_d = int(m_disc.group(1) or m_disc.group(2)) if m_disc else 0
-                nums = [to_float(x) for x in re.findall(r'(?:جنيه|ج\.م|EGP)\s*([\d,]+(?:\.\d+)?)|([\d,]+(?:\.\d+)?)\s*(?:جنيه|ج\.م|EGP)', txt, re.I)]
-                flat_nums = [to_float(a or b) for a, b in re.findall(r'(?:جنيه|ج\.م|EGP)\s*([\d,]+(?:\.\d+)?)|([\d,]+(?:\.\d+)?)\s*(?:جنيه|ج\.م|EGP)', txt, re.I)]
-                flat_nums = [x for x in flat_nums if x and x >= 15]
-                if not flat_nums:
-                    continue
-                p = flat_nums[0]
-                lp = flat_nums[1] if len(flat_nums) > 1 and flat_nums[1] > p else (round(p / (1 - badge_d / 100.0), 2) if 15 <= badge_d <= 85 else None)
-                if not lp or lp <= p:
+                parsed = _parse_noon_card_strict(raw_lines_txt, sc.get("price_text"), badge_d)
+                p = parsed["price"]
+                lp = parsed["list_price"]
+                if not p or p < 25 or not lp or lp <= p:
                     continue
                 disc = (1.0 - p / lp) * 100.0
-                if disc < 18.0 or disc >= 90.0:
+                if disc < 18.0 or disc >= 88.0:
                     continue
-                rat_m = re.search(r'\b([345]\.\d)\b', txt)
                 items[full_u] = {
                     "store": "Noon",
                     "link": full_u,
@@ -339,10 +397,10 @@ async def scrape_girls_noon(page, queries_batch, url_offset=0):
                     "price": p,
                     "list_price": lp,
                     "discount": disc,
-                    "rating": rat_m.group(1) if rat_m else None,
-                    "reviews": None,
+                    "rating": parsed["rating"],
+                    "reviews": parsed["reviews"],
                     "image": sc.get("img") or "",
-                    "card_text": txt,
+                    "card_text": txt_flat,
                 }
         except Exception as e:
             print(f"[Girls Noon] skip {url[:60]}: {e}")
@@ -350,7 +408,7 @@ async def scrape_girls_noon(page, queries_batch, url_offset=0):
 
 
 async def fetch_pdp_details(context, item):
-    """يجلب التفاصيل الكاملة والصورة الأصلية والوصف الإنجليزي والعربي من صفحة المنتج."""
+    """يجلب التفاصيل الكاملة + يتحقق من السعر الحقيقي والسعر القديم من صفحة المنتج (PDP) مباشرة لمنع أي خطأ سعر نهائياً."""
     page = await context.new_page()
     res = {
         "title": item["title"],
@@ -361,6 +419,8 @@ async def fetch_pdp_details(context, item):
         "en_title": "",
         "en_brand": "",
         "breadcrumbs": [],
+        "pdp_price": None,
+        "pdp_list_price": None,
     }
     try:
         await page.goto(item["link"], wait_until="domcontentloaded", timeout=35000)
@@ -376,7 +436,9 @@ async def fetch_pdp_details(context, item):
                     || document.querySelector('#landingImage')?.src || '';
                 const crumbs = [...document.querySelectorAll('#wayfinding-breadcrumbs_feature_div li a')]
                     .map(e => e.innerText.trim()).filter(Boolean);
-                return {title, brand, seller, feats, img, crumbs};
+                const price = document.querySelector('#corePriceDisplay_desktop_feature_div .priceToPay .a-offscreen, #corePriceDisplay_desktop_feature_div .priceToPay, #corePrice_feature_div .a-price:not(.a-text-price) .a-offscreen')?.innerText || '';
+                const list_price = document.querySelector('#corePriceDisplay_desktop_feature_div .basisPrice .a-offscreen, #corePriceDisplay_desktop_feature_div .a-price.a-text-price .a-offscreen')?.innerText || '';
+                return {title, brand, seller, feats, img, crumbs, price, list_price};
             }""")
             if data.get("title"):
                 res["title"] = clean_txt(data["title"])
@@ -390,25 +452,49 @@ async def fetch_pdp_details(context, item):
                 res["image"] = data["img"]
             if data.get("crumbs"):
                 res["breadcrumbs"] = data["crumbs"]
+            if data.get("price"):
+                res["pdp_price"] = to_float(data["price"])
+            if data.get("list_price"):
+                res["pdp_list_price"] = to_float(data["list_price"])
         else:
             data = await page.evaluate("""() => {
-                const title = document.querySelector('h1')?.innerText?.trim() || '';
+                const title = document.querySelector('[data-qa="pdp-product-name"], h1')?.innerText?.trim() || '';
                 const feats = [...document.querySelectorAll('[class*="highlight"] li, [class*="Highlight"] li')]
                     .map(e => e.innerText.trim()).filter(t => t.length > 10).slice(0, 5);
-                let ldBrand = '', ldImg = '';
+                let ldBrand = '', ldImg = '', pdpPrice = null, pdpListPrice = null;
+                try {
+                    const nj = JSON.parse(document.querySelector('#__NEXT_DATA__')?.textContent || '{}');
+                    const prod = nj?.props?.pageProps?.catalog?.product
+                        || nj?.props?.pageProps?.product
+                        || nj?.props?.pageProps?.initialData?.product;
+                    if (prod) {
+                        if (prod.brand) ldBrand = String(prod.brand).trim();
+                        const v = (prod.variants && prod.variants[0]) || prod;
+                        const offers = (v && v.offers) || prod.offers || [];
+                        const off = Array.isArray(offers) ? offers[0] : offers;
+                        const sp = off?.sale_price ?? off?.price ?? prod?.sale_price ?? prod?.price_min;
+                        const rp = off?.regular_price ?? off?.price ?? prod?.regular_price ?? prod?.price_max;
+                        if (sp) pdpPrice = Number(sp);
+                        if (rp) pdpListPrice = Number(rp);
+                    }
+                } catch (e) {}
                 for (const sc of document.querySelectorAll('script[type="application/ld+json"]')) {
                     try {
                         const o = JSON.parse(sc.textContent);
                         const arr = Array.isArray(o) ? o : [o];
                         for (const p of arr) {
                             if (p['@type'] === 'Product') {
-                                if (p.brand) ldBrand = typeof p.brand === 'string' ? p.brand : (p.brand.name || '');
-                                if (p.image) ldImg = Array.isArray(p.image) ? p.image[0] : p.image;
+                                if (!ldBrand && p.brand) ldBrand = typeof p.brand === 'string' ? p.brand : (p.brand.name || '');
+                                if (!ldImg && p.image) ldImg = Array.isArray(p.image) ? p.image[0] : p.image;
+                                const off = Array.isArray(p.offers) ? p.offers[0] : p.offers;
+                                if (!pdpPrice && off?.price) pdpPrice = Number(off.price);
                             }
                         }
                     } catch (e) {}
                 }
-                return {title, feats, ldBrand, ldImg};
+                const priceBox = document.querySelector('[data-qa="pdp-price"], [class*="priceNow"]')?.innerText || '';
+                const oldPriceBox = document.querySelector('[data-qa="pdp-was-price"], [class*="priceWas"]')?.innerText || '';
+                return {title, feats, ldBrand, ldImg, pdpPrice, pdpListPrice, priceBox, oldPriceBox};
             }""")
             if data.get("title"):
                 res["title"] = clean_txt(data["title"])
@@ -418,6 +504,8 @@ async def fetch_pdp_details(context, item):
                 res["features"] = data["feats"]
             if data.get("ldImg"):
                 res["image"] = data["ldImg"]
+            res["pdp_price"] = to_float(data.get("pdpPrice")) or to_float(data.get("priceBox"))
+            res["pdp_list_price"] = to_float(data.get("pdpListPrice")) or to_float(data.get("oldPriceBox"))
     except Exception as e:
         print(f"[Girls PDP] error {item['link']}: {e}")
     finally:
@@ -848,6 +936,24 @@ async def run_girls_cycle(force_tiktok=False):
 
             for item in pool[:18]:
                 pdp = await fetch_pdp_details(context, item)
+                # التحقق الإلزامي من السعر الحقيقي والسعر القديم من صفحة المنتج PDP لمنع أي خطأ تقييمات نهائياً
+                pdp_p = pdp.get("pdp_price")
+                pdp_lp = pdp.get("pdp_list_price")
+                if pdp_p and pdp_p >= 20:
+                    if item["store"] == "Noon" and abs(pdp_p - item["price"]) / max(pdp_p, 1.0) > 0.15:
+                        if not pdp_lp or pdp_lp <= pdp_p:
+                            print(f"⚠️ تخطي منتج نون لسعر كارت غير مطابق لصفحة المنتج ({item['price']} vs {pdp_p}): {item['link']}")
+                            continue
+                        item["list_price"] = pdp_lp
+                    item["price"] = pdp_p
+                if pdp_lp and pdp_lp > item["price"]:
+                    item["list_price"] = pdp_lp
+                if not item["price"] or item["price"] < 25 or not item["list_price"] or item["list_price"] <= item["price"]:
+                    continue
+                item["discount"] = (1.0 - item["price"] / item["list_price"]) * 100.0
+                if item["discount"] < 12.0 or item["discount"] >= 88.0:
+                    continue
+
                 intel = ge.classify_girls_product(
                     title=pdp["title"],
                     brand=pdp["brand"],
@@ -897,16 +1003,20 @@ async def run_girls_cycle(force_tiktok=False):
         tg_sorted = sorted(raw_candidates, key=lambda x: x["v_score"], reverse=True)
         tg_sent_cnt = 0
         cat_counts = {}
+        brand_counts = {}
         recent_names = state.get("recent_names") or {}
         for c in tg_sorted:
             if tg_sent_cnt >= GIRLS_TG_MAX_PER_CYCLE:
                 break
             link = c["item"]["link"]
             gcat = c["intel"]["girls_cat"]
+            b_en = (c["intel"].get("brand_en") or "").lower().strip()
             disc = float(c["item"]["discount"] or 0)
             if link in sent_tg or c["name_key"] in recent_names:
                 continue
             if cat_counts.get(gcat, 0) >= 2 and disc < 65.0:
+                continue
+            if b_en and brand_counts.get(b_en, 0) >= 1 and disc < 65.0:
                 continue
             if not _can_post_girls_tg_now(state, discount=disc):
                 continue
@@ -940,6 +1050,8 @@ async def run_girls_cycle(force_tiktok=False):
                     "v_score": c["v_score"],
                 })
                 cat_counts[gcat] = cat_counts.get(gcat, 0) + 1
+                if b_en:
+                    brand_counts[b_en] = brand_counts.get(b_en, 0) + 1
                 tg_sent_cnt += 1
                 print(f"✅ [Girls TG #{tg_sent_cnt}] {c['intel']['name_ar']} (Score={c['v_score']})")
                 await asyncio.sleep(5)
