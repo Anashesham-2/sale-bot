@@ -283,8 +283,6 @@
     "Hoover"
   ],
   "queries": [
-    "فريش غسالة تحميل Fresh",
-    "جوجل اير فيتبت، Fitbit",
     "مجموعة ممسحة مسطحة فيليدا",
     "مروحة تبريد بإضاءة havit",
     "كرياتين بدون نكهة",
@@ -362,7 +360,9 @@
     "تكييف سبليت انفرتر تورنيدو",
     "مكيف هواء محمول Fresh",
     "تكييف سبليت بروفيشنال Fresh",
-    "هاتف HONOR X9d"
+    "هاتف HONOR X9d",
+    "سوكاني خلاط محمول Sokany",
+    "تلفزيون ايه برو Xiaomi"
   ],
   "channels": [
     "epichardware",
@@ -2091,7 +2091,12 @@
     "Sal7lyEgypt/40514",
     "Sal7lyEgypt/40516",
     "Yo_Ayman/16842",
-    "epichardware/5007"
+    "epichardware/5007",
+    "epichardware/5010",
+    "epichardware/5009",
+    "epichardware/5008",
+    "Yo_Ayman/16844",
+    "Yo_Ayman/16843"
   ],
   "last_digest_date": "2026-11-20"
 }
