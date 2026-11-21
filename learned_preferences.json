@@ -287,8 +287,6 @@
     "DY"
   ],
   "queries": [
-    "Victus fa2103ne Intel HP",
-    "عطر فخر اللطافة Lattafa",
     "واقي الشمس كوريان VITA-KYEOL",
     "أقراص فيتامينات ومغنيسيوم Centrum",
     "كرياتين نقي بنسبة Max Muscle",
@@ -366,7 +364,9 @@
     "جهاز باد شريحة Apple",
     "لاب توب ابل Apple",
     "غسالة هوفر H3DP485TAMBRELA Hoover",
-    "مجموعة ماكينة حلاقة VGR"
+    "مجموعة ماكينة حلاقة VGR",
+    "ميزان شخصي الكترونى دي اس بي",
+    "بروتين تشالنجر نيوتريشن"
   ],
   "channels": [
     "epichardware",
@@ -2221,6 +2221,9 @@
     "Sal7lyEgypt/40590",
     "Sal7lyEgypt/40589",
     "Sal7lyEgypt/40588",
-    "epichardware/5044"
+    "epichardware/5044",
+    "epichardware/5048",
+    "epichardware/5046",
+    "Yo_Ayman/16868"
   ]
 }
