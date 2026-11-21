@@ -287,7 +287,6 @@
     "DY"
   ],
   "queries": [
-    "ماكينة تحضير اسبريسو Arzum Okka",
     "ماكينة حلاقة الشعر VGR",
     "بلسم مجدد بحجم Braes",
     "سماعة أورايمو OEB Oraimo",
@@ -366,7 +365,8 @@
     "مسحوق بروتين مصل DY Nutrition",
     "قطونيل طقم بوكسرات Cottonil",
     "موزع HDMI USB UGREEN",
-    "جالاكسي A36 ثنائي سامسونج"
+    "جالاكسي A36 ثنائي سامسونج",
+    "كاميرا ويب قابلة RAPOO"
   ],
   "channels": [
     "epichardware",
@@ -2150,6 +2150,9 @@
     "epichardware/5031",
     "Sal7lyEgypt/40544",
     "Sal7lyEgypt/40545",
-    "Sal7lyEgypt/40546"
+    "Sal7lyEgypt/40546",
+    "epichardware/5032",
+    "Sal7lyEgypt/40548",
+    "Sal7lyEgypt/40547"
   ]
 }
