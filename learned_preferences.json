@@ -287,7 +287,6 @@
     "DY"
   ],
   "queries": [
-    "ماكينة حلاقة الشعر VGR",
     "بلسم مجدد بحجم Braes",
     "سماعة أورايمو OEB Oraimo",
     "باور بانك أنكر انكر",
@@ -366,7 +365,8 @@
     "قطونيل طقم بوكسرات Cottonil",
     "موزع HDMI USB UGREEN",
     "جالاكسي A36 ثنائي سامسونج",
-    "كاميرا ويب قابلة RAPOO"
+    "كاميرا ويب قابلة RAPOO",
+    "جهاز باد شريحة Apple"
   ],
   "channels": [
     "epichardware",
@@ -2157,6 +2157,8 @@
     "Sal7lyEgypt/40549",
     "Sal7lyEgypt/40550",
     "epichardware/5033",
-    "Sal7lyEgypt/40551"
+    "Sal7lyEgypt/40551",
+    "epichardware/5034",
+    "Sal7lyEgypt/40552"
   ]
 }
