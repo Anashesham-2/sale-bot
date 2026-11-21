@@ -287,7 +287,6 @@
     "DY"
   ],
   "queries": [
-    "بلسم مجدد بحجم Braes",
     "سماعة أورايمو OEB Oraimo",
     "باور بانك أنكر انكر",
     "Victus fa2103ne Intel HP",
@@ -366,7 +365,8 @@
     "موزع HDMI USB UGREEN",
     "جالاكسي A36 ثنائي سامسونج",
     "كاميرا ويب قابلة RAPOO",
-    "جهاز باد شريحة Apple"
+    "جهاز باد شريحة Apple",
+    "لاب توب ابل Apple"
   ],
   "channels": [
     "epichardware",
@@ -2159,6 +2159,8 @@
     "epichardware/5033",
     "Sal7lyEgypt/40551",
     "epichardware/5034",
-    "Sal7lyEgypt/40552"
+    "Sal7lyEgypt/40552",
+    "epichardware/5035",
+    "Sal7lyEgypt/40553"
   ]
 }
