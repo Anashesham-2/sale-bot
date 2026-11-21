@@ -287,7 +287,6 @@
     "DY"
   ],
   "queries": [
-    "باور بانك أنكر انكر",
     "Victus fa2103ne Intel HP",
     "عطر فخر اللطافة Lattafa",
     "واقي الشمس كوريان VITA-KYEOL",
@@ -366,7 +365,8 @@
     "كاميرا ويب قابلة RAPOO",
     "جهاز باد شريحة Apple",
     "لاب توب ابل Apple",
-    "غسالة هوفر H3DP485TAMBRELA Hoover"
+    "غسالة هوفر H3DP485TAMBRELA Hoover",
+    "مجموعة ماكينة حلاقة VGR"
   ],
   "channels": [
     "epichardware",
@@ -2220,6 +2220,7 @@
     "epichardware/5043",
     "Sal7lyEgypt/40590",
     "Sal7lyEgypt/40589",
-    "Sal7lyEgypt/40588"
+    "Sal7lyEgypt/40588",
+    "epichardware/5044"
   ]
 }
