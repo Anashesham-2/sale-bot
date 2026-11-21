@@ -287,7 +287,6 @@
     "DY"
   ],
   "queries": [
-    "واقي الشمس كوريان VITA-KYEOL",
     "أقراص فيتامينات ومغنيسيوم Centrum",
     "كرياتين نقي بنسبة Max Muscle",
     "كيس فاكهة رامي ريد ريكس",
@@ -366,7 +365,8 @@
     "غسالة هوفر H3DP485TAMBRELA Hoover",
     "مجموعة ماكينة حلاقة VGR",
     "ميزان شخصي الكترونى دي اس بي",
-    "بروتين تشالنجر نيوتريشن"
+    "بروتين تشالنجر نيوتريشن",
+    "جيم سير وحدة"
   ],
   "channels": [
     "epichardware",
@@ -2238,6 +2238,10 @@
     "Sal7lyEgypt/40598",
     "Sal7lyEgypt/40601",
     "Yo_Ayman/16870",
-    "Sal7lyEgypt/40602"
-  ]
+    "Sal7lyEgypt/40602",
+    "epichardware/5049",
+    "Sal7lyEgypt/40604",
+    "Sal7lyEgypt/40603"
+  ],
+  "last_digest_date": "2026-11-21"
 }
