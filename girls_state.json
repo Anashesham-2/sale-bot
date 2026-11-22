@@ -1,5 +1,5 @@
 {
-  "query_idx": 10,
+  "query_idx": 15,
   "last_tt_cat": "",
   "recent_names": {
     "كونسيلر فيت مي للعيون من ميبيلين": 1795131404,
@@ -286,7 +286,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795293708,
     1795294512,
     1795294517,
     1795294523,
@@ -369,16 +368,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795293708,
-      "link": "https://www.amazon.eg/dp/B0B8NW4SWZ",
-      "name_ar": "سبلاش للجسم برائحة مانجو خوخي من افوفا، سعة 55 مل — Avuva",
-      "price": 29.0,
-      "list_price": 45.72,
-      "discount": 36.6,
-      "store": "Amazon",
-      "v_score": 42.3
-    },
     {
       "ts": 1795294512,
       "link": "https://www.amazon.eg/dp/B0CFYWDLBJ",
