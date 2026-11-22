@@ -286,10 +286,10 @@
     "FRUSTA",
     "DY",
     "Nutriversum",
-    "Camelion"
+    "Camelion",
+    "ALLEASA"
   ],
   "queries": [
-    "حليب سائل المراعي، Almarai",
     "جيم سير وحدة GameSir",
     "موبايل ريدمي ذكي شاومي",
     "مكنسة كهربائية بفلتر Tornado",
@@ -368,7 +368,8 @@
     "فلتر مياه تانك",
     "حفاضات اطفال مولفيكس، Molfix",
     "ميكروفون هايبر إكس، هايبر اكس",
-    "قاعدة ماوس يابانية ProbTis"
+    "قاعدة ماوس يابانية ProbTis",
+    "كابل HDMI بطول ALLEASA"
   ],
   "channels": [
     "epichardware",
@@ -2325,6 +2326,7 @@
     "Sal7lyEgypt/40650",
     "Sal7lyEgypt/40651",
     "epichardware/5072",
-    "Sal7lyEgypt/40652"
+    "Sal7lyEgypt/40652",
+    "epichardware/5075"
   ]
 }
