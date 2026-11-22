@@ -292,7 +292,6 @@
     "Vacation"
   ],
   "queries": [
-    "باور بانك شفاف جي- بور",
     "سماعة سبيس بادزN اورايمو",
     "توتال انيرجيز كوارتز TotalEnergies",
     "بايركس طقم اواني Pyrex",
@@ -371,7 +370,8 @@
     "يوجرين كابل ساتا UGREEN",
     "طقم شورت بوكسر Cottonil",
     "سوكاني خلاط محمول",
-    "سوكاني طقم افطار"
+    "سوكاني طقم افطار",
+    "كابل USB USB جي باور"
   ],
   "channels": [
     "epichardware",
@@ -2368,6 +2368,9 @@
     "Sal7lyEgypt/40672",
     "Sal7lyEgypt/40671",
     "Sal7lyEgypt/40670",
-    "Yo_Ayman/16893"
+    "Yo_Ayman/16893",
+    "epichardware/5096",
+    "Sal7lyEgypt/40674",
+    "Yo_Ayman/16894"
   ]
 }
