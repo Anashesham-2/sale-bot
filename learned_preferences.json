@@ -292,7 +292,6 @@
     "Vacation"
   ],
   "queries": [
-    "مناديل مبللة منعشة Extra Hygiene",
     "Pyrex Excellence Daily",
     "ابل اير تاج،",
     "ذاكرة فلاش USB هايك فيجون",
@@ -371,7 +370,8 @@
     "موزع HDMI USB يوجرين",
     "مجموعة حماية البشرة Dermacy",
     "مشترك كهرباء مزود جي باور",
-    "عطر خمرة للجنسين Lattafa"
+    "عطر خمرة للجنسين Lattafa",
+    "موبايل شاومي 17T"
   ],
   "channels": [
     "epichardware",
@@ -2391,6 +2391,10 @@
     "Sal7lyEgypt/40684",
     "epichardware/5102",
     "Sal7lyEgypt/40685",
-    "Sal7lyEgypt/40686"
+    "Sal7lyEgypt/40686",
+    "epichardware/5103",
+    "Sal7lyEgypt/40688",
+    "Sal7lyEgypt/40687",
+    "Yo_Ayman/16898"
   ]
 }
