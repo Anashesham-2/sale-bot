@@ -1,5 +1,5 @@
 {
-  "query_idx": 8,
+  "query_idx": 13,
   "last_tt_cat": "",
   "recent_names": {
     "كونسيلر فيت مي للعيون من ميبيلين": 1795131404,
@@ -286,8 +286,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795300707,
-    1795300713,
     1795302943,
     1795302948,
     1795304620,
@@ -358,26 +356,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795300707,
-      "link": "https://www.noon.com/egypt-ar/ZF40A090C256D65CD138AZ/p/",
-      "name_ar": "واقي شمس إنفينيتي كير فلويد فائق SPF50+",
-      "price": 450.0,
-      "list_price": 900.0,
-      "discount": 50.0,
-      "store": "Noon",
-      "v_score": 78.0
-    },
-    {
-      "ts": 1795300713,
-      "link": "https://www.noon.com/egypt-ar/ZE2F3F35E63CDA6EA4E73Z/p/",
-      "name_ar": "سيروم فاونديشن معزّز للإشراقة بحمض الهيالورونيك، درجة متوسط",
-      "price": 150.45,
-      "list_price": 550.0,
-      "discount": 72.6,
-      "store": "Noon",
-      "v_score": 62.0
-    },
     {
       "ts": 1795302943,
       "link": "https://www.noon.com/egypt-ar/N13625792A/p/",
