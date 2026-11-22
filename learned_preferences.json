@@ -287,11 +287,10 @@
     "DY",
     "Nutriversum",
     "Camelion",
-    "ALLEASA"
+    "ALLEASA",
+    "Acer"
   ],
   "queries": [
-    "مكنسة كهربائية بفلتر Tornado",
-    "حلة ضغط سعة زينوكس",
     "طقم حلل اكسبريس زينوكس",
     "ساعة ذكية اورايمو،",
     "سماعات أذن لاسلكية تشويتك",
@@ -369,7 +368,9 @@
     "قاعدة ماوس يابانية ProbTis",
     "كابل HDMI بطول ALLEASA",
     "فيفين ميكروفون ديناميكي",
-    "طقم لوحة مفاتيح يوجرين"
+    "طقم لوحة مفاتيح يوجرين",
+    "حفاضات اطفال مولفيكس،",
+    "قارئ بطاقات محول Acer"
   ],
   "channels": [
     "epichardware",
@@ -2336,6 +2337,9 @@
     "Yo_Ayman/16888",
     "epichardware/5077",
     "Sal7lyEgypt/40657",
-    "Sal7lyEgypt/40658"
+    "Sal7lyEgypt/40658",
+    "epichardware/5079",
+    "epichardware/5078",
+    "Sal7lyEgypt/40659"
   ]
 }
