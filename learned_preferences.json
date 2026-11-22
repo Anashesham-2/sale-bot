@@ -292,7 +292,6 @@
     "Vacation"
   ],
   "queries": [
-    "سماعة أذن لاسلكية CHOETECH",
     "مناديل مبللة منعشة Extra Hygiene",
     "Pyrex Excellence Daily",
     "ابل اير تاج،",
@@ -371,7 +370,8 @@
     "كابل USB USB جي باور",
     "موزع HDMI USB يوجرين",
     "مجموعة حماية البشرة Dermacy",
-    "مشترك كهرباء مزود جي باور"
+    "مشترك كهرباء مزود جي باور",
+    "عطر خمرة للجنسين Lattafa"
   ],
   "channels": [
     "epichardware",
@@ -2386,6 +2386,8 @@
     "Sal7lyEgypt/40681",
     "Yo_Ayman/16897",
     "Sal7lyEgypt/40682",
-    "Sal7lyEgypt/40683"
+    "Sal7lyEgypt/40683",
+    "epichardware/5101",
+    "Sal7lyEgypt/40684"
   ]
 }
