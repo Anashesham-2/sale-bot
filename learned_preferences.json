@@ -292,7 +292,6 @@
     "Vacation"
   ],
   "queries": [
-    "بايركس طقم اواني Pyrex",
     "سماعة أذن لاسلكية CHOETECH",
     "مناديل مبللة منعشة Extra Hygiene",
     "Pyrex Excellence Daily",
@@ -371,7 +370,8 @@
     "سوكاني طقم افطار",
     "كابل USB USB جي باور",
     "موزع HDMI USB يوجرين",
-    "مجموعة حماية البشرة Dermacy"
+    "مجموعة حماية البشرة Dermacy",
+    "مشترك كهرباء مزود جي باور"
   ],
   "channels": [
     "epichardware",
@@ -2381,7 +2381,10 @@
     "epichardware/5098",
     "Sal7lyEgypt/40680",
     "Sal7lyEgypt/40679",
-    "Yo_Ayman/16896"
+    "Yo_Ayman/16896",
+    "epichardware/5099",
+    "Sal7lyEgypt/40681",
+    "Yo_Ayman/16897"
   ],
   "last_digest_date": "2026-11-22"
 }
