@@ -292,8 +292,6 @@
     "Vacation"
   ],
   "queries": [
-    "طقم جرانيت مكون Top Chef",
-    "طاسة قلي تيفلون تروفال",
     "باور بانك شفاف جي- بور",
     "سماعة سبيس بادزN اورايمو",
     "توتال انيرجيز كوارتز TotalEnergies",
@@ -371,7 +369,9 @@
     "موبايل ذكي XIAOMI شاومي",
     "جوال ذكي ريدمي شاومي",
     "يوجرين كابل ساتا UGREEN",
-    "طقم شورت بوكسر Cottonil"
+    "طقم شورت بوكسر Cottonil",
+    "سوكاني خلاط محمول",
+    "سوكاني طقم افطار"
   ],
   "channels": [
     "epichardware",
@@ -2361,6 +2361,13 @@
     "epichardware/5091",
     "Sal7lyEgypt/40669",
     "Sal7lyEgypt/40668",
-    "Sal7lyEgypt/40667"
+    "Sal7lyEgypt/40667",
+    "epichardware/5095",
+    "epichardware/5093",
+    "Sal7lyEgypt/40673",
+    "Sal7lyEgypt/40672",
+    "Sal7lyEgypt/40671",
+    "Sal7lyEgypt/40670",
+    "Yo_Ayman/16893"
   ]
 }
