@@ -1,5 +1,5 @@
 {
-  "query_idx": 9,
+  "query_idx": 14,
   "last_tt_cat": "",
   "recent_names": {
     "كونسيلر فيت مي للعيون من ميبيلين": 1795131404,
@@ -245,12 +245,12 @@
     "جل تفتيح اضافي واقي الشمس بعامل": 1795338848,
     "مسكارا من لوريال باريس للرفع ثبات": 1795345411,
     "ماسكارا ثلاثيه الابعاد باللون الاسود الداكن": 1795345417,
-    "فوط صحيه رفيعه للغايه مع اجنحه": 1795345423
+    "فوط صحيه رفيعه للغايه مع اجنحه": 1795345423,
+    "telofill pink blush body mist حجم": 1795347421,
+    "رذاذ الجسم بينك بلاش": 1795347426
   },
   "price_history": {},
   "sent_timestamps": [
-    1795260639,
-    1795260645,
     1795261892,
     1795261898,
     1795262902,
@@ -322,30 +322,12 @@
     1795338848,
     1795345411,
     1795345417,
-    1795345423
+    1795345423,
+    1795347421,
+    1795347426
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795260639,
-      "link": "https://www.amazon.eg/dp/B01N22W85N",
-      "name_ar": "كيرفري فوط اليومية، كبيرة الحجم، 48 فوطة، تتميز بقدرتها الفائقة على الامتصاص وتتحكم",
-      "price": 138.95,
-      "list_price": 187.0,
-      "discount": 25.7,
-      "store": "Amazon",
-      "v_score": 59.8
-    },
-    {
-      "ts": 1795260645,
-      "link": "https://www.amazon.eg/dp/B07MW1YWYL",
-      "name_ar": "فوج ايسانس عطر بخاخ للجسم للنساء يدوم طويلا بدون غاز 120 مل",
-      "price": 109.6,
-      "list_price": 142.27,
-      "discount": 23.0,
-      "store": "Amazon",
-      "v_score": 47.5
-    },
     {
       "ts": 1795261892,
       "link": "https://www.amazon.eg/dp/B0FL9SKMSP",
@@ -1065,6 +1047,26 @@
       "discount": 14.2,
       "store": "Amazon",
       "v_score": 32.1
+    },
+    {
+      "ts": 1795347421,
+      "link": "https://www.noon.com/egypt-ar/ZB4EE240F3A11D2088A8BZ/p/",
+      "name_ar": "Telofill Pink Blush Body Mist حجم السفر",
+      "price": 95.0,
+      "list_price": 190.0,
+      "discount": 50.0,
+      "store": "Noon",
+      "v_score": 56.0
+    },
+    {
+      "ts": 1795347426,
+      "link": "https://www.noon.com/egypt-ar/Z3562E1CC578203EB2047Z/p/",
+      "name_ar": "رذاذ الجسم بينك بلاش",
+      "price": 170.0,
+      "list_price": 340.0,
+      "discount": 50.0,
+      "store": "Noon",
+      "v_score": 52.0
     }
   ],
   "last_digest_date": "2026-11-21",
