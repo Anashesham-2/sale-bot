@@ -288,8 +288,6 @@
     "Nutriversum"
   ],
   "queries": [
-    "خلاط يدوي وات، Tornado",
-    "قلاية هوائية وات Tornado",
     "تورنيدو مكواة بخار",
     "مكواة بخار محمولة Tornado",
     "جبنة فيتا بيضاء Domty",
@@ -367,7 +365,9 @@
     "سماعات رأس لاسلكية JBL",
     "موسع نطاق واي TP-Link",
     "ثلاجة ببابين بسعة Midea",
-    "رابوو فأرة سلكي RAPOO"
+    "رابوو فأرة سلكي RAPOO",
+    "وسادة مسند معصم Generic",
+    "فلتر مياه تانك"
   ],
   "channels": [
     "epichardware",
@@ -2277,6 +2277,8 @@
     "Sal7lyEgypt/40624",
     "Sal7lyEgypt/40625",
     "Sal7lyEgypt/40626",
-    "epichardware/5059"
+    "epichardware/5059",
+    "epichardware/5061",
+    "epichardware/5060"
   ]
 }
