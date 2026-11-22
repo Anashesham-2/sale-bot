@@ -1,5 +1,5 @@
 {
-  "query_idx": 9,
+  "query_idx": 14,
   "last_tt_cat": "",
   "recent_names": {
     "كونسيلر فيت مي للعيون من ميبيلين": 1795131404,
@@ -259,7 +259,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795267304,
     1795270161,
     1795273325,
     1795274065,
@@ -338,16 +337,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795267304,
-      "link": "https://www.amazon.eg/dp/B0144M0QGW",
-      "name_ar": "كيرفري فوط قطنية، 56 قطعة، بدون رائحة وقابلة للتنفس لراحة طوال اليوم وحماية",
-      "price": 121.0,
-      "list_price": 158.99,
-      "discount": 23.9,
-      "store": "Amazon",
-      "v_score": 58.9
-    },
     {
       "ts": 1795270161,
       "link": "https://www.amazon.eg/dp/B0F67GP74S",
