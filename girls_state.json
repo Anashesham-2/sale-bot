@@ -1,5 +1,5 @@
 {
-  "query_idx": 0,
+  "query_idx": 5,
   "last_tt_cat": "",
   "recent_names": {
     "كونسيلر فيت مي للعيون من ميبيلين": 1795131404,
@@ -246,7 +246,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795255007,
     1795255513,
     1795255518,
     1795257676,
@@ -327,16 +326,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795255007,
-      "link": "https://www.noon.com/egypt-ar/ZAF0CE522EBB7D17296A0Z/p/",
-      "name_ar": "إنسيال ظهر حية ستانلس بيور أصلي مع سلسلة تطويل مقاوم للصدأ والتآكل انسيال للنساء",
-      "price": 89.0,
-      "list_price": 150.0,
-      "discount": 40.7,
-      "store": "Noon",
-      "v_score": 38.3
-    },
     {
       "ts": 1795255513,
       "link": "https://www.noon.com/egypt-ar/Z9923F829D28005926247Z/p/",
