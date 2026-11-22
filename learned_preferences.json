@@ -292,7 +292,6 @@
     "Vacation"
   ],
   "queries": [
-    "سماعة سبيس بادزN اورايمو",
     "توتال انيرجيز كوارتز TotalEnergies",
     "بايركس طقم اواني Pyrex",
     "سماعة أذن لاسلكية CHOETECH",
@@ -371,7 +370,8 @@
     "طقم شورت بوكسر Cottonil",
     "سوكاني خلاط محمول",
     "سوكاني طقم افطار",
-    "كابل USB USB جي باور"
+    "كابل USB USB جي باور",
+    "موزع HDMI USB يوجرين"
   ],
   "channels": [
     "epichardware",
@@ -2375,6 +2375,7 @@
     "Sal7lyEgypt/40675",
     "Sal7lyEgypt/40677",
     "Sal7lyEgypt/40676",
-    "Yo_Ayman/16895"
+    "Yo_Ayman/16895",
+    "epichardware/5097"
   ]
 }
