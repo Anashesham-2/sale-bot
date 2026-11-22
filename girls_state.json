@@ -1,5 +1,5 @@
 {
-  "query_idx": 15,
+  "query_idx": 3,
   "last_tt_cat": "",
   "recent_names": {
     "كونسيلر فيت مي للعيون من ميبيلين": 1795131404,
@@ -286,8 +286,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795300182,
-    1795300188,
     1795300707,
     1795300713,
     1795302943,
@@ -360,26 +358,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795300182,
-      "link": "https://www.noon.com/egypt-ar/Z264A650CC47094FFBCEFZ/p/",
-      "name_ar": "منظم مكياج و حقيبة تخزين مستحضرات التجميل قابلة للتعديل بدوران 360 درجة — Tangplp",
-      "price": 250.75,
-      "list_price": 450.0,
-      "discount": 44.3,
-      "store": "Noon",
-      "v_score": 55.1
-    },
-    {
-      "ts": 1795300188,
-      "link": "https://www.noon.com/egypt-ar/Z90EB111AEDB4DC458A72Z/p/",
-      "name_ar": "منظم مكياج كريستال دوار 2*1 بقاعدة",
-      "price": 501.5,
-      "list_price": 850.0,
-      "discount": 41.0,
-      "store": "Noon",
-      "v_score": 53.5
-    },
     {
       "ts": 1795300707,
       "link": "https://www.noon.com/egypt-ar/ZF40A090C256D65CD138AZ/p/",
