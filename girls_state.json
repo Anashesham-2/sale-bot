@@ -1,5 +1,5 @@
 {
-  "query_idx": 12,
+  "query_idx": 0,
   "last_tt_cat": "",
   "recent_names": {
     "بخاخ ديلايت للجسم للنساء من اوسوم": 1795133949,
@@ -286,8 +286,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795304620,
-    1795304626,
     1795305088,
     1795305094,
     1795306924,
@@ -359,26 +357,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795304620,
-      "link": "https://www.noon.com/egypt-ar/N43423651A/p/",
-      "name_ar": "لاروش بوزيه إيفاكلار سيروم للوجه لعلاج حب الشباب بحمض الساليسيليك والنياسيناميد",
-      "price": 1171.0,
-      "list_price": 1590.0,
-      "discount": 26.4,
-      "store": "Noon",
-      "v_score": 66.2
-    },
-    {
-      "ts": 1795304626,
-      "link": "https://www.noon.com/egypt-ar/Z198FF6B14BF2510C389BZ/p/",
-      "name_ar": "شامبو ضد القشرة 220 مل",
-      "price": 136.5,
-      "list_price": 195.0,
-      "discount": 30.0,
-      "store": "Noon",
-      "v_score": 33.0
-    },
     {
       "ts": 1795305088,
       "link": "https://www.amazon.eg/dp/B0DJ7HGP8J",
