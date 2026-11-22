@@ -1,5 +1,5 @@
 {
-  "query_idx": 3,
+  "query_idx": 8,
   "last_tt_cat": "",
   "recent_names": {
     "كونسيلر فيت مي للعيون من ميبيلين": 1795131404,
@@ -255,9 +255,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795264630,
-    1795264635,
-    1795264641,
     1795267304,
     1795270161,
     1795273325,
@@ -333,36 +330,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795264630,
-      "link": "https://www.amazon.eg/dp/B0C2ZD76TC",
-      "name_ar": "واقي شمس سائل هايدرو بروتيكت خفيف للغاية للوجه من يوسيرين حماية عالية الأشعة فوق",
-      "price": 756.8,
-      "list_price": 958.0,
-      "discount": 21.0,
-      "store": "Amazon",
-      "v_score": 71.5
-    },
-    {
-      "ts": 1795264635,
-      "link": "https://www.amazon.eg/dp/B07MTXH58N",
-      "name_ar": "شامبو وبلسم من لوريال باريس للتقوية والتغذية ومضاد للتجعد والتنعيم وتعزيز اللمعان",
-      "price": 399.0,
-      "list_price": 485.0,
-      "discount": 17.7,
-      "store": "Amazon",
-      "v_score": 63.9
-    },
-    {
-      "ts": 1795264641,
-      "link": "https://www.amazon.eg/dp/B08WJLGWBV",
-      "name_ar": "أحمر شفاه ريتش كريم من سيبيلي، وردي ملكي 127، 5 جم",
-      "price": 140.0,
-      "list_price": 185.0,
-      "discount": 24.3,
-      "store": "Amazon",
-      "v_score": 58.2
-    },
     {
       "ts": 1795267304,
       "link": "https://www.amazon.eg/dp/B0144M0QGW",
