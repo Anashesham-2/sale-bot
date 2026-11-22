@@ -1,5 +1,5 @@
 {
-  "query_idx": 5,
+  "query_idx": 10,
   "last_tt_cat": "",
   "recent_names": {
     "كونسيلر فيت مي للعيون من ميبيلين": 1795131404,
@@ -246,8 +246,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795255513,
-    1795255518,
     1795257676,
     1795258031,
     1795258909,
@@ -326,26 +324,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795255513,
-      "link": "https://www.noon.com/egypt-ar/Z9923F829D28005926247Z/p/",
-      "name_ar": "منظف الوجه DEAR للبشرة الدهنية والمعرضة لحب الشباب 400ML",
-      "price": 149.0,
-      "list_price": 600.0,
-      "discount": 75.2,
-      "store": "Noon",
-      "v_score": 74.0
-    },
-    {
-      "ts": 1795255518,
-      "link": "https://www.noon.com/egypt-ar/Z3607D4C9E1F8F6C67F2AZ/p/",
-      "name_ar": "واقي شمس من ليلاك",
-      "price": 202.5,
-      "list_price": 450.0,
-      "discount": 55.0,
-      "store": "Noon",
-      "v_score": 54.5
-    },
     {
       "ts": 1795257676,
       "link": "https://www.amazon.eg/dp/B0FL9XDDD9",
