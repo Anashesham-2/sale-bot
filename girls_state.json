@@ -1,5 +1,5 @@
 {
-  "query_idx": 13,
+  "query_idx": 1,
   "last_tt_cat": "",
   "recent_names": {
     "كونسيلر فيت مي للعيون من ميبيلين": 1795131404,
@@ -283,7 +283,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795288921,
     1795290067,
     1795290073,
     1795290578,
@@ -1171,6 +1170,6 @@
       "v_score": 39.3
     }
   ],
-  "last_digest_date": "2026-11-21",
+  "last_digest_date": "2026-11-22",
   "tg_update_offset": 0
 }
