@@ -288,8 +288,6 @@
     "Nutriversum"
   ],
   "queries": [
-    "كرياتين نقي بنسبة Max Muscle",
-    "كيس فاكهة رامي ريد ريكس",
     "غلاية كهربائية برايم برايم تيك",
     "فلتر مياه مراحل Tank",
     "خلاط يدوي وات، Tornado",
@@ -367,7 +365,9 @@
     "ميزان شخصي الكترونى دي اس بي",
     "بروتين تشالنجر نيوتريشن",
     "جيم سير وحدة",
-    "مسحوق بروتين مصل Nutriversum"
+    "مسحوق بروتين مصل Nutriversum",
+    "سماعات رأس لاسلكية JBL",
+    "موسع نطاق واي TP-Link"
   ],
   "channels": [
     "epichardware",
@@ -2269,6 +2269,9 @@
     "Yo_Ayman/16877",
     "Sal7lyEgypt/40622",
     "Sal7lyEgypt/40621",
-    "Sal7lyEgypt/40620"
+    "Sal7lyEgypt/40620",
+    "epichardware/5057",
+    "epichardware/5056",
+    "Sal7lyEgypt/40623"
   ]
 }
