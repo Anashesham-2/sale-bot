@@ -1,5 +1,5 @@
 {
-  "query_idx": 5,
+  "query_idx": 10,
   "last_tt_cat": "",
   "recent_names": {
     "كونسيلر فيت مي للعيون من ميبيلين": 1795131404,
@@ -286,8 +286,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795299297,
-    1795299302,
     1795299659,
     1795300182,
     1795300188,
@@ -363,26 +361,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795299297,
-      "link": "https://www.noon.com/egypt-ar/Z5D8C9BEC1A842FDC40F4Z/p/",
-      "name_ar": "مزيل عرق أدفانسد كير مضاد للتعرق، بالخيار، مع سيروم البرو-سيراميد — Dove",
-      "price": 134.66,
-      "list_price": 350.0,
-      "discount": 61.5,
-      "store": "Noon",
-      "v_score": 83.8
-    },
-    {
-      "ts": 1795299302,
-      "link": "https://www.amazon.eg/dp/B00DIXK7CM",
-      "name_ar": "عطر بروميس او دي بارفان من سابيل، 100 مل، عطر فاخر بأسعار معقولة — Sapil",
-      "price": 538.0,
-      "list_price": 830.0,
-      "discount": 35.2,
-      "store": "Amazon",
-      "v_score": 56.6
-    },
     {
       "ts": 1795299659,
       "link": "https://www.amazon.eg/dp/B0GBBNB79D",
