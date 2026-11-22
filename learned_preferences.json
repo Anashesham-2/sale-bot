@@ -288,7 +288,6 @@
     "Nutriversum"
   ],
   "queries": [
-    "غلاية كهربائية برايم برايم تيك",
     "فلتر مياه مراحل Tank",
     "خلاط يدوي وات، Tornado",
     "قلاية هوائية وات Tornado",
@@ -367,7 +366,8 @@
     "جيم سير وحدة",
     "مسحوق بروتين مصل Nutriversum",
     "سماعات رأس لاسلكية JBL",
-    "موسع نطاق واي TP-Link"
+    "موسع نطاق واي TP-Link",
+    "ثلاجة ببابين بسعة Midea"
   ],
   "channels": [
     "epichardware",
@@ -2272,6 +2272,8 @@
     "Sal7lyEgypt/40620",
     "epichardware/5057",
     "epichardware/5056",
-    "Sal7lyEgypt/40623"
+    "Sal7lyEgypt/40623",
+    "epichardware/5058",
+    "Sal7lyEgypt/40624"
   ]
 }
