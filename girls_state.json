@@ -1,5 +1,5 @@
 {
-  "query_idx": 16,
+  "query_idx": 4,
   "last_tt_cat": "",
   "recent_names": {
     "كونسيلر فيت مي للعيون من ميبيلين": 1795131404,
@@ -249,7 +249,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795259776,
     1795260639,
     1795260645,
     1795261892,
@@ -327,16 +326,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795259776,
-      "link": "https://www.noon.com/egypt-ar/Z1F6CAD57AD87B0304CA9Z/p/",
-      "name_ar": "أل باي مي برو مزيل الميكب",
-      "price": 350.0,
-      "list_price": 700.0,
-      "discount": 50.0,
-      "store": "Noon",
-      "v_score": 48.0
-    },
     {
       "ts": 1795260639,
       "link": "https://www.amazon.eg/dp/B01N22W85N",
