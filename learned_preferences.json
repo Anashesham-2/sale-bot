@@ -292,7 +292,6 @@
     "Vacation"
   ],
   "queries": [
-    "طقم اواني للطهي لازورد",
     "طقم جرانيت مكون Top Chef",
     "طاسة قلي تيفلون تروفال",
     "باور بانك شفاف جي- بور",
@@ -371,7 +370,8 @@
     "مكنسة كهربائية بعصا اورايمو",
     "موبايل ذكي XIAOMI شاومي",
     "جوال ذكي ريدمي شاومي",
-    "يوجرين كابل ساتا UGREEN"
+    "يوجرين كابل ساتا UGREEN",
+    "طقم شورت بوكسر Cottonil"
   ],
   "channels": [
     "epichardware",
@@ -2357,6 +2357,10 @@
     "Sal7lyEgypt/40664",
     "epichardware/5090",
     "Sal7lyEgypt/40666",
-    "Yo_Ayman/16892"
+    "Yo_Ayman/16892",
+    "epichardware/5091",
+    "Sal7lyEgypt/40669",
+    "Sal7lyEgypt/40668",
+    "Sal7lyEgypt/40667"
   ]
 }
