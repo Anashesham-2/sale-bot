@@ -292,7 +292,6 @@
     "Vacation"
   ],
   "queries": [
-    "توتال انيرجيز كوارتز TotalEnergies",
     "بايركس طقم اواني Pyrex",
     "سماعة أذن لاسلكية CHOETECH",
     "مناديل مبللة منعشة Extra Hygiene",
@@ -371,7 +370,8 @@
     "سوكاني خلاط محمول",
     "سوكاني طقم افطار",
     "كابل USB USB جي باور",
-    "موزع HDMI USB يوجرين"
+    "موزع HDMI USB يوجرين",
+    "مجموعة حماية البشرة Dermacy"
   ],
   "channels": [
     "epichardware",
@@ -2377,7 +2377,11 @@
     "Sal7lyEgypt/40676",
     "Yo_Ayman/16895",
     "epichardware/5097",
-    "Sal7lyEgypt/40678"
+    "Sal7lyEgypt/40678",
+    "epichardware/5098",
+    "Sal7lyEgypt/40680",
+    "Sal7lyEgypt/40679",
+    "Yo_Ayman/16896"
   ],
   "last_digest_date": "2026-11-22"
 }
