@@ -1,5 +1,5 @@
 {
-  "query_idx": 1,
+  "query_idx": 6,
   "last_tt_cat": "",
   "recent_names": {
     "كونسيلر فيت مي للعيون من ميبيلين": 1795131404,
@@ -271,7 +271,9 @@
     "عطر بريف روز من اصداف اميره": 1795366004,
     "عطر او دو بارفان شهره من": 1795366010,
     "احمر شفاه سايبيل مطفي ن ماهوجني": 1795366661,
-    "كيرفري فوط يوميه قطنيه غير معطره": 1795368210
+    "كيرفري فوط يوميه قطنيه غير معطره": 1795368210,
+    "احمر شفاه من لوريال باريس سائل": 1795369868,
+    "بودره خدود سموث اند وير من": 1795369874
   },
   "price_history": {},
   "sent_timestamps": [
@@ -357,30 +359,12 @@
     1795366004,
     1795366010,
     1795366661,
-    1795368210
+    1795368210,
+    1795369868,
+    1795369874
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795284882,
-      "link": "https://www.amazon.eg/dp/B0HDV5N92Z",
-      "name_ar": "سبلاش للجسم فاخر للنساء من ليلي، 250 مل — LILY COSMETICS",
-      "price": 180.0,
-      "list_price": 250.0,
-      "discount": 28.0,
-      "store": "Amazon",
-      "v_score": 45.0
-    },
-    {
-      "ts": 1795285568,
-      "link": "https://www.noon.com/egypt-ar/Z8DB68EC00A667937AB71Z/p/",
-      "name_ar": "3 فورت سيروم + فورت شامبو — Bioxcin",
-      "price": 1700.0,
-      "list_price": 3400.0,
-      "discount": 50.0,
-      "store": "Noon",
-      "v_score": 54.0
-    },
     {
       "ts": 1795285574,
       "link": "https://www.amazon.eg/dp/B09BM6CSN5",
@@ -1160,6 +1144,26 @@
       "discount": 26.1,
       "store": "Amazon",
       "v_score": 56.1
+    },
+    {
+      "ts": 1795369868,
+      "link": "https://www.amazon.eg/dp/B0DGQS6BR3",
+      "name_ar": "أحمر شفاه من لوريال باريس سائل لامع بلون كريستال شفاف",
+      "price": 531.0,
+      "list_price": 700.0,
+      "discount": 24.1,
+      "store": "Amazon",
+      "v_score": 69.1
+    },
+    {
+      "ts": 1795369874,
+      "link": "https://www.amazon.eg/dp/B08YY2X5KR",
+      "name_ar": "بودرة خدود سموث اند وير من سيبيل، روز كوتور 11، 3.7 جم",
+      "price": 207.0,
+      "list_price": 240.0,
+      "discount": 13.7,
+      "store": "Amazon",
+      "v_score": 56.9
     }
   ],
   "last_digest_date": "2026-11-21",
