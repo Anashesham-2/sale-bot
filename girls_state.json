@@ -1,5 +1,5 @@
 {
-  "query_idx": 4,
+  "query_idx": 9,
   "last_tt_cat": "",
   "recent_names": {
     "كونسيلر فيت مي للعيون من ميبيلين": 1795131404,
@@ -291,8 +291,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795302943,
-    1795302948,
     1795304620,
     1795304626,
     1795305088,
@@ -366,26 +364,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795302943,
-      "link": "https://www.noon.com/egypt-ar/N13625792A/p/",
-      "name_ar": "ماسكارا فوليم إكسبريس ذا كولوسال القابلة للغسل من مايبيلين نيويورك",
-      "price": 202.0,
-      "list_price": 333.0,
-      "discount": 39.3,
-      "store": "Noon",
-      "v_score": 64.7
-    },
-    {
-      "ts": 1795302948,
-      "link": "https://www.noon.com/egypt-ar/Z34DA8D3625C36D3D1669Z/p/",
-      "name_ar": "منظم مكياج، حقيبة عرض مستحضرات تجميل دوارة 360 درجة مع 6 طبقات قابلة للتعديل",
-      "price": 436.5,
-      "list_price": 970.0,
-      "discount": 55.0,
-      "store": "Noon",
-      "v_score": 48.5
-    },
     {
       "ts": 1795304620,
       "link": "https://www.noon.com/egypt-ar/N43423651A/p/",
