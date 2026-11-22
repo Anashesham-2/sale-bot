@@ -289,7 +289,6 @@
     "Camelion"
   ],
   "queries": [
-    "جبنة فيتا بيضاء Domty",
     "حليب سائل المراعي، Almarai",
     "جيم سير وحدة GameSir",
     "موبايل ريدمي ذكي شاومي",
@@ -368,7 +367,8 @@
     "وسادة مسند معصم Generic",
     "فلتر مياه تانك",
     "حفاضات اطفال مولفيكس، Molfix",
-    "ميكروفون هايبر إكس، هايبر اكس"
+    "ميكروفون هايبر إكس، هايبر اكس",
+    "قاعدة ماوس يابانية ProbTis"
   ],
   "channels": [
     "epichardware",
@@ -2323,6 +2323,8 @@
     "epichardware/5071",
     "epichardware/5070",
     "Sal7lyEgypt/40650",
-    "Sal7lyEgypt/40651"
+    "Sal7lyEgypt/40651",
+    "epichardware/5072",
+    "Sal7lyEgypt/40652"
   ]
 }
