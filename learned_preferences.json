@@ -294,7 +294,6 @@
     "AINOPE"
   ],
   "queries": [
-    "كابل باكروبان بطول Pacroban",
     "مكمل غذائي نباتي Puritan's Pride",
     "موبايل سامسونج جالكسي",
     "ماكينة تحضير القهوة Tornado",
@@ -373,7 +372,8 @@
     "توتال انيرجيز كوارتز TotalEnergies",
     "Tornado Washing Machine",
     "حامل أجهزة إلكترونية AINOPE",
-    "ميكروفون فيفاين K688 فيفين"
+    "ميكروفون فيفاين K688 فيفين",
+    "باور بانك زولو انكر"
   ],
   "channels": [
     "epichardware",
@@ -2531,6 +2531,10 @@
     "epichardware/5126",
     "Sal7lyEgypt/40775",
     "Sal7lyEgypt/40774",
-    "Yo_Ayman/16930"
+    "Yo_Ayman/16930",
+    "epichardware/5127",
+    "Sal7lyEgypt/40776",
+    "Yo_Ayman/16932",
+    "Yo_Ayman/16931"
   ]
 }
