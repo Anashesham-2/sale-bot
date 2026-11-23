@@ -1,5 +1,5 @@
 {
-  "query_idx": 13,
+  "query_idx": 1,
   "last_tt_cat": "",
   "recent_names": {
     "ملمع شفاه وردي نعناعي": 1795149645,
@@ -266,7 +266,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795321679,
     1795328647,
     1795328652,
     1795331291,
@@ -334,16 +333,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795321679,
-      "link": "https://www.noon.com/egypt-ar/ZA219E7DFE0CCD1B9B565Z/p/",
-      "name_ar": "بلو ليدي، او دي برفيوم، نسائي، 60 مللي",
-      "price": 118.0,
-      "list_price": 400.0,
-      "discount": 70.5,
-      "store": "Noon",
-      "v_score": 62.0
-    },
     {
       "ts": 1795328647,
       "link": "https://www.noon.com/egypt-ar/ZC0904D3445424E54AFA7Z/p/",
