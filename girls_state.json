@@ -1,5 +1,5 @@
 {
-  "query_idx": 14,
+  "query_idx": 2,
   "last_tt_cat": "",
   "recent_names": {
     "عطر للنساء سبلاش للجسم من افوفا": 1795202936,
@@ -228,8 +228,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795374869,
-    1795374875,
     1795375987,
     1795376345,
     1795379529,
@@ -284,26 +282,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795374869,
-      "link": "https://www.amazon.eg/dp/B0CZ1X413T",
-      "name_ar": "فوط الحماية المكثفة من أولويز 16 فوطة",
-      "price": 45.0,
-      "list_price": 63.0,
-      "discount": 28.6,
-      "store": "Amazon",
-      "v_score": 57.3
-    },
-    {
-      "ts": 1795374875,
-      "link": "https://www.amazon.eg/dp/B0DZ2C7684",
-      "name_ar": "الويز، فوط صحية ناعمة وسميكة مقاس XXL، 12 فوطة",
-      "price": 45.0,
-      "list_price": 63.0,
-      "discount": 28.6,
-      "store": "Amazon",
-      "v_score": 39.3
-    },
     {
       "ts": 1795375987,
       "link": "https://www.amazon.eg/dp/B0GJPYN4MC",
