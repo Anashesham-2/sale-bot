@@ -1,5 +1,5 @@
 {
-  "query_idx": 2,
+  "query_idx": 7,
   "last_tt_cat": "",
   "recent_names": {
     "بخاخ معطر جسم برائحه الفانيليا المحمصه": 1795191389,
@@ -235,8 +235,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795363168,
-    1795363173,
     1795366004,
     1795366010,
     1795366661,
@@ -292,26 +290,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795363168,
-      "link": "https://www.amazon.eg/dp/B06XTTZB9G",
-      "name_ar": "ماء ميسيلار من لوريال باريس لجميع أنواع البشرة، حتى الحساسة",
-      "price": 255.24,
-      "list_price": 380.0,
-      "discount": 32.8,
-      "store": "Amazon",
-      "v_score": 69.4
-    },
-    {
-      "ts": 1795363173,
-      "link": "https://www.amazon.eg/dp/B0GLMGGG38",
-      "name_ar": "بخاخ تثبيت المكياج من شيغلام، شفاف، للنساء، قطعة واحدة — Sheglam",
-      "price": 467.46,
-      "list_price": 567.7,
-      "discount": 17.7,
-      "store": "Amazon",
-      "v_score": 61.8
-    },
     {
       "ts": 1795366004,
       "link": "https://www.amazon.eg/dp/B0BYF9847H",
