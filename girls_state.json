@@ -1,8 +1,7 @@
 {
-  "query_idx": 3,
+  "query_idx": 8,
   "last_tt_cat": "",
   "recent_names": {
-    "شيجلام قلم بلش اند من سناتش": 1795172300,
     "تينت وملمع شفاه سوبر ستاي تيدي": 1795173383,
     "ميسيروي منظم مكياج دوار درجه من": 1795173390,
     "بخاخ للجسم عود من بودي كريفينغز": 1795173396,
@@ -243,9 +242,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795345411,
-    1795345417,
-    1795345423,
     1795347421,
     1795347426,
     1795347789,
@@ -306,36 +302,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795345411,
-      "link": "https://www.amazon.eg/dp/B09XVMV2ZV",
-      "name_ar": "مسكارا من لوريال باريس للرفع ثبات 24 ساعة مقاوم للتلطخ و فرشاة ذات وجهين بلون أسود",
-      "price": 619.0,
-      "list_price": 738.0,
-      "discount": 16.1,
-      "store": "Amazon",
-      "v_score": 61.1
-    },
-    {
-      "ts": 1795345417,
-      "link": "https://www.amazon.eg/dp/B0HNK8HK38",
-      "name_ar": "ماسكارا ثلاثية الأبعاد باللون الأسود الداكن",
-      "price": 299.0,
-      "list_price": 345.0,
-      "discount": 13.3,
-      "store": "Amazon",
-      "v_score": 38.7
-    },
-    {
-      "ts": 1795345423,
-      "link": "https://www.amazon.eg/dp/B07Y22QP1Y",
-      "name_ar": "فوط صحية رفيعة للغاية مع أجنحة للحماية طوال الليل من كوتيكس",
-      "price": 128.66,
-      "list_price": 150.0,
-      "discount": 14.2,
-      "store": "Amazon",
-      "v_score": 32.1
-    },
     {
       "ts": 1795347421,
       "link": "https://www.noon.com/egypt-ar/ZB4EE240F3A11D2088A8BZ/p/",
