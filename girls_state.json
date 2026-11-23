@@ -1,5 +1,5 @@
 {
-  "query_idx": 6,
+  "query_idx": 11,
   "last_tt_cat": "",
   "recent_names": {
     "سيروم فيتامين سي من انفينيتي 40مل": 1795138627,
@@ -290,8 +290,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795308896,
-    1795308902,
     1795321679,
     1795328647,
     1795328652,
@@ -360,26 +358,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795308896,
-      "link": "https://www.amazon.eg/dp/B08VW5974C",
-      "name_ar": "ماسكارا لاش برينسس لتجعيد وتكثيف الرموش من ايسنس، نباتية وخالية الكحول والبارابين",
-      "price": 212.5,
-      "list_price": 260.0,
-      "discount": 18.3,
-      "store": "Amazon",
-      "v_score": 59.1
-    },
-    {
-      "ts": 1795308902,
-      "link": "https://www.amazon.eg/dp/B0GQ9Y3HJ9",
-      "name_ar": "فوط صحية دريم سوفت نيس طويلة من خامة قطنية، ماكسي مضغوطة برائحة المسك — Molped",
-      "price": 119.99,
-      "list_price": 149.0,
-      "discount": 19.5,
-      "store": "Amazon",
-      "v_score": 38.7
-    },
     {
       "ts": 1795321679,
       "link": "https://www.noon.com/egypt-ar/ZA219E7DFE0CCD1B9B565Z/p/",
