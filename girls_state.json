@@ -1,5 +1,5 @@
 {
-  "query_idx": 5,
+  "query_idx": 10,
   "last_tt_cat": "",
   "recent_names": {
     "جارنييه سكين اكتيف": 1795165559,
@@ -248,8 +248,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795337949,
-    1795337955,
     1795338476,
     1795338848,
     1795345411,
@@ -309,26 +307,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795337949,
-      "link": "https://www.amazon.eg/dp/B0FQP6VCWJ",
-      "name_ar": "مولبد فوط صحية دريم سوفت نيس، طويلة جدا، عبوة عائلية 36 وحدة",
-      "price": 114.0,
-      "list_price": 139.0,
-      "discount": 18.0,
-      "store": "Amazon",
-      "v_score": 34.0
-    },
-    {
-      "ts": 1795337955,
-      "link": "https://www.amazon.eg/dp/B0GQBC9F4R",
-      "name_ar": "فوطة صحية اكسترا هايجين طويلة قطنية ماكسي مضغوطة وغير معطرة للتدفق الكثيف من مولبيد",
-      "price": 125.16,
-      "list_price": 149.0,
-      "discount": 16.0,
-      "store": "Amazon",
-      "v_score": 33.0
-    },
     {
       "ts": 1795338476,
       "link": "https://www.noon.com/egypt-ar/Z2A674ED8C2859CB2CD05Z/p/",
