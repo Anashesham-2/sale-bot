@@ -293,7 +293,6 @@
     "COSRX"
   ],
   "queries": [
-    "ساعة ذكية ووتش شاومي",
     "بروتين تشالنجر نيوتريشن تشالنجر نيوترشن",
     "سماعة رأس سلكية هايبر اكس",
     "كابل باكروبان بطول Pacroban",
@@ -372,7 +371,8 @@
     "مجفف شعر شاين BaByliss",
     "رقعة رئيسية لحب COSRX",
     "مكمل غذائي متعدد سينتروم",
-    "توتال انيرجيز كوارتز TotalEnergies"
+    "توتال انيرجيز كوارتز TotalEnergies",
+    "Tornado Washing Machine"
   ],
   "channels": [
     "epichardware",
@@ -2501,6 +2501,12 @@
     "Sal7lyEgypt/40759",
     "Sal7lyEgypt/40758",
     "Sal7lyEgypt/40757",
-    "Yo_Ayman/16920"
+    "Yo_Ayman/16920",
+    "epichardware/5123",
+    "Sal7lyEgypt/40762",
+    "Sal7lyEgypt/40761",
+    "Yo_Ayman/16923",
+    "Yo_Ayman/16922",
+    "Yo_Ayman/16921"
   ]
 }
