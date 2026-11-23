@@ -1,8 +1,7 @@
 {
-  "query_idx": 2,
+  "query_idx": 7,
   "last_tt_cat": "",
   "recent_names": {
-    "معطر الجسم ايفاسكين كير سينسيس": 1795163421,
     "مكواه فرد الشعر x1 بالاشعه تحت": 1795164488,
     "جارنييه سكين اكتيف": 1795165559,
     "ماء الذهب فلاوري n197 ايدول لانكوم": 1795165565,
@@ -249,7 +248,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795336527,
     1795337277,
     1795337949,
     1795337955,
@@ -311,16 +309,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795336527,
-      "link": "https://www.noon.com/egypt-ar/Z2ED842ABCBED94A6A267Z/p/",
-      "name_ar": "كريم سيروم فيتامين C* المعزز للإشراق والنضارة بعامل حماية SPF25 (50 مل) — Garnier",
-      "price": 1113.2,
-      "list_price": 1599.0,
-      "discount": 30.4,
-      "store": "Noon",
-      "v_score": 60.2
-    },
     {
       "ts": 1795337277,
       "link": "https://www.amazon.eg/dp/B0FQBTLTK7",
