@@ -1,8 +1,7 @@
 {
-  "query_idx": 0,
+  "query_idx": 5,
   "last_tt_cat": "",
   "recent_names": {
-    "بلشر سائل كولور بلوم s004 للخدود": 1795197531,
     "مجموعه فوطه صحيه دريمز ليليه طويله": 1795198796,
     "سيرم حمض جليكوليك بي نقي بنسبه": 1795200224,
     "احمر شفاه سائل بلمسه مطفيه بلون": 1795200230,
@@ -229,8 +228,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795370299,
-    1795370306,
     1795370983,
     1795372067,
     1795374869,
@@ -283,26 +280,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795370299,
-      "link": "https://www.amazon.eg/dp/B075L6BL61",
-      "name_ar": "قناع من كارسيل للشعر الجاف والتالف والمصبوغ، 500 مل، للتحكم بالتلف",
-      "price": 648.85,
-      "list_price": 1022.58,
-      "discount": 36.5,
-      "store": "Amazon",
-      "v_score": 77.3
-    },
-    {
-      "ts": 1795370306,
-      "link": "https://www.amazon.eg/dp/B0CPCV2TGH",
-      "name_ar": "سائل من كارسيل لجميع أنواع الشعر 500 مليلتر للإصلاح — Karseell MACA CARE SYSTEM",
-      "price": 880.0,
-      "list_price": 1078.84,
-      "discount": 18.4,
-      "store": "Amazon",
-      "v_score": 54.2
-    },
     {
       "ts": 1795370983,
       "link": "https://www.amazon.eg/dp/B0C94VJN5G",
