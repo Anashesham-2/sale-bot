@@ -295,7 +295,6 @@
     "Optimum Nutrition"
   ],
   "queries": [
-    "مكمل غذائي نباتي Puritan's Pride",
     "موبايل سامسونج جالكسي",
     "ماكينة تحضير القهوة Tornado",
     "ماكينة انيسيا ايروسينو3 Nespresso",
@@ -374,7 +373,8 @@
     "Tornado Washing Machine",
     "حامل أجهزة إلكترونية AINOPE",
     "ميكروفون فيفاين K688 فيفين",
-    "باور بانك زولو انكر"
+    "باور بانك زولو انكر",
+    "بروتين الجيل الثامن"
   ],
   "channels": [
     "epichardware",
@@ -2559,6 +2559,9 @@
     "epichardware/5133",
     "Sal7lyEgypt/40785",
     "Yo_Ayman/16941",
-    "Yo_Ayman/16940"
+    "Yo_Ayman/16940",
+    "epichardware/5134",
+    "Sal7lyEgypt/40786",
+    "Yo_Ayman/16942"
   ]
 }
