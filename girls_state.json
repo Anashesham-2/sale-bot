@@ -1,8 +1,7 @@
 {
-  "query_idx": 3,
+  "query_idx": 8,
   "last_tt_cat": "",
   "recent_names": {
-    "بخاخ ديلايت للجسم للنساء من اوسوم": 1795133949,
     "سيروم فيتامين سي من انفينيتي 40مل": 1795138627,
     "pdrn collagen intense vitalizing serum": 1795138634,
     "برايفت فوط نسائيه رفيعه للغايه بملمس": 1795139144,
@@ -290,8 +289,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795306924,
-    1795306930,
     1795308151,
     1795308532,
     1795308896,
@@ -363,26 +360,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795306924,
-      "link": "https://www.amazon.eg/dp/B0842J5CWB",
-      "name_ar": "فوط صحية ماكسي مغلفة من برايفت، حجم كبير، عبوة من 50 فوطة صحية",
-      "price": 159.95,
-      "list_price": 190.0,
-      "discount": 15.8,
-      "store": "Amazon",
-      "v_score": 58.9
-    },
-    {
-      "ts": 1795306930,
-      "link": "https://www.amazon.eg/dp/B0C923ZS3C",
-      "name_ar": "ايفا واقي من الشمس المعرض لحب الشباب بعامل وقاية من اشعة الشمس 50+ من سكين كلينك",
-      "price": 142.0,
-      "list_price": 178.5,
-      "discount": 20.4,
-      "store": "Amazon",
-      "v_score": 56.2
-    },
     {
       "ts": 1795308151,
       "link": "https://www.noon.com/egypt-ar/ZF57B8901A0505DA11CE5Z/p/",
