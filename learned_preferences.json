@@ -292,7 +292,6 @@
     "Vacation"
   ],
   "queries": [
-    "مفك ثنائي الاتجاه APT",
     "باور بانك باور اورايمو",
     "طقم أواني طهي Pyrex",
     "موبايل سامسونج جالاكسي",
@@ -371,7 +370,8 @@
     "قلاية هوائية لتر دي اس بي",
     "موبايل سامسونج جالاكسي Samsung",
     "جوال سامسونج جالكسي",
-    "مكيف هواء شارب Sharp"
+    "مكيف هواء شارب Sharp",
+    "خلاط يدوي وات، Tornado"
   ],
   "channels": [
     "epichardware",
@@ -2472,6 +2472,11 @@
     "Sal7lyEgypt/40744",
     "Sal7lyEgypt/40743",
     "Yo_Ayman/16912",
-    "Yo_Ayman/16911"
+    "Yo_Ayman/16911",
+    "epichardware/5116",
+    "Sal7lyEgypt/40747",
+    "Sal7lyEgypt/40746",
+    "Sal7lyEgypt/40745",
+    "Yo_Ayman/16913"
   ]
 }
