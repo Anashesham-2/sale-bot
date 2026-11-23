@@ -289,11 +289,10 @@
     "Camelion",
     "ALLEASA",
     "Acer",
-    "Vacation"
+    "Vacation",
+    "COSRX"
   ],
   "queries": [
-    "باور بانك باور اورايمو",
-    "طقم أواني طهي Pyrex",
     "موبايل سامسونج جالاكسي",
     "مقلاة هوائية TFE Tornado",
     "ساعة ذكية ووتش شاومي",
@@ -371,7 +370,9 @@
     "موبايل سامسونج جالاكسي Samsung",
     "جوال سامسونج جالكسي",
     "مكيف هواء شارب Sharp",
-    "خلاط يدوي وات، Tornado"
+    "خلاط يدوي وات، Tornado",
+    "مجفف شعر شاين BaByliss",
+    "رقعة رئيسية لحب COSRX"
   ],
   "channels": [
     "epichardware",
@@ -2484,6 +2485,10 @@
     "Yo_Ayman/16914",
     "Sal7lyEgypt/40752",
     "Yo_Ayman/16916",
-    "Yo_Ayman/16915"
+    "Yo_Ayman/16915",
+    "epichardware/5118",
+    "epichardware/5117",
+    "Sal7lyEgypt/40753",
+    "Yo_Ayman/16917"
   ]
 }
