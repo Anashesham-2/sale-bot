@@ -290,10 +290,10 @@
     "ALLEASA",
     "Acer",
     "Vacation",
-    "COSRX"
+    "COSRX",
+    "AINOPE"
   ],
   "queries": [
-    "بروتين تشالنجر نيوتريشن تشالنجر نيوترشن",
     "سماعة رأس سلكية هايبر اكس",
     "كابل باكروبان بطول Pacroban",
     "مكمل غذائي نباتي Puritan's Pride",
@@ -372,7 +372,8 @@
     "رقعة رئيسية لحب COSRX",
     "مكمل غذائي متعدد سينتروم",
     "توتال انيرجيز كوارتز TotalEnergies",
-    "Tornado Washing Machine"
+    "Tornado Washing Machine",
+    "حامل أجهزة إلكترونية AINOPE"
   ],
   "channels": [
     "epichardware",
@@ -2518,6 +2519,8 @@
     "Sal7lyEgypt/40768",
     "Sal7lyEgypt/40767",
     "Sal7lyEgypt/40769",
-    "Yo_Ayman/16927"
+    "Yo_Ayman/16927",
+    "epichardware/5124",
+    "Sal7lyEgypt/40770"
   ]
 }
