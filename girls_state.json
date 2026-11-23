@@ -1,5 +1,5 @@
 {
-  "query_idx": 6,
+  "query_idx": 11,
   "last_tt_cat": "",
   "recent_names": {
     "جل هيدرو لتنظيف الوجه من فاكيشن": 1795189960,
@@ -236,7 +236,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795360862,
     1795363168,
     1795363173,
     1795366004,
@@ -294,16 +293,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795360862,
-      "link": "https://www.amazon.eg/dp/B0BG5X6ZT8",
-      "name_ar": "شيجلام هايلايتر وبلشر هايبرد 101 من جلام، سانت تروبيز",
-      "price": 277.95,
-      "list_price": 337.41,
-      "discount": 17.6,
-      "store": "Amazon",
-      "v_score": 54.8
-    },
     {
       "ts": 1795363168,
       "link": "https://www.amazon.eg/dp/B06XTTZB9G",
