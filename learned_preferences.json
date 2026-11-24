@@ -294,10 +294,10 @@
     "AINOPE",
     "Optimum Nutrition",
     "Dozova",
-    "Eco Healthy"
+    "Eco Healthy",
+    "Profi Cook"
   ],
   "queries": [
-    "مكيف سبليت حصان شارب",
     "مكيف هواء سبليت Tornado",
     "تكييف سبليت انفرتر تورنيدو",
     "مكيف هواء محمول Fresh",
@@ -376,7 +376,8 @@
     "قلاية هوائية ذكية شاومي",
     "كبسولات دوزوفا اشواجندا Dozova",
     "ساعة ذكية بلوتوث اورايمو",
-    "زيت الزيتون إيكو Eco Healthy"
+    "زيت الزيتون إيكو Eco Healthy",
+    "ماكينة تحضير اسبريسو Profi Cook"
   ],
   "channels": [
     "epichardware",
@@ -2680,6 +2681,8 @@
     "epichardware/5161",
     "Sal7lyEgypt/40854",
     "epichardware/5162",
-    "Sal7lyEgypt/40855"
+    "Sal7lyEgypt/40855",
+    "epichardware/5163",
+    "Sal7lyEgypt/40856"
   ]
 }
