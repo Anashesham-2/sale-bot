@@ -1,5 +1,5 @@
 {
-  "query_idx": 3,
+  "query_idx": 8,
   "last_tt_cat": "",
   "recent_names": {
     "كيرفري فوط يوميه قطنيه": 1795273325,
@@ -186,8 +186,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795444019,
-    1795444027,
     1795444402,
     1795445408,
     1795446146,
@@ -237,26 +235,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795444019,
-      "link": "https://www.noon.com/egypt-ar/ZE742CA9DC5477BC387DCZ/p/",
-      "name_ar": "شنطة كروس بودي حريمي جلد، كاجوال للاستخدام اليومي",
-      "price": 199.0,
-      "list_price": 439.0,
-      "discount": 54.7,
-      "store": "Noon",
-      "v_score": 44.3
-    },
-    {
-      "ts": 1795444027,
-      "link": "https://www.noon.com/egypt-ar/Z9CE675B92AB3EF32347FZ/p/",
-      "name_ar": "شنطة كتف كروس عبر الجسم صغيرة حريمي، متعددة الجيوب للجوال جلد البولي يوريثين",
-      "price": 300.0,
-      "list_price": 500.0,
-      "discount": 40.0,
-      "store": "Noon",
-      "v_score": 37.0
-    },
     {
       "ts": 1795444402,
       "link": "https://www.amazon.eg/dp/B08WJNFM38",
