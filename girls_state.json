@@ -1,5 +1,5 @@
 {
-  "query_idx": 1,
+  "query_idx": 6,
   "last_tt_cat": "",
   "recent_names": {
     "كيرفري فوط قطنيه": 1795267304,
@@ -185,7 +185,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795438066,
     1795438469,
     1795438475,
     1795438985,
@@ -241,16 +240,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795438066,
-      "link": "https://www.noon.com/egypt-ar/Z48978741FE04A2456E5AZ/p/",
-      "name_ar": "برايفت فوط نسائية رفيعة للغاية بملمس القطن الطبيعي حجم ليلي مع أجنحة",
-      "price": 69.0,
-      "list_price": 132.0,
-      "discount": 47.7,
-      "store": "Noon",
-      "v_score": 66.9
-    },
     {
       "ts": 1795438469,
       "link": "https://www.amazon.eg/dp/B007B8UOPK",
