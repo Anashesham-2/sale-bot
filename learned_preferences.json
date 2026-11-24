@@ -301,8 +301,6 @@
     "Hisense"
   ],
   "queries": [
-    "جالاكسي A36 ثنائي سامسونج",
-    "كاميرا ويب قابلة RAPOO",
     "جهاز باد شريحة Apple",
     "لاب توب ابل Apple",
     "غسالة هوفر H3DP485TAMBRELA Hoover",
@@ -380,7 +378,9 @@
     "مكيف هواء سبليت تورنيدو",
     "كرياتين بدون نكهة RED REX",
     "نوتري كوك حلة Nutricook",
-    "ميكروفون ألعاب اكس فيفين"
+    "ميكروفون ألعاب اكس فيفين",
+    "ماكينة غسيل بالضغط اي بي تي",
+    "مشترك كهرباء واقي G-Power"
   ],
   "channels": [
     "epichardware",
@@ -2768,6 +2768,16 @@
     "epichardware/5187",
     "Sal7lyEgypt/40899",
     "epichardware/5188",
-    "Sal7lyEgypt/40900"
+    "Sal7lyEgypt/40900",
+    "epichardware/5190",
+    "epichardware/5189",
+    "Sal7lyEgypt/40904",
+    "Sal7lyEgypt/40903",
+    "Sal7lyEgypt/40902",
+    "Sal7lyEgypt/40901",
+    "Yo_Ayman/16995",
+    "Yo_Ayman/16994",
+    "Yo_Ayman/16993",
+    "Yo_Ayman/16992"
   ]
 }
