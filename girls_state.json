@@ -1,8 +1,7 @@
 {
-  "query_idx": 5,
+  "query_idx": 10,
   "last_tt_cat": "",
   "recent_names": {
-    "سائل من بليس لجميع انواع الشعر": 1795288198,
     "لوشن واقي من الشمس دراي تاتش": 1795288921,
     "شيجلام فرشاه دريم تاتش من دريم": 1795290067,
     "سله تخزين من برايم شوب": 1795290073,
@@ -178,7 +177,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795460926,
     1795461888,
     1795461894,
     1795463391,
@@ -219,16 +217,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795460926,
-      "link": "https://www.amazon.eg/dp/B0GKGFKRFM",
-      "name_ar": "ماسكارا ماستربيس ماكس من ماكس فاكتور باللون الأسود",
-      "price": 153.0,
-      "list_price": 181.94,
-      "discount": 15.9,
-      "store": "Amazon",
-      "v_score": 24.0
-    },
     {
       "ts": 1795461888,
       "link": "https://www.noon.com/egypt-ar/ZA846777B341D68D48EB7Z/p/",
