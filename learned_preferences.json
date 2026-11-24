@@ -299,7 +299,6 @@
     "Yava Labs"
   ],
   "queries": [
-    "سوكاني خلاط محمول Sokany",
     "تلفزيون ايه برو Xiaomi",
     "SOKANY Retro Breakfast",
     "مجموعة جهاز تشذيب في جي ار",
@@ -378,7 +377,8 @@
     "بروتين الجيل الثامن تشالنجر نيوترشن",
     "اقراص ليميتليس مان",
     "مسحوق كريمة الأرز Yava Labs",
-    "بروتين مصل اللبن Nutriversum"
+    "بروتين مصل اللبن Nutriversum",
+    "ميكروفون الألعاب USB فيفين"
   ],
   "channels": [
     "epichardware",
@@ -2705,6 +2705,9 @@
     "Sal7lyEgypt/40866",
     "Yo_Ayman/16973",
     "Sal7lyEgypt/40867",
-    "Yo_Ayman/16974"
+    "Yo_Ayman/16974",
+    "epichardware/5176",
+    "Sal7lyEgypt/40868",
+    "Yo_Ayman/16975"
   ]
 }
