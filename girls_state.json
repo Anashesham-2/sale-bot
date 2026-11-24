@@ -1,5 +1,5 @@
 {
-  "query_idx": 11,
+  "query_idx": 16,
   "last_tt_cat": "",
   "recent_names": {
     "كيرفري فوط قطنيه": 1795267304,
@@ -186,7 +186,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795438985,
     1795439481,
     1795439488,
     1795440333,
@@ -240,16 +239,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795438985,
-      "link": "https://www.noon.com/egypt-ar/Z6B113B4F7A7899CF9129Z/p/",
-      "name_ar": "غسول وجه سيسترفينش للبشرة المختلطة",
-      "price": 290.0,
-      "list_price": 390.0,
-      "discount": 25.6,
-      "store": "Noon",
-      "v_score": 27.8
-    },
     {
       "ts": 1795439481,
       "link": "https://www.noon.com/egypt-ar/N52261837A/p/",
