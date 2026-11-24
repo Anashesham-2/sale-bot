@@ -292,11 +292,10 @@
     "Vacation",
     "COSRX",
     "AINOPE",
-    "Optimum Nutrition"
+    "Optimum Nutrition",
+    "Dozova"
   ],
   "queries": [
-    "فرن مايكرو أوريمو Oraimo",
-    "ماكينة تحضير قهوة سوكاني",
     "ماوس ألعاب لاسلكي Razer",
     "غسالة صحون فرد هوفر",
     "مكيف سبليت حصان شارب",
@@ -374,7 +373,9 @@
     "بخاخ الجسم للرجال AXE",
     "تلفاز 50NU85CB6LA بوصة LG",
     "Redragon P035 Meteor ريدراجون",
-    "غسول وجه بحمض بوبانا"
+    "غسول وجه بحمض بوبانا",
+    "قلاية هوائية ذكية شاومي",
+    "كبسولات دوزوفا اشواجندا Dozova"
   ],
   "channels": [
     "epichardware",
@@ -2661,6 +2662,8 @@
     "epichardware/5150",
     "Sal7lyEgypt/40846",
     "epichardware/5154",
-    "epichardware/5152"
+    "epichardware/5152",
+    "epichardware/5157",
+    "epichardware/5155"
   ]
 }
