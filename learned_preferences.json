@@ -299,7 +299,6 @@
     "Yava Labs"
   ],
   "queries": [
-    "هاتف HONOR X9d",
     "سوكاني خلاط محمول Sokany",
     "تلفزيون ايه برو Xiaomi",
     "SOKANY Retro Breakfast",
@@ -378,7 +377,8 @@
     "مسحوق بروتين مصل",
     "بروتين الجيل الثامن تشالنجر نيوترشن",
     "اقراص ليميتليس مان",
-    "مسحوق كريمة الأرز Yava Labs"
+    "مسحوق كريمة الأرز Yava Labs",
+    "بروتين مصل اللبن Nutriversum"
   ],
   "channels": [
     "epichardware",
@@ -2700,6 +2700,8 @@
     "epichardware/5174",
     "Sal7lyEgypt/40864",
     "Sal7lyEgypt/40863",
-    "Sal7lyEgypt/40865"
+    "Sal7lyEgypt/40865",
+    "epichardware/5175",
+    "Sal7lyEgypt/40866"
   ]
 }
