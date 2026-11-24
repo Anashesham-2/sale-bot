@@ -299,10 +299,10 @@
     "Yava Labs",
     "FIFINE",
     "Hisense",
-    "SanDisk"
+    "SanDisk",
+    "Hero"
   ],
   "queries": [
-    "مسحوق بروتين مصل Nutriversum",
     "سماعات رأس لاسلكية JBL",
     "موسع نطاق واي TP-Link",
     "ثلاجة ببابين بسعة Midea",
@@ -381,7 +381,8 @@
     "أوكسي برايت عبوة او اكس اي",
     "كرياتين بدون نكهة ريد ريكس",
     "دبليو دبليو شاحن",
-    "سانديسك محرك محمول"
+    "سانديسك محرك محمول",
+    "هيرو عسل زهرة Hero"
   ],
   "channels": [
     "epichardware",
@@ -2825,6 +2826,9 @@
     "epichardware/5208",
     "Yo_Ayman/17006",
     "Yo_Ayman/17007",
-    "Sal7lyEgypt/40929"
+    "Sal7lyEgypt/40929",
+    "epichardware/5210",
+    "epichardware/5209",
+    "Sal7lyEgypt/40930"
   ]
 }
