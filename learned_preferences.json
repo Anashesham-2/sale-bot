@@ -300,8 +300,6 @@
     "FIFINE"
   ],
   "queries": [
-    "تلفزيون ذكي ميني Samsung",
-    "سخان نار واط Fresh",
     "مدفأة زيت مستويات Raslan",
     "ماكينة قهوة كبسولات FRUSTA",
     "مسحوق بروتين مصل DY Nutrition",
@@ -379,7 +377,9 @@
     "ميكروفون الألعاب USB فيفين",
     "سماعة رأس سلكية FIFINE",
     "سماعة باراكودا اكس Razer",
-    "كيبورد العاب صغيرة Razer"
+    "كيبورد العاب صغيرة Razer",
+    "مكيف تبريد سبليت Tornado",
+    "شارب تكييف سبليت Sharp"
   ],
   "channels": [
     "epichardware",
@@ -2754,6 +2754,8 @@
     "Yo_Ayman/16988",
     "Yo_Ayman/16987",
     "Yo_Ayman/16986",
-    "Yo_Ayman/16985"
+    "Yo_Ayman/16985",
+    "epichardware/5182",
+    "epichardware/5181"
   ]
 }
