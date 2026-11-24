@@ -295,13 +295,10 @@
     "Optimum Nutrition",
     "Dozova",
     "Eco Healthy",
-    "Profi Cook"
+    "Profi Cook",
+    "Yava Labs"
   ],
   "queries": [
-    "مكيف هواء سبليت Tornado",
-    "تكييف سبليت انفرتر تورنيدو",
-    "مكيف هواء محمول Fresh",
-    "تكييف سبليت بروفيشنال Fresh",
     "هاتف HONOR X9d",
     "سوكاني خلاط محمول Sokany",
     "تلفزيون ايه برو Xiaomi",
@@ -377,7 +374,11 @@
     "كبسولات دوزوفا اشواجندا Dozova",
     "ساعة ذكية بلوتوث اورايمو",
     "زيت الزيتون إيكو Eco Healthy",
-    "ماكينة تحضير اسبريسو Profi Cook"
+    "ماكينة تحضير اسبريسو Profi Cook",
+    "مسحوق بروتين مصل",
+    "بروتين الجيل الثامن تشالنجر نيوترشن",
+    "اقراص ليميتليس مان",
+    "مسحوق كريمة الأرز Yava Labs"
   ],
   "channels": [
     "epichardware",
@@ -2685,6 +2686,13 @@
     "epichardware/5163",
     "Sal7lyEgypt/40856",
     "Sal7lyEgypt/40857",
-    "Yo_Ayman/16971"
+    "Yo_Ayman/16971",
+    "epichardware/5172",
+    "epichardware/5171",
+    "epichardware/5168",
+    "epichardware/5166",
+    "Sal7lyEgypt/40860",
+    "Sal7lyEgypt/40859",
+    "Sal7lyEgypt/40858"
   ]
 }
