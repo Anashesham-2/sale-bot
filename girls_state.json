@@ -1,5 +1,5 @@
 {
-  "query_idx": 0,
+  "query_idx": 5,
   "last_tt_cat": "",
   "recent_names": {
     "فوط يوميه حجم كبير بعطر منعش": 1795257676,
@@ -192,7 +192,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795428975,
     1795429495,
     1795429501,
     1795432280,
@@ -250,16 +249,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795428975,
-      "link": "https://www.amazon.eg/dp/B08QFM5MQN",
-      "name_ar": "كريم اساس انفاليبل فريش وير يدوم 24 ساعة من لوريال باريس",
-      "price": 648.38,
-      "list_price": 950.0,
-      "discount": 31.7,
-      "store": "Amazon",
-      "v_score": 68.9
-    },
     {
       "ts": 1795429495,
       "link": "https://www.noon.com/egypt-ar/ZD15F068F125BF86DE491Z/p/",
