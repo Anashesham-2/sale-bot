@@ -303,7 +303,6 @@
     "Hero"
   ],
   "queries": [
-    "سماعات رأس لاسلكية JBL",
     "موسع نطاق واي TP-Link",
     "ثلاجة ببابين بسعة Midea",
     "رابوو فأرة سلكي RAPOO",
@@ -382,7 +381,8 @@
     "كرياتين بدون نكهة ريد ريكس",
     "دبليو دبليو شاحن",
     "سانديسك محرك محمول",
-    "هيرو عسل زهرة Hero"
+    "هيرو عسل زهرة Hero",
+    "وسادة مسند معصم جينيريك"
   ],
   "channels": [
     "epichardware",
@@ -2829,6 +2829,10 @@
     "Sal7lyEgypt/40929",
     "epichardware/5210",
     "epichardware/5209",
-    "Sal7lyEgypt/40930"
+    "Sal7lyEgypt/40930",
+    "epichardware/5212",
+    "Sal7lyEgypt/40932",
+    "Sal7lyEgypt/40931",
+    "Yo_Ayman/17008"
   ]
 }
