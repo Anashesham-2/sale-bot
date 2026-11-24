@@ -1,8 +1,7 @@
 {
-  "query_idx": 11,
+  "query_idx": 16,
   "last_tt_cat": "",
   "recent_names": {
-    "فاتيكا بخاخ بودي سبلاش كريمسون دريفت": 1795297288,
     "مزيل عرق ادفانسد كير مضاد للتعرق": 1795299297,
     "عطر بروميس او دي بارفان من": 1795299302,
     "شنطه يد حريمي": 1795299659,
@@ -171,7 +170,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795469991,
     1795470863,
     1795472559,
     1795474688,
@@ -211,16 +209,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795469991,
-      "link": "https://www.noon.com/egypt-ar/Z8A07BD2DF948374CB644Z/p/",
-      "name_ar": "عطر الشعر بلوسوم بليس",
-      "price": 96.0,
-      "list_price": 190.0,
-      "discount": 49.5,
-      "store": "Noon",
-      "v_score": 39.7
-    },
     {
       "ts": 1795470863,
       "link": "https://www.noon.com/egypt-ar/ZD6B77FCB34E76C17825BZ/p/",
