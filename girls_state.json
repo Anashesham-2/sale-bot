@@ -1,5 +1,5 @@
 {
-  "query_idx": 5,
+  "query_idx": 10,
   "last_tt_cat": "",
   "recent_names": {
     "فوط يوميه حجم كبير بعطر منعش": 1795257676,
@@ -192,8 +192,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795429495,
-    1795429501,
     1795432280,
     1795434066,
     1795434431,
@@ -249,26 +247,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795429495,
-      "link": "https://www.noon.com/egypt-ar/ZD15F068F125BF86DE491Z/p/",
-      "name_ar": "ليلي معطر جسم فاخر للنساء، 250 مل",
-      "price": 228.0,
-      "list_price": 350.0,
-      "discount": 34.9,
-      "store": "Noon",
-      "v_score": 44.4
-    },
-    {
-      "ts": 1795429501,
-      "link": "https://www.noon.com/egypt-ar/Z44114F50CE5F552BA29CZ/p/",
-      "name_ar": "فانيلا ليس سبلاش الجسم & هير ميست فانيلا",
-      "price": 350.0,
-      "list_price": 640.0,
-      "discount": 45.3,
-      "store": "Noon",
-      "v_score": 41.7
-    },
     {
       "ts": 1795432280,
       "link": "https://www.noon.com/egypt-ar/ZA703B63D058F4E39E25CZ/p/",
