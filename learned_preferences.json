@@ -301,9 +301,6 @@
     "Hisense"
   ],
   "queries": [
-    "جهاز باد شريحة Apple",
-    "لاب توب ابل Apple",
-    "غسالة هوفر H3DP485TAMBRELA Hoover",
     "مجموعة ماكينة حلاقة VGR",
     "ميزان شخصي الكترونى دي اس بي",
     "بروتين تشالنجر نيوتريشن",
@@ -380,7 +377,10 @@
     "نوتري كوك حلة Nutricook",
     "ميكروفون ألعاب اكس فيفين",
     "ماكينة غسيل بالضغط اي بي تي",
-    "مشترك كهرباء واقي G-Power"
+    "مشترك كهرباء واقي G-Power",
+    "موبايل ذكي سامسونج Samsung",
+    "موبايل جالكسي A27 سامسونج",
+    "موبايل سامسونج جالاكسي"
   ],
   "channels": [
     "epichardware",
@@ -2778,6 +2778,23 @@
     "Yo_Ayman/16995",
     "Yo_Ayman/16994",
     "Yo_Ayman/16993",
-    "Yo_Ayman/16992"
+    "Yo_Ayman/16992",
+    "epichardware/5195",
+    "epichardware/5193",
+    "epichardware/5192",
+    "Sal7lyEgypt/40911",
+    "Sal7lyEgypt/40910",
+    "Sal7lyEgypt/40909",
+    "Sal7lyEgypt/40908",
+    "Sal7lyEgypt/40907",
+    "Sal7lyEgypt/40906",
+    "Sal7lyEgypt/40905",
+    "Yo_Ayman/17002",
+    "Yo_Ayman/17001",
+    "Yo_Ayman/17000",
+    "Yo_Ayman/16999",
+    "Yo_Ayman/16998",
+    "Yo_Ayman/16997",
+    "Yo_Ayman/16996"
   ]
 }
