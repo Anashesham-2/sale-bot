@@ -301,7 +301,6 @@
     "Hisense"
   ],
   "queries": [
-    "قطونيل طقم بوكسرات Cottonil",
     "موزع HDMI USB UGREEN",
     "جالاكسي A36 ثنائي سامسونج",
     "كاميرا ويب قابلة RAPOO",
@@ -380,7 +379,8 @@
     "شارب تكييف سبليت Sharp",
     "تكييف سبليت حصان هايسينس",
     "مكيف هواء سبليت تورنيدو",
-    "كرياتين بدون نكهة RED REX"
+    "كرياتين بدون نكهة RED REX",
+    "نوتري كوك حلة Nutricook"
   ],
   "channels": [
     "epichardware",
@@ -2764,6 +2764,8 @@
     "Sal7lyEgypt/40897",
     "epichardware/5186",
     "Sal7lyEgypt/40898",
-    "Yo_Ayman/16991"
+    "Yo_Ayman/16991",
+    "epichardware/5187",
+    "Sal7lyEgypt/40899"
   ]
 }
