@@ -300,8 +300,6 @@
     "FIFINE"
   ],
   "queries": [
-    "SOKANY Retro Breakfast",
-    "مجموعة جهاز تشذيب في جي ار",
     "تلفزيون ذكي ميني Samsung",
     "سخان نار واط Fresh",
     "مدفأة زيت مستويات Raslan",
@@ -379,7 +377,9 @@
     "مسحوق كريمة الأرز Yava Labs",
     "بروتين مصل اللبن Nutriversum",
     "ميكروفون الألعاب USB فيفين",
-    "سماعة رأس سلكية FIFINE"
+    "سماعة رأس سلكية FIFINE",
+    "سماعة باراكودا اكس Razer",
+    "كيبورد العاب صغيرة Razer"
   ],
   "channels": [
     "epichardware",
@@ -2719,6 +2719,11 @@
     "Sal7lyEgypt/40873",
     "Sal7lyEgypt/40874",
     "Sal7lyEgypt/40875",
-    "Sal7lyEgypt/40876"
+    "Sal7lyEgypt/40876",
+    "epichardware/5180",
+    "epichardware/5178",
+    "Sal7lyEgypt/40878",
+    "Sal7lyEgypt/40877",
+    "Yo_Ayman/16977"
   ]
 }
