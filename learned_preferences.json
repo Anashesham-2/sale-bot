@@ -301,7 +301,6 @@
     "Hisense"
   ],
   "queries": [
-    "مسحوق بروتين مصل DY Nutrition",
     "قطونيل طقم بوكسرات Cottonil",
     "موزع HDMI USB UGREEN",
     "جالاكسي A36 ثنائي سامسونج",
@@ -380,7 +379,8 @@
     "مكيف تبريد سبليت Tornado",
     "شارب تكييف سبليت Sharp",
     "تكييف سبليت حصان هايسينس",
-    "مكيف هواء سبليت تورنيدو"
+    "مكيف هواء سبليت تورنيدو",
+    "كرياتين بدون نكهة RED REX"
   ],
   "channels": [
     "epichardware",
@@ -2761,6 +2761,9 @@
     "epichardware/5184",
     "epichardware/5183",
     "Yo_Ayman/16990",
-    "Sal7lyEgypt/40897"
+    "Sal7lyEgypt/40897",
+    "epichardware/5186",
+    "Sal7lyEgypt/40898",
+    "Yo_Ayman/16991"
   ]
 }
