@@ -297,11 +297,10 @@
     "Eco Healthy",
     "Profi Cook",
     "Yava Labs",
-    "FIFINE"
+    "FIFINE",
+    "Hisense"
   ],
   "queries": [
-    "مدفأة زيت مستويات Raslan",
-    "ماكينة قهوة كبسولات FRUSTA",
     "مسحوق بروتين مصل DY Nutrition",
     "قطونيل طقم بوكسرات Cottonil",
     "موزع HDMI USB UGREEN",
@@ -379,7 +378,9 @@
     "سماعة باراكودا اكس Razer",
     "كيبورد العاب صغيرة Razer",
     "مكيف تبريد سبليت Tornado",
-    "شارب تكييف سبليت Sharp"
+    "شارب تكييف سبليت Sharp",
+    "تكييف سبليت حصان هايسينس",
+    "مكيف هواء سبليت تورنيدو"
   ],
   "channels": [
     "epichardware",
@@ -2756,6 +2757,9 @@
     "Yo_Ayman/16986",
     "Yo_Ayman/16985",
     "epichardware/5182",
-    "epichardware/5181"
+    "epichardware/5181",
+    "epichardware/5184",
+    "epichardware/5183",
+    "Yo_Ayman/16990"
   ]
 }
