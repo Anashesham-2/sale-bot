@@ -1,5 +1,5 @@
 {
-  "query_idx": 2,
+  "query_idx": 7,
   "last_tt_cat": "",
   "recent_names": {
     "سائل من بليس لجميع انواع الشعر": 1795288198,
@@ -178,7 +178,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795459277,
     1795460926,
     1795461888,
     1795461894,
@@ -220,16 +219,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795459277,
-      "link": "https://www.amazon.eg/dp/B08Z46DBF2",
-      "name_ar": "أحمر خدود بودرة سموث ان وير من سيبيل، بلون كويفر 06 ووزن 3.7 جم",
-      "price": 207.0,
-      "list_price": 240.0,
-      "discount": 13.7,
-      "store": "Amazon",
-      "v_score": 56.9
-    },
     {
       "ts": 1795460926,
       "link": "https://www.amazon.eg/dp/B0GKGFKRFM",
