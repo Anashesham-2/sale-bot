@@ -1,5 +1,5 @@
 {
-  "query_idx": 1,
+  "query_idx": 6,
   "last_tt_cat": "",
   "recent_names": {
     "لوشن واقي من الشمس ملون مل": 1795222145,
@@ -215,10 +215,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795392937,
-    1795392943,
-    1795392950,
-    1795392956,
     1795393994,
     1795415917,
     1795418027,
@@ -274,46 +270,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795392937,
-      "link": "https://www.noon.com/egypt-ar/Z141E8012CBAB2D9761B5Z/p/",
-      "name_ar": "انسيال عقده متطابق من ستانلس ستيل انسيال للزوجين لطيف اكسسوارات بنات",
-      "price": 179.17,
-      "list_price": 269.0,
-      "discount": 33.4,
-      "store": "Noon",
-      "v_score": 41.7
-    },
-    {
-      "ts": 1795392943,
-      "link": "https://www.noon.com/egypt-ar/ZCEC27AF685347360DE8AZ/p/",
-      "name_ar": "منظم مكياج وكريمات قد يتغير اللون",
-      "price": 150.0,
-      "list_price": 250.0,
-      "discount": 40.0,
-      "store": "Noon",
-      "v_score": 41.0
-    },
-    {
-      "ts": 1795392950,
-      "link": "https://www.noon.com/egypt-ar/ZCC8763A33DF3D7A66E2AZ/p/",
-      "name_ar": "حامل فرش المكياج من اويدز، منظم مستحضرات تجميل دوار 360 درجة",
-      "price": 255.0,
-      "list_price": 390.0,
-      "discount": 34.6,
-      "store": "Noon",
-      "v_score": 40.3
-    },
-    {
-      "ts": 1795392956,
-      "link": "https://www.noon.com/egypt-ar/ZBE723DB481DD1FCDA0B3Z/p/",
-      "name_ar": "منظم فرش المكياج دوارة بزاوية 360° لتخزين مستحضرات تجميل مع غطاء مضاد للغبار",
-      "price": 220.0,
-      "list_price": 325.0,
-      "discount": 32.3,
-      "store": "Noon",
-      "v_score": 39.2
-    },
     {
       "ts": 1795393994,
       "link": "https://www.noon.com/egypt-ar/Z884707C5D70A18F91452Z/p/",
