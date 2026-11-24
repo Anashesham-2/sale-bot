@@ -301,7 +301,6 @@
     "Hisense"
   ],
   "queries": [
-    "موزع HDMI USB UGREEN",
     "جالاكسي A36 ثنائي سامسونج",
     "كاميرا ويب قابلة RAPOO",
     "جهاز باد شريحة Apple",
@@ -380,7 +379,8 @@
     "تكييف سبليت حصان هايسينس",
     "مكيف هواء سبليت تورنيدو",
     "كرياتين بدون نكهة RED REX",
-    "نوتري كوك حلة Nutricook"
+    "نوتري كوك حلة Nutricook",
+    "ميكروفون ألعاب اكس فيفين"
   ],
   "channels": [
     "epichardware",
@@ -2766,6 +2766,8 @@
     "Sal7lyEgypt/40898",
     "Yo_Ayman/16991",
     "epichardware/5187",
-    "Sal7lyEgypt/40899"
+    "Sal7lyEgypt/40899",
+    "epichardware/5188",
+    "Sal7lyEgypt/40900"
   ]
 }
