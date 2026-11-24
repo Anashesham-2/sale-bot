@@ -293,10 +293,10 @@
     "COSRX",
     "AINOPE",
     "Optimum Nutrition",
-    "Dozova"
+    "Dozova",
+    "Eco Healthy"
   ],
   "queries": [
-    "غسالة صحون فرد هوفر",
     "مكيف سبليت حصان شارب",
     "مكيف هواء سبليت Tornado",
     "تكييف سبليت انفرتر تورنيدو",
@@ -375,7 +375,8 @@
     "غسول وجه بحمض بوبانا",
     "قلاية هوائية ذكية شاومي",
     "كبسولات دوزوفا اشواجندا Dozova",
-    "ساعة ذكية بلوتوث اورايمو"
+    "ساعة ذكية بلوتوث اورايمو",
+    "زيت الزيتون إيكو Eco Healthy"
   ],
   "channels": [
     "epichardware",
@@ -2677,6 +2678,8 @@
     "Sal7lyEgypt/40853",
     "Yo_Ayman/16970",
     "epichardware/5161",
-    "Sal7lyEgypt/40854"
+    "Sal7lyEgypt/40854",
+    "epichardware/5162",
+    "Sal7lyEgypt/40855"
   ]
 }
