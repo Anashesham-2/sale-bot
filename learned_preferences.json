@@ -296,10 +296,10 @@
     "Dozova",
     "Eco Healthy",
     "Profi Cook",
-    "Yava Labs"
+    "Yava Labs",
+    "FIFINE"
   ],
   "queries": [
-    "تلفزيون ايه برو Xiaomi",
     "SOKANY Retro Breakfast",
     "مجموعة جهاز تشذيب في جي ار",
     "تلفزيون ذكي ميني Samsung",
@@ -378,7 +378,8 @@
     "اقراص ليميتليس مان",
     "مسحوق كريمة الأرز Yava Labs",
     "بروتين مصل اللبن Nutriversum",
-    "ميكروفون الألعاب USB فيفين"
+    "ميكروفون الألعاب USB فيفين",
+    "سماعة رأس سلكية FIFINE"
   ],
   "channels": [
     "epichardware",
@@ -2708,6 +2709,9 @@
     "Yo_Ayman/16974",
     "epichardware/5176",
     "Sal7lyEgypt/40868",
-    "Yo_Ayman/16975"
+    "Yo_Ayman/16975",
+    "epichardware/5177",
+    "Sal7lyEgypt/40870",
+    "Sal7lyEgypt/40869"
   ]
 }
