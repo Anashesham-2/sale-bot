@@ -1,5 +1,5 @@
 {
-  "query_idx": 16,
+  "query_idx": 4,
   "last_tt_cat": "",
   "recent_names": {
     "كيرفري فوط قطنيه": 1795267304,
@@ -186,8 +186,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795439481,
-    1795439488,
     1795440333,
     1795443217,
     1795444019,
@@ -239,26 +237,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795439481,
-      "link": "https://www.noon.com/egypt-ar/N52261837A/p/",
-      "name_ar": "ماء عطر يارا 100ملليلتر — Lattafa",
-      "price": 1100.01,
-      "list_price": 1700.0,
-      "discount": 35.3,
-      "store": "Noon",
-      "v_score": 70.6
-    },
-    {
-      "ts": 1795439488,
-      "link": "https://www.noon.com/egypt-ar/Z0F8222E2642168D15076Z/p/",
-      "name_ar": "سانت فاليري، ليلي روز، عطر أو دو بارفان للنساء، 100 مل، طويل الثبات",
-      "price": 557.18,
-      "list_price": 830.0,
-      "discount": 32.9,
-      "store": "Noon",
-      "v_score": 47.4
-    },
     {
       "ts": 1795440333,
       "link": "https://www.noon.com/egypt-ar/Z33C219EB476679295583Z/p/",
