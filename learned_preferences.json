@@ -298,10 +298,10 @@
     "Profi Cook",
     "Yava Labs",
     "FIFINE",
-    "Hisense"
+    "Hisense",
+    "SanDisk"
   ],
   "queries": [
-    "جيم سير وحدة",
     "مسحوق بروتين مصل Nutriversum",
     "سماعات رأس لاسلكية JBL",
     "موسع نطاق واي TP-Link",
@@ -380,7 +380,8 @@
     "موبايل سامسونج جالاكسي",
     "أوكسي برايت عبوة او اكس اي",
     "كرياتين بدون نكهة ريد ريكس",
-    "دبليو دبليو شاحن"
+    "دبليو دبليو شاحن",
+    "سانديسك محرك محمول"
   ],
   "channels": [
     "epichardware",
@@ -2820,6 +2821,8 @@
     "Sal7lyEgypt/40928",
     "Sal7lyEgypt/40927",
     "Sal7lyEgypt/40926",
-    "Sal7lyEgypt/40925"
+    "Sal7lyEgypt/40925",
+    "epichardware/5208",
+    "Yo_Ayman/17006"
   ]
 }
