@@ -1,5 +1,5 @@
 {
-  "query_idx": 16,
+  "query_idx": 4,
   "last_tt_cat": "",
   "recent_names": {
     "سيبل ماسكارا هوت لاش اسود داكن": 1795388125,
@@ -140,7 +140,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795560274,
     1795561162,
     1795561670,
     1795563271,
@@ -182,16 +181,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795560274,
-      "link": "https://www.amazon.eg/dp/B0CFWQ9S53",
-      "name_ar": "ماء الذهب أورينتست N195 روزيز فانيلا مانسيرا أو دي بارفيوم للنساء 100 مل",
-      "price": 664.0,
-      "list_price": 805.19,
-      "discount": 17.5,
-      "store": "Amazon",
-      "v_score": 47.8
-    },
     {
       "ts": 1795561162,
       "link": "https://www.noon.com/egypt-ar/Z6324165D704FC950DD5BZ/p/",
