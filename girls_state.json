@@ -1,8 +1,7 @@
 {
-  "query_idx": 12,
+  "query_idx": 0,
   "last_tt_cat": "",
   "recent_names": {
-    "كريم سيروم فيتامين c المعزز للاشراق": 1795336527,
     "monaya l010 احمر شفاه كريمي": 1795337277,
     "مولبد فوط صحيه دريم سوفت نيس": 1795337949,
     "فوطه صحيه اكسترا هايجين طويله قطنيه": 1795337955,
@@ -155,8 +154,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795509469,
-    1795509475,
     1795509981,
     1795509987,
     1795509992,
@@ -197,26 +194,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795509469,
-      "link": "https://www.noon.com/egypt-ar/Z0104E2D642BF1D88631CZ/p/",
-      "name_ar": "مايبيلين نيويورك، كونسيلر إنستانت إيج ريويند إيزر 07، ساند",
-      "price": 429.0,
-      "list_price": 640.0,
-      "discount": 33.0,
-      "store": "Noon",
-      "v_score": 65.5
-    },
-    {
-      "ts": 1795509475,
-      "link": "https://www.noon.com/egypt-ar/ZF480C7AA6DDCFAC034D3Z/p/",
-      "name_ar": "طقم فرش مكياج 13 قطعة + 4 بيوتي بلندر + فرش ماسكارا 50 قطعة + 3 إسفنجات أشقر",
-      "price": 322.0,
-      "list_price": 520.0,
-      "discount": 38.1,
-      "store": "Noon",
-      "v_score": 38.0
-    },
     {
       "ts": 1795509981,
       "link": "https://www.noon.com/egypt-ar/N11294362A/p/",
