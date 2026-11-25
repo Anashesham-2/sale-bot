@@ -307,7 +307,6 @@
     "Ocean"
   ],
   "queries": [
-    "يوجرين كابل ساتا UGREEN",
     "طقم شورت بوكسر Cottonil",
     "سوكاني خلاط محمول",
     "سوكاني طقم افطار",
@@ -386,7 +385,8 @@
     "ابل اير تاج، Apple",
     "موبايل جالكسي A17 Samsung",
     "غسالة هوفر H3DP485TAMBRELA Hoover",
-    "اقراص ليميتليس مان Limitless"
+    "اقراص ليميتليس مان Limitless",
+    "موزع HDMI USB UGREEN"
   ],
   "channels": [
     "epichardware",
@@ -3033,6 +3033,15 @@
     "Sal7lyEgypt/41038",
     "Sal7lyEgypt/41037",
     "Sal7lyEgypt/41036",
-    "Yo_Ayman/17055"
-  ]
+    "Yo_Ayman/17055",
+    "epichardware/5276",
+    "Sal7lyEgypt/41047",
+    "Sal7lyEgypt/41046",
+    "Sal7lyEgypt/41045",
+    "Sal7lyEgypt/41044",
+    "Sal7lyEgypt/41043",
+    "Sal7lyEgypt/41042",
+    "Yo_Ayman/17056"
+  ],
+  "last_digest_date": "2026-11-25"
 }
