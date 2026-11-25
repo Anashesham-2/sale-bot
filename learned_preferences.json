@@ -304,7 +304,6 @@
     "MediaTech"
   ],
   "queries": [
-    "حفاضات اطفال مولفيكس، Molfix",
     "ميكروفون هايبر إكس، هايبر اكس",
     "قاعدة ماوس يابانية ProbTis",
     "كابل HDMI بطول ALLEASA",
@@ -383,7 +382,8 @@
     "ماوس ألعاب لاسلكي ايجو",
     "مشروب منكه مونستر مونستر انرجي",
     "ماوس ألعاب M815 Redragon",
-    "ميدياتيك مقلاة هوائية MediaTech"
+    "ميدياتيك مقلاة هوائية MediaTech",
+    "لاب توب ابل Apple"
   ],
   "channels": [
     "epichardware",
@@ -2879,6 +2879,13 @@
     "Sal7lyEgypt/40957",
     "Sal7lyEgypt/40956",
     "Sal7lyEgypt/40955",
-    "Yo_Ayman/17015"
+    "Yo_Ayman/17015",
+    "epichardware/5234",
+    "epichardware/5233",
+    "Sal7lyEgypt/40961",
+    "Sal7lyEgypt/40960",
+    "Sal7lyEgypt/40959",
+    "Sal7lyEgypt/40958",
+    "Yo_Ayman/17016"
   ]
 }
