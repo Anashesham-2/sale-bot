@@ -301,11 +301,10 @@
     "Hisense",
     "SanDisk",
     "Hero",
-    "MediaTech"
+    "MediaTech",
+    "GM"
   ],
   "queries": [
-    "ميكروفون هايبر إكس، هايبر اكس",
-    "قاعدة ماوس يابانية ProbTis",
     "كابل HDMI بطول ALLEASA",
     "فيفين ميكروفون ديناميكي",
     "طقم لوحة مفاتيح يوجرين",
@@ -383,7 +382,9 @@
     "مشروب منكه مونستر مونستر انرجي",
     "ماوس ألعاب M815 Redragon",
     "ميدياتيك مقلاة هوائية MediaTech",
-    "لاب توب ابل Apple"
+    "لاب توب ابل Apple",
+    "تلفزيون كاجيتو بوصة Kajito",
+    "جلوريوس كيبورد العاب غلوريوس"
   ],
   "channels": [
     "epichardware",
@@ -2886,6 +2887,10 @@
     "Sal7lyEgypt/40960",
     "Sal7lyEgypt/40959",
     "Sal7lyEgypt/40958",
-    "Yo_Ayman/17016"
+    "Yo_Ayman/17016",
+    "epichardware/5236",
+    "epichardware/5235",
+    "Sal7lyEgypt/40963",
+    "Sal7lyEgypt/40962"
   ]
 }
