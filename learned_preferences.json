@@ -308,7 +308,6 @@
     "Vatika"
   ],
   "queries": [
-    "طقم شورت بوكسر Cottonil",
     "سوكاني خلاط محمول",
     "سوكاني طقم افطار",
     "كابل USB USB جي باور",
@@ -387,7 +386,8 @@
     "موبايل جالكسي A17 Samsung",
     "غسالة هوفر H3DP485TAMBRELA Hoover",
     "اقراص ليميتليس مان Limitless",
-    "موزع HDMI USB UGREEN"
+    "موزع HDMI USB UGREEN",
+    "جوال سامسونج جالكسي Samsung"
   ],
   "channels": [
     "epichardware",
@@ -3061,6 +3061,7 @@
     "epichardware/5282",
     "Sal7lyEgypt/41056",
     "Sal7lyEgypt/41058",
-    "Sal7lyEgypt/41057"
+    "Sal7lyEgypt/41057",
+    "epichardware/5284"
   ]
 }
