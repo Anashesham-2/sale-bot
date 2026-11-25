@@ -1,5 +1,5 @@
 {
-  "query_idx": 0,
+  "query_idx": 5,
   "last_tt_cat": "",
   "recent_names": {
     "سيبل ماسكارا هوت لاش اسود داكن": 1795388125,
@@ -136,7 +136,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795556251,
     1795557905,
     1795557911,
     1795559016,
@@ -180,16 +179,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795556251,
-      "link": "https://www.noon.com/egypt-ar/Z524B0BCF1195FA079FFAZ/p/",
-      "name_ar": "روتين ليفز لعلاج جفاف وهيشان الشعر",
-      "price": 599.0,
-      "list_price": 1042.0,
-      "discount": 42.5,
-      "store": "Noon",
-      "v_score": 50.3
-    },
     {
       "ts": 1795557905,
       "link": "https://www.noon.com/egypt-ar/Z8C40926126739369CB6DZ/p/",
