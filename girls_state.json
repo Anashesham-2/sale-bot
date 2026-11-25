@@ -1,8 +1,7 @@
 {
-  "query_idx": 14,
+  "query_idx": 2,
   "last_tt_cat": "",
   "recent_names": {
-    "فوط صحيه ناعمه ومضغوطه وطويله من": 1795388481,
     "مسكارا من فلورمار للاطاله مع تجعيد": 1795388916,
     "ماسكرا شيجلام الكل في واحد برايمر": 1795388923,
     "بودره مضغوطه من فلورمار": 1795389258,
@@ -139,7 +138,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795561162,
     1795561670,
     1795563271,
     1795566067,
@@ -180,16 +178,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795561162,
-      "link": "https://www.noon.com/egypt-ar/Z6324165D704FC950DD5BZ/p/",
-      "name_ar": "حقيبة مكياج جلد مطبوعه، منظم سفر، الوان جذابه — Voya",
-      "price": 69.0,
-      "list_price": 175.0,
-      "discount": 60.6,
-      "store": "Noon",
-      "v_score": 57.3
-    },
     {
       "ts": 1795561670,
       "link": "https://www.noon.com/egypt-ar/Z329BEACB15C2DFF986B5Z/p/",
