@@ -308,7 +308,6 @@
     "Vatika"
   ],
   "queries": [
-    "سوكاني خلاط محمول",
     "سوكاني طقم افطار",
     "كابل USB USB جي باور",
     "موزع HDMI USB يوجرين",
@@ -387,7 +386,8 @@
     "غسالة هوفر H3DP485TAMBRELA Hoover",
     "اقراص ليميتليس مان Limitless",
     "موزع HDMI USB UGREEN",
-    "جوال سامسونج جالكسي Samsung"
+    "جوال سامسونج جالكسي Samsung",
+    "قاعدة كيبورد لتخفيف GLORIOUS"
   ],
   "channels": [
     "epichardware",
@@ -3064,6 +3064,10 @@
     "Sal7lyEgypt/41057",
     "epichardware/5284",
     "Sal7lyEgypt/41060",
-    "Sal7lyEgypt/41059"
+    "Sal7lyEgypt/41059",
+    "epichardware/5287",
+    "epichardware/5286",
+    "Sal7lyEgypt/41061",
+    "Yo_Ayman/17060"
   ]
 }
