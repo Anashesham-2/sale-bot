@@ -1,5 +1,5 @@
 {
-  "query_idx": 6,
+  "query_idx": 11,
   "last_tt_cat": "",
   "recent_names": {
     "مسكارا من لوريال باريس للرفع ثبات": 1795345411,
@@ -151,7 +151,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795513530,
     1795517381,
     1795519299,
     1795519306,
@@ -189,16 +188,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795513530,
-      "link": "https://www.amazon.eg/dp/B007Q427FY",
-      "name_ar": "بطانات بانتي من كير فري، قطن، رائحة منعشة، عبوة 56 قطعة",
-      "price": 121.0,
-      "list_price": 145.0,
-      "discount": 16.6,
-      "store": "Amazon",
-      "v_score": 51.3
-    },
     {
       "ts": 1795517381,
       "link": "https://www.noon.com/egypt-ar/Z767484D5777EAED1D0F8Z/p/",
