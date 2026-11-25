@@ -300,10 +300,10 @@
     "FIFINE",
     "Hisense",
     "SanDisk",
-    "Hero"
+    "Hero",
+    "MediaTech"
   ],
   "queries": [
-    "فلتر مياه تانك",
     "حفاضات اطفال مولفيكس، Molfix",
     "ميكروفون هايبر إكس، هايبر اكس",
     "قاعدة ماوس يابانية ProbTis",
@@ -382,7 +382,8 @@
     "يوجرين كيبل منفذ",
     "ماوس ألعاب لاسلكي ايجو",
     "مشروب منكه مونستر مونستر انرجي",
-    "ماوس ألعاب M815 Redragon"
+    "ماوس ألعاب M815 Redragon",
+    "ميدياتيك مقلاة هوائية MediaTech"
   ],
   "channels": [
     "epichardware",
@@ -2873,6 +2874,11 @@
     "Yo_Ayman/17012",
     "Yo_Ayman/17011",
     "epichardware/5231",
-    "Yo_Ayman/17014"
+    "Yo_Ayman/17014",
+    "epichardware/5232",
+    "Sal7lyEgypt/40957",
+    "Sal7lyEgypt/40956",
+    "Sal7lyEgypt/40955",
+    "Yo_Ayman/17015"
   ]
 }
