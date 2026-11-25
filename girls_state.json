@@ -1,5 +1,5 @@
 {
-  "query_idx": 6,
+  "query_idx": 11,
   "last_tt_cat": "",
   "recent_names": {
     "كيرفري فوط يوميه قطنيه غير معطره": 1795368210,
@@ -139,7 +139,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795539883,
     1795554531,
     1795555218,
     1795555223,
@@ -180,16 +179,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795539883,
-      "link": "https://www.amazon.eg/dp/B09WNGWY85",
-      "name_ar": "سيروم فيتامين سي من ستارفيل",
-      "price": 208.0,
-      "list_price": 290.0,
-      "discount": 28.3,
-      "store": "Amazon",
-      "v_score": 59.1
-    },
     {
       "ts": 1795554531,
       "link": "https://www.amazon.eg/dp/B0D3B68HYY",
