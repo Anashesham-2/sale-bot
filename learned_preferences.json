@@ -307,7 +307,6 @@
     "Ocean"
   ],
   "queries": [
-    "جوال ذكي ريدمي شاومي",
     "يوجرين كابل ساتا UGREEN",
     "طقم شورت بوكسر Cottonil",
     "سوكاني خلاط محمول",
@@ -386,7 +385,8 @@
     "كابل سحب خطافات جينيريك",
     "ابل اير تاج، Apple",
     "موبايل جالكسي A17 Samsung",
-    "غسالة هوفر H3DP485TAMBRELA Hoover"
+    "غسالة هوفر H3DP485TAMBRELA Hoover",
+    "اقراص ليميتليس مان Limitless"
   ],
   "channels": [
     "epichardware",
@@ -3010,6 +3010,10 @@
     "Sal7lyEgypt/41025",
     "Sal7lyEgypt/41024",
     "Yo_Ayman/17051",
-    "Sal7lyEgypt/41026"
+    "Sal7lyEgypt/41026",
+    "epichardware/5270",
+    "epichardware/5268",
+    "Sal7lyEgypt/41028",
+    "Sal7lyEgypt/41027"
   ]
 }
