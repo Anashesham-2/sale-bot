@@ -1,5 +1,5 @@
 {
-  "query_idx": 7,
+  "query_idx": 12,
   "last_tt_cat": "",
   "recent_names": {
     "سيبل ماسكارا هوت لاش اسود داكن": 1795388125,
@@ -136,8 +136,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795555714,
-    1795555720,
     1795556251,
     1795557905,
     1795557911,
@@ -182,26 +180,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795555714,
-      "link": "https://www.noon.com/egypt-ar/Z19C43AAA4AD9824146B7Z/p/",
-      "name_ar": "Altesse Soin باقة السعادة",
-      "price": 170.0,
-      "list_price": 539.0,
-      "discount": 68.5,
-      "store": "Noon",
-      "v_score": 77.2
-    },
-    {
-      "ts": 1795555720,
-      "link": "https://www.noon.com/egypt-ar/ZE4E555BAD00F85948BD5Z/p/",
-      "name_ar": "P007 بودرة ماجيك تاتش فيس ميكر السميكة، لمسة نهائية ناعمة غير لامعة — Monaya",
-      "price": 334.95,
-      "list_price": 986.17,
-      "discount": 66.0,
-      "store": "Noon",
-      "v_score": 64.0
-    },
     {
       "ts": 1795556251,
       "link": "https://www.noon.com/egypt-ar/Z524B0BCF1195FA079FFAZ/p/",
