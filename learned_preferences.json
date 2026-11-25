@@ -305,10 +305,10 @@
     "GM",
     "GLORIOUS",
     "Ocean",
-    "Vatika"
+    "Vatika",
+    "MSI"
   ],
   "queries": [
-    "سوكاني طقم افطار",
     "كابل USB USB جي باور",
     "موزع HDMI USB يوجرين",
     "مجموعة حماية البشرة Dermacy",
@@ -387,7 +387,8 @@
     "اقراص ليميتليس مان Limitless",
     "موزع HDMI USB UGREEN",
     "جوال سامسونج جالكسي Samsung",
-    "قاعدة كيبورد لتخفيف GLORIOUS"
+    "قاعدة كيبورد لتخفيف GLORIOUS",
+    "لابتوب أعمال F1MG MSI"
   ],
   "channels": [
     "epichardware",
@@ -3068,6 +3069,11 @@
     "epichardware/5287",
     "epichardware/5286",
     "Sal7lyEgypt/41061",
-    "Yo_Ayman/17060"
+    "Yo_Ayman/17060",
+    "epichardware/5288",
+    "Sal7lyEgypt/41064",
+    "Sal7lyEgypt/41063",
+    "Sal7lyEgypt/41062",
+    "Yo_Ayman/17061"
   ]
 }
