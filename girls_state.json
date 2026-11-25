@@ -1,8 +1,7 @@
 {
-  "query_idx": 9,
+  "query_idx": 14,
   "last_tt_cat": "",
   "recent_names": {
-    "وايت عرض قطع فوط مزيل مكياج": 1795334785,
     "كريم سيروم فيتامين c المعزز للاشراق": 1795336527,
     "monaya l010 احمر شفاه كريمي": 1795337277,
     "مولبد فوط صحيه دريم سوفت نيس": 1795337949,
@@ -156,7 +155,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795508065,
     1795509469,
     1795509475,
     1795509981,
@@ -199,16 +197,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795508065,
-      "link": "https://www.noon.com/egypt-ar/Z41E2116F4FC0385BF46CZ/p/",
-      "name_ar": "بيلّو ماء ميسيلار مزيل مكياج بالهيالورونيك اسيد 120مل",
-      "price": 70.0,
-      "list_price": 130.0,
-      "discount": 46.2,
-      "store": "Noon",
-      "v_score": 43.1
-    },
     {
       "ts": 1795509469,
       "link": "https://www.noon.com/egypt-ar/Z0104E2D642BF1D88631CZ/p/",
