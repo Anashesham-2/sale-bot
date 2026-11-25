@@ -1,5 +1,5 @@
 {
-  "query_idx": 12,
+  "query_idx": 0,
   "last_tt_cat": "",
   "recent_names": {
     "مسكارا من لوريال باريس للرفع ثبات": 1795345411,
@@ -153,7 +153,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795517381,
     1795519299,
     1795519306,
     1795522397,
@@ -192,16 +191,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795517381,
-      "link": "https://www.noon.com/egypt-ar/Z767484D5777EAED1D0F8Z/p/",
-      "name_ar": "L016 أحمر شفاه كريمي من مونايا بورجوفا، أحمر شفاه غني اللون بلمسة نهائية ناعمة",
-      "price": 135.52,
-      "list_price": 465.96,
-      "discount": 70.9,
-      "store": "Noon",
-      "v_score": 78.0
-    },
     {
       "ts": 1795519299,
       "link": "https://www.amazon.eg/dp/B07ZH4WWSH",
