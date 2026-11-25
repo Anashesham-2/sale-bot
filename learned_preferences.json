@@ -310,7 +310,6 @@
     "Naturesta"
   ],
   "queries": [
-    "موزع HDMI USB يوجرين",
     "مجموعة حماية البشرة Dermacy",
     "مشترك كهرباء مزود جي باور",
     "عطر خمرة للجنسين Lattafa",
@@ -389,7 +388,8 @@
     "جوال سامسونج جالكسي Samsung",
     "قاعدة كيبورد لتخفيف GLORIOUS",
     "لابتوب أعمال F1MG MSI",
-    "نيتشرستا خردل، عسل، Naturesta"
+    "نيتشرستا خردل، عسل، Naturesta",
+    "طقم ملابس داخلية Dice"
   ],
   "channels": [
     "epichardware",
@@ -3081,6 +3081,10 @@
     "Sal7lyEgypt/41066",
     "Sal7lyEgypt/41065",
     "Sal7lyEgypt/41067",
-    "Sal7lyEgypt/41068"
+    "Sal7lyEgypt/41068",
+    "epichardware/5291",
+    "Sal7lyEgypt/41070",
+    "Sal7lyEgypt/41069",
+    "Yo_Ayman/17062"
   ]
 }
