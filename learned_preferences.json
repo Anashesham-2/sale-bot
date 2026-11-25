@@ -306,10 +306,10 @@
     "GLORIOUS",
     "Ocean",
     "Vatika",
-    "MSI"
+    "MSI",
+    "Naturesta"
   ],
   "queries": [
-    "كابل USB USB جي باور",
     "موزع HDMI USB يوجرين",
     "مجموعة حماية البشرة Dermacy",
     "مشترك كهرباء مزود جي باور",
@@ -388,7 +388,8 @@
     "موزع HDMI USB UGREEN",
     "جوال سامسونج جالكسي Samsung",
     "قاعدة كيبورد لتخفيف GLORIOUS",
-    "لابتوب أعمال F1MG MSI"
+    "لابتوب أعمال F1MG MSI",
+    "نيتشرستا خردل، عسل، Naturesta"
   ],
   "channels": [
     "epichardware",
@@ -3074,6 +3075,10 @@
     "Sal7lyEgypt/41064",
     "Sal7lyEgypt/41063",
     "Sal7lyEgypt/41062",
-    "Yo_Ayman/17061"
+    "Yo_Ayman/17061",
+    "epichardware/5290",
+    "epichardware/5289",
+    "Sal7lyEgypt/41066",
+    "Sal7lyEgypt/41065"
   ]
 }
