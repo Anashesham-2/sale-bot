@@ -307,8 +307,6 @@
     "Ocean"
   ],
   "queries": [
-    "مكنسة كهربائية بعصا اورايمو",
-    "موبايل ذكي XIAOMI شاومي",
     "جوال ذكي ريدمي شاومي",
     "يوجرين كابل ساتا UGREEN",
     "طقم شورت بوكسر Cottonil",
@@ -386,7 +384,9 @@
     "مسحوق غسيل فيلفيتا، فلفيتا",
     "جهاز قياس ضغط Granzia",
     "كابل سحب خطافات جينيريك",
-    "ابل اير تاج، Apple"
+    "ابل اير تاج، Apple",
+    "موبايل جالكسي A17 Samsung",
+    "غسالة هوفر H3DP485TAMBRELA Hoover"
   ],
   "channels": [
     "epichardware",
@@ -2989,6 +2989,17 @@
     "Yo_Ayman/17044",
     "Yo_Ayman/17043",
     "Yo_Ayman/17042",
-    "Yo_Ayman/17041"
+    "Yo_Ayman/17041",
+    "epichardware/5262",
+    "epichardware/5261",
+    "epichardware/5259",
+    "Sal7lyEgypt/41021",
+    "Sal7lyEgypt/41020",
+    "Sal7lyEgypt/41019",
+    "Sal7lyEgypt/41018",
+    "Yo_Ayman/17048",
+    "Yo_Ayman/17047",
+    "Yo_Ayman/17046",
+    "Yo_Ayman/17045"
   ]
 }
