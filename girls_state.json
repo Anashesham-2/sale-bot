@@ -1,5 +1,5 @@
 {
-  "query_idx": 2,
+  "query_idx": 7,
   "last_tt_cat": "",
   "recent_names": {
     "سبلاش للجسم سينسيز من ايفا سكين": 1795443217,
@@ -136,7 +136,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795614548,
     1795617049,
     1795617055,
     1795617416,
@@ -187,16 +186,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795614548,
-      "link": "https://www.amazon.eg/dp/B00I7PK3GQ",
-      "name_ar": "عطر لا في اي بيل للنساء من لانكوم، او دو بارفان، 100 مل",
-      "price": 5481.0,
-      "list_price": 7735.0,
-      "discount": 29.1,
-      "store": "Amazon",
-      "v_score": 57.6
-    },
     {
       "ts": 1795617049,
       "link": "https://www.amazon.eg/dp/B0F28Y72RL",
