@@ -1,5 +1,5 @@
 {
-  "query_idx": 16,
+  "query_idx": 4,
   "last_tt_cat": "",
   "recent_names": {
     "كريم اساس بيرفكت كوفريج من فلورمار": 1795453303,
@@ -129,7 +129,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795625429,
     1795627056,
     1795627235,
     1795627608,
@@ -174,16 +173,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795625429,
-      "link": "https://www.amazon.eg/dp/B0FM8HGBWT",
-      "name_ar": "بخاخ للجسم بلوسوم من اوسوم، 250 مل",
-      "price": 87.05,
-      "list_price": 174.11,
-      "discount": 50.0,
-      "store": "Amazon",
-      "v_score": 56.0
-    },
     {
       "ts": 1795627056,
       "link": "https://www.amazon.eg/dp/B0CY9LJHXY",
