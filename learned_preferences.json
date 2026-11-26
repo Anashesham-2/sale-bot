@@ -311,8 +311,6 @@
     "Marvelous Nutrition"
   ],
   "queries": [
-    "موبايل سامسونج جالاكسي Samsung",
-    "جوال سامسونج جالكسي",
     "مكيف هواء شارب Sharp",
     "خلاط يدوي وات، Tornado",
     "مجفف شعر شاين BaByliss",
@@ -390,7 +388,9 @@
     "محول USB طراز HIKSEMI",
     "بروتين مصل اللبن",
     "فلاش ميموري كينغستون Kingston",
-    "موبايل سامسونج جالكسي Samsung"
+    "موبايل سامسونج جالكسي Samsung",
+    "سوكاني خلاط محمول Sokany",
+    "غلاية سيف تاتش تانك"
   ],
   "channels": [
     "epichardware",
@@ -3221,6 +3221,12 @@
     "Yo_Ayman/17097",
     "epichardware/5311",
     "epichardware/5310",
-    "Yo_Ayman/17098"
+    "Yo_Ayman/17098",
+    "epichardware/5314",
+    "epichardware/5313",
+    "Sal7lyEgypt/41157",
+    "Sal7lyEgypt/41156",
+    "Yo_Ayman/17100",
+    "Yo_Ayman/17099"
   ]
 }
