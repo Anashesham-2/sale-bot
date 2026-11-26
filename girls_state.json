@@ -1,5 +1,5 @@
 {
-  "query_idx": 14,
+  "query_idx": 2,
   "last_tt_cat": "",
   "recent_names": {
     "سبلاش للجسم سينسيز من ايفا سكين": 1795443217,
@@ -136,7 +136,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795614166,
     1795614548,
     1795617049,
     1795617055,
@@ -188,16 +187,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795614166,
-      "link": "https://www.amazon.eg/dp/B0DFPZ7CQ1",
-      "name_ar": "واقي شمس سائل هيسياك بعامل حماية 50+ من يورياج، 50 مل",
-      "price": 699.99,
-      "list_price": 1175.0,
-      "discount": 40.4,
-      "store": "Amazon",
-      "v_score": 55.2
-    },
     {
       "ts": 1795614548,
       "link": "https://www.amazon.eg/dp/B00I7PK3GQ",
