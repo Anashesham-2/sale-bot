@@ -1,5 +1,5 @@
 {
-  "query_idx": 8,
+  "query_idx": 13,
   "last_tt_cat": "",
   "recent_names": {
     "اسد مل برفيوم": 1795472559,
@@ -123,7 +123,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795644656,
     1795645156,
     1795650728,
     1795675539,
@@ -167,16 +166,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795644656,
-      "link": "https://www.amazon.eg/dp/B0C94VSLJM",
-      "name_ar": "بودرة وجه مضغوطة بلمسة مطفية وملمس ناعم وتغطية طويلة الأمد من فلورمار",
-      "price": 438.0,
-      "list_price": 650.0,
-      "discount": 32.6,
-      "store": "Amazon",
-      "v_score": 65.3
-    },
     {
       "ts": 1795645156,
       "link": "https://www.noon.com/egypt-ar/Z1FFD1DA441AE545A857BZ/p/",
