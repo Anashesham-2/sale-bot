@@ -1,5 +1,5 @@
 {
-  "query_idx": 15,
+  "query_idx": 3,
   "last_tt_cat": "",
   "recent_names": {
     "بخاخ للجسم روز فانيلا رويال من": 1795415917,
@@ -131,7 +131,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795569841,
     1795572957,
     1795596568,
     1795599063,
@@ -168,16 +167,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795569841,
-      "link": "https://www.noon.com/egypt-ar/Z69402E33D45282C71303Z/p/",
-      "name_ar": "معطر جسم جزيرة استوائية، 200 مل",
-      "price": 110.88,
-      "list_price": 400.0,
-      "discount": 72.3,
-      "store": "Noon",
-      "v_score": 54.0
-    },
     {
       "ts": 1795572957,
       "link": "https://www.noon.com/egypt-ar/Z868A446E4CF8FC3C6DBDZ/p/",
