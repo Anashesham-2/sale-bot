@@ -312,7 +312,6 @@
     "Trueval"
   ],
   "queries": [
-    "ميكروويف بلت بفرن هيلير",
     "انفنيكس هوت بسعة",
     "بخاخ الجسم للرجال AXE",
     "تلفاز 50NU85CB6LA بوصة LG",
@@ -391,7 +390,8 @@
     "طقم سمارت زينوكس Zinox",
     "شاحن سريع C38 G-Power",
     "شاحن ويوو بمنفذ",
-    "مزيل عرق رول نيفيا"
+    "مزيل عرق رول نيفيا",
+    "جوجل فيتبيت إير Fitbit"
   ],
   "channels": [
     "epichardware",
@@ -3318,7 +3318,11 @@
     "Sal7lyEgypt/41203",
     "Sal7lyEgypt/41202",
     "Sal7lyEgypt/41201",
-    "Yo_Ayman/17119"
+    "Yo_Ayman/17119",
+    "epichardware/5356",
+    "Sal7lyEgypt/41207",
+    "Sal7lyEgypt/41206",
+    "Sal7lyEgypt/41205"
   ],
   "last_digest_date": "2026-11-26"
 }
