@@ -1,5 +1,5 @@
 {
-  "query_idx": 12,
+  "query_idx": 0,
   "last_tt_cat": "",
   "recent_names": {
     "منظم وحامل كريستالي لفرش المكياج من": 1795456537,
@@ -127,7 +127,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795627608,
     1795628076,
     1795629918,
     1795632799,
@@ -169,16 +168,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795627608,
-      "link": "https://www.noon.com/egypt-ar/Z2DF9DBBAE377D15C5A3CZ/p/",
-      "name_ar": "طقم هدايا أرابيا مدام مكون من (او دي بيرفيوم 100مللي، بودي ميست 100مللي) نسائي",
-      "price": 1360.42,
-      "list_price": 6402.0,
-      "discount": 78.8,
-      "store": "Noon",
-      "v_score": 70.0
-    },
     {
       "ts": 1795628076,
       "link": "https://www.amazon.eg/dp/B0DDGR7XZ3",
