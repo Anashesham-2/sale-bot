@@ -312,9 +312,6 @@
     "Trueval"
   ],
   "queries": [
-    "زيت الزيتون إيكو Eco Healthy",
-    "ماكينة تحضير اسبريسو Profi Cook",
-    "مسحوق بروتين مصل",
     "بروتين الجيل الثامن تشالنجر نيوترشن",
     "اقراص ليميتليس مان",
     "مسحوق كريمة الأرز Yava Labs",
@@ -391,7 +388,10 @@
     "موبايل انفينيكس ثنائي",
     "سوكاني غلاية كهربائية",
     "فريش غسالة تحميل Fresh",
-    "موبايل جالاكسي S26 سامسونج"
+    "موبايل جالاكسي S26 سامسونج",
+    "شاومي ريدمي نوت",
+    "قلاية تعمل بدون Tornado",
+    "موبايل ذكي سامسونج"
   ],
   "channels": [
     "epichardware",
@@ -3408,6 +3408,23 @@
     "Yo_Ayman/17145",
     "Yo_Ayman/17144",
     "Yo_Ayman/17143",
-    "Yo_Ayman/17142"
+    "Yo_Ayman/17142",
+    "epichardware/5396",
+    "epichardware/5395",
+    "epichardware/5393",
+    "epichardware/5392",
+    "epichardware/5390",
+    "Sal7lyEgypt/41264",
+    "Sal7lyEgypt/41263",
+    "Sal7lyEgypt/41262",
+    "Sal7lyEgypt/41261",
+    "Sal7lyEgypt/41260",
+    "Sal7lyEgypt/41259",
+    "Sal7lyEgypt/41258",
+    "Sal7lyEgypt/41257",
+    "Sal7lyEgypt/41256",
+    "Yo_Ayman/17149",
+    "Yo_Ayman/17148",
+    "Yo_Ayman/17147"
   ]
 }
