@@ -312,7 +312,6 @@
     "Trueval"
   ],
   "queries": [
-    "بخاخ الجسم للرجال AXE",
     "تلفاز 50NU85CB6LA بوصة LG",
     "Redragon P035 Meteor ريدراجون",
     "غسول وجه بحمض بوبانا",
@@ -391,7 +390,8 @@
     "شاحن ويوو بمنفذ",
     "مزيل عرق رول نيفيا",
     "جوجل فيتبيت إير Fitbit",
-    "تلفزيون S85H بشاشة سامسونج"
+    "تلفزيون S85H بشاشة سامسونج",
+    "كيبورد العاب صغيرة ريزر"
   ],
   "channels": [
     "epichardware",
@@ -3326,6 +3326,13 @@
     "epichardware/5358",
     "epichardware/5357",
     "Sal7lyEgypt/41209",
-    "Sal7lyEgypt/41208"
+    "Sal7lyEgypt/41208",
+    "epichardware/5364",
+    "epichardware/5362",
+    "epichardware/5361",
+    "Sal7lyEgypt/41212",
+    "Sal7lyEgypt/41211",
+    "Sal7lyEgypt/41210",
+    "Yo_Ayman/17120"
   ]
 }
