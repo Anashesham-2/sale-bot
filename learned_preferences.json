@@ -311,7 +311,6 @@
     "Marvelous Nutrition"
   ],
   "queries": [
-    "موبايل شاومي 17T",
     "قلاية هوائية لتر دي اس بي",
     "موبايل سامسونج جالاكسي Samsung",
     "جوال سامسونج جالكسي",
@@ -390,7 +389,8 @@
     "طقم ملابس داخلية Dice",
     "فلاش ميموري M210S HIKSEMI",
     "محول USB طراز HIKSEMI",
-    "بروتين مصل اللبن"
+    "بروتين مصل اللبن",
+    "فلاش ميموري كينغستون Kingston"
   ],
   "channels": [
     "epichardware",
@@ -3194,6 +3194,15 @@
     "Sal7lyEgypt/41138",
     "Sal7lyEgypt/41137",
     "Yo_Ayman/17089",
-    "Yo_Ayman/17088"
+    "Yo_Ayman/17088",
+    "epichardware/5306",
+    "Sal7lyEgypt/41145",
+    "Sal7lyEgypt/41144",
+    "Sal7lyEgypt/41143",
+    "Sal7lyEgypt/41142",
+    "Yo_Ayman/17093",
+    "Yo_Ayman/17092",
+    "Yo_Ayman/17091",
+    "Yo_Ayman/17090"
   ]
 }
