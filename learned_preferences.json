@@ -312,7 +312,6 @@
     "Trueval"
   ],
   "queries": [
-    "بروتين مصل اللبن Nutriversum",
     "ميكروفون الألعاب USB فيفين",
     "سماعة رأس سلكية FIFINE",
     "سماعة باراكودا اكس Razer",
@@ -391,7 +390,8 @@
     "موبايل ذكي سامسونج",
     "Redragon P035 Meteor ريدراجون",
     "موبايل جالكسي A17 سامسونج",
-    "سوكاني خلاط محمول"
+    "سوكاني خلاط محمول",
+    "تلفزيون طراز عالي شاومي"
   ],
   "channels": [
     "epichardware",
@@ -3440,6 +3440,18 @@
     "Sal7lyEgypt/41265",
     "Yo_Ayman/17152",
     "Yo_Ayman/17151",
-    "Yo_Ayman/17150"
+    "Yo_Ayman/17150",
+    "epichardware/5406",
+    "epichardware/5405",
+    "epichardware/5404",
+    "Sal7lyEgypt/41274",
+    "Sal7lyEgypt/41273",
+    "Sal7lyEgypt/41272",
+    "Sal7lyEgypt/41271",
+    "Yo_Ayman/17157",
+    "Yo_Ayman/17156",
+    "Yo_Ayman/17155",
+    "Yo_Ayman/17154",
+    "Yo_Ayman/17153"
   ]
 }
