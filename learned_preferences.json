@@ -311,12 +311,6 @@
     "Marvelous Nutrition"
   ],
   "queries": [
-    "مكمل غذائي متعدد سينتروم",
-    "توتال انيرجيز كوارتز TotalEnergies",
-    "Tornado Washing Machine",
-    "حامل أجهزة إلكترونية AINOPE",
-    "ميكروفون فيفاين K688 فيفين",
-    "باور بانك زولو انكر",
     "بروتين الجيل الثامن",
     "مروحة ستاند صامتة فريش",
     "ميكروويف بلت بفرن هيلير",
@@ -390,7 +384,13 @@
     "مسحوق بروتين معزول Yava Labs",
     "واي بروتين ريد RED REX",
     "طقم شورت بوكسر قطونيل",
-    "ساوند كور سماعات"
+    "ساوند كور سماعات",
+    "مزيل عرق برائحة Vacation",
+    "لدنيو مشترك كهربائي اي دينو",
+    "موزع HDMI USB يوجرين",
+    "طقم أواني طهي تروفال",
+    "طقم سمارت زينوكس Zinox",
+    "شاحن سريع C38 G-Power"
   ],
   "channels": [
     "epichardware",
@@ -3277,6 +3277,19 @@
     "Sal7lyEgypt/41182",
     "Sal7lyEgypt/41181",
     "Yo_Ayman/17113",
-    "Yo_Ayman/17112"
+    "Yo_Ayman/17112",
+    "epichardware/5346",
+    "epichardware/5344",
+    "epichardware/5343",
+    "epichardware/5342",
+    "epichardware/5341",
+    "epichardware/5340",
+    "Sal7lyEgypt/41188",
+    "Sal7lyEgypt/41187",
+    "Sal7lyEgypt/41186",
+    "Sal7lyEgypt/41185",
+    "Yo_Ayman/17116",
+    "Yo_Ayman/17115",
+    "Yo_Ayman/17114"
   ]
 }
