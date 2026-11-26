@@ -311,7 +311,6 @@
     "Marvelous Nutrition"
   ],
   "queries": [
-    "مجفف شعر شاين BaByliss",
     "رقعة رئيسية لحب COSRX",
     "مكمل غذائي متعدد سينتروم",
     "توتال انيرجيز كوارتز TotalEnergies",
@@ -390,7 +389,8 @@
     "سوكاني خلاط محمول Sokany",
     "غلاية سيف تاتش تانك",
     "مسحوق بروتين معزول Yava Labs",
-    "واي بروتين ريد RED REX"
+    "واي بروتين ريد RED REX",
+    "طقم شورت بوكسر قطونيل"
   ],
   "channels": [
     "epichardware",
@@ -3265,6 +3265,8 @@
     "Sal7lyEgypt/41176",
     "epichardware/5331",
     "epichardware/5330",
-    "Sal7lyEgypt/41177"
+    "Sal7lyEgypt/41177",
+    "epichardware/5332",
+    "Sal7lyEgypt/41178"
   ]
 }
