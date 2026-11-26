@@ -311,7 +311,6 @@
     "Marvelous Nutrition"
   ],
   "queries": [
-    "قلاية هوائية لتر دي اس بي",
     "موبايل سامسونج جالاكسي Samsung",
     "جوال سامسونج جالكسي",
     "مكيف هواء شارب Sharp",
@@ -390,7 +389,8 @@
     "فلاش ميموري M210S HIKSEMI",
     "محول USB طراز HIKSEMI",
     "بروتين مصل اللبن",
-    "فلاش ميموري كينغستون Kingston"
+    "فلاش ميموري كينغستون Kingston",
+    "موبايل سامسونج جالكسي Samsung"
   ],
   "channels": [
     "epichardware",
@@ -3218,6 +3218,9 @@
     "Sal7lyEgypt/41153",
     "Yo_Ayman/17096",
     "Sal7lyEgypt/41155",
-    "Yo_Ayman/17097"
+    "Yo_Ayman/17097",
+    "epichardware/5311",
+    "epichardware/5310",
+    "Yo_Ayman/17098"
   ]
 }
