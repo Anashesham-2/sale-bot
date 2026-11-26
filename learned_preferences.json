@@ -311,7 +311,6 @@
     "Marvelous Nutrition"
   ],
   "queries": [
-    "رقعة رئيسية لحب COSRX",
     "مكمل غذائي متعدد سينتروم",
     "توتال انيرجيز كوارتز TotalEnergies",
     "Tornado Washing Machine",
@@ -390,7 +389,8 @@
     "غلاية سيف تاتش تانك",
     "مسحوق بروتين معزول Yava Labs",
     "واي بروتين ريد RED REX",
-    "طقم شورت بوكسر قطونيل"
+    "طقم شورت بوكسر قطونيل",
+    "ساوند كور سماعات"
   ],
   "channels": [
     "epichardware",
@@ -3267,6 +3267,9 @@
     "epichardware/5330",
     "Sal7lyEgypt/41177",
     "epichardware/5332",
-    "Sal7lyEgypt/41178"
+    "Sal7lyEgypt/41178",
+    "epichardware/5334",
+    "Sal7lyEgypt/41180",
+    "Sal7lyEgypt/41179"
   ]
 }
