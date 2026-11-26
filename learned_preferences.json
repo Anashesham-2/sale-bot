@@ -312,9 +312,6 @@
     "Trueval"
   ],
   "queries": [
-    "بروتين الجيل الثامن تشالنجر نيوترشن",
-    "اقراص ليميتليس مان",
-    "مسحوق كريمة الأرز Yava Labs",
     "بروتين مصل اللبن Nutriversum",
     "ميكروفون الألعاب USB فيفين",
     "سماعة رأس سلكية FIFINE",
@@ -391,7 +388,10 @@
     "موبايل جالاكسي S26 سامسونج",
     "شاومي ريدمي نوت",
     "قلاية تعمل بدون Tornado",
-    "موبايل ذكي سامسونج"
+    "موبايل ذكي سامسونج",
+    "Redragon P035 Meteor ريدراجون",
+    "موبايل جالكسي A17 سامسونج",
+    "سوكاني خلاط محمول"
   ],
   "channels": [
     "epichardware",
@@ -3425,6 +3425,21 @@
     "Sal7lyEgypt/41256",
     "Yo_Ayman/17149",
     "Yo_Ayman/17148",
-    "Yo_Ayman/17147"
+    "Yo_Ayman/17147",
+    "epichardware/5403",
+    "epichardware/5402",
+    "epichardware/5401",
+    "epichardware/5400",
+    "epichardware/5399",
+    "epichardware/5398",
+    "Sal7lyEgypt/41270",
+    "Sal7lyEgypt/41269",
+    "Sal7lyEgypt/41268",
+    "Sal7lyEgypt/41267",
+    "Sal7lyEgypt/41266",
+    "Sal7lyEgypt/41265",
+    "Yo_Ayman/17152",
+    "Yo_Ayman/17151",
+    "Yo_Ayman/17150"
   ]
 }
