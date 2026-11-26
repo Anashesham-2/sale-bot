@@ -311,7 +311,6 @@
     "Marvelous Nutrition"
   ],
   "queries": [
-    "مكيف هواء شارب Sharp",
     "خلاط يدوي وات، Tornado",
     "مجفف شعر شاين BaByliss",
     "رقعة رئيسية لحب COSRX",
@@ -390,7 +389,8 @@
     "فلاش ميموري كينغستون Kingston",
     "موبايل سامسونج جالكسي Samsung",
     "سوكاني خلاط محمول Sokany",
-    "غلاية سيف تاتش تانك"
+    "غلاية سيف تاتش تانك",
+    "مسحوق بروتين معزول Yava Labs"
   ],
   "channels": [
     "epichardware",
@@ -3254,6 +3254,10 @@
     "Sal7lyEgypt/41171",
     "Sal7lyEgypt/41174",
     "Sal7lyEgypt/41173",
-    "Yo_Ayman/17109"
+    "Yo_Ayman/17109",
+    "epichardware/5322",
+    "Sal7lyEgypt/41175",
+    "Yo_Ayman/17111",
+    "Yo_Ayman/17110"
   ]
 }
