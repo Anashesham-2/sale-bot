@@ -312,7 +312,6 @@
     "Trueval"
   ],
   "queries": [
-    "انفنيكس هوت بسعة",
     "بخاخ الجسم للرجال AXE",
     "تلفاز 50NU85CB6LA بوصة LG",
     "Redragon P035 Meteor ريدراجون",
@@ -391,7 +390,8 @@
     "شاحن سريع C38 G-Power",
     "شاحن ويوو بمنفذ",
     "مزيل عرق رول نيفيا",
-    "جوجل فيتبيت إير Fitbit"
+    "جوجل فيتبيت إير Fitbit",
+    "تلفزيون S85H بشاشة سامسونج"
   ],
   "channels": [
     "epichardware",
@@ -3322,7 +3322,10 @@
     "epichardware/5356",
     "Sal7lyEgypt/41207",
     "Sal7lyEgypt/41206",
-    "Sal7lyEgypt/41205"
-  ],
-  "last_digest_date": "2026-11-26"
+    "Sal7lyEgypt/41205",
+    "epichardware/5358",
+    "epichardware/5357",
+    "Sal7lyEgypt/41209",
+    "Sal7lyEgypt/41208"
+  ]
 }
