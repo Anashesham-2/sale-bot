@@ -312,8 +312,6 @@
     "Trueval"
   ],
   "queries": [
-    "تلفاز 50NU85CB6LA بوصة LG",
-    "Redragon P035 Meteor ريدراجون",
     "غسول وجه بحمض بوبانا",
     "قلاية هوائية ذكية شاومي",
     "كبسولات دوزوفا اشواجندا Dozova",
@@ -391,7 +389,9 @@
     "مزيل عرق رول نيفيا",
     "جوجل فيتبيت إير Fitbit",
     "تلفزيون S85H بشاشة سامسونج",
-    "كيبورد العاب صغيرة ريزر"
+    "كيبورد العاب صغيرة ريزر",
+    "موبايل انفينكس Hot انفينيكس",
+    "سماعة الاذن سلكي Razer"
   ],
   "channels": [
     "epichardware",
@@ -3333,6 +3333,13 @@
     "Sal7lyEgypt/41212",
     "Sal7lyEgypt/41211",
     "Sal7lyEgypt/41210",
-    "Yo_Ayman/17120"
+    "Yo_Ayman/17120",
+    "epichardware/5367",
+    "epichardware/5365",
+    "Sal7lyEgypt/41215",
+    "Sal7lyEgypt/41214",
+    "Sal7lyEgypt/41213",
+    "Yo_Ayman/17122",
+    "Yo_Ayman/17121"
   ]
 }
