@@ -310,8 +310,6 @@
     "Naturesta"
   ],
   "queries": [
-    "مجموعة حماية البشرة Dermacy",
-    "مشترك كهرباء مزود جي باور",
     "عطر خمرة للجنسين Lattafa",
     "موبايل شاومي 17T",
     "قلاية هوائية لتر دي اس بي",
@@ -389,7 +387,9 @@
     "قاعدة كيبورد لتخفيف GLORIOUS",
     "لابتوب أعمال F1MG MSI",
     "نيتشرستا خردل، عسل، Naturesta",
-    "طقم ملابس داخلية Dice"
+    "طقم ملابس داخلية Dice",
+    "فلاش ميموري M210S HIKSEMI",
+    "محول USB طراز HIKSEMI"
   ],
   "channels": [
     "epichardware",
@@ -3092,6 +3092,12 @@
     "epichardware/5295",
     "epichardware/5293",
     "Sal7lyEgypt/41072",
-    "Yo_Ayman/17064"
+    "Yo_Ayman/17064",
+    "epichardware/5298",
+    "epichardware/5297",
+    "Sal7lyEgypt/41076",
+    "Sal7lyEgypt/41075",
+    "Sal7lyEgypt/41074",
+    "Sal7lyEgypt/41073"
   ]
 }
