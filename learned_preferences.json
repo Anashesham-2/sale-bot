@@ -311,7 +311,6 @@
     "Marvelous Nutrition"
   ],
   "queries": [
-    "خلاط يدوي وات، Tornado",
     "مجفف شعر شاين BaByliss",
     "رقعة رئيسية لحب COSRX",
     "مكمل غذائي متعدد سينتروم",
@@ -390,7 +389,8 @@
     "موبايل سامسونج جالكسي Samsung",
     "سوكاني خلاط محمول Sokany",
     "غلاية سيف تاتش تانك",
-    "مسحوق بروتين معزول Yava Labs"
+    "مسحوق بروتين معزول Yava Labs",
+    "واي بروتين ريد RED REX"
   ],
   "channels": [
     "epichardware",
@@ -3258,6 +3258,10 @@
     "epichardware/5322",
     "Sal7lyEgypt/41175",
     "Yo_Ayman/17111",
-    "Yo_Ayman/17110"
+    "Yo_Ayman/17110",
+    "epichardware/5328",
+    "epichardware/5327",
+    "epichardware/5325",
+    "Sal7lyEgypt/41176"
   ]
 }
