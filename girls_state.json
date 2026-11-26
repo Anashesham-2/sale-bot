@@ -1,8 +1,7 @@
 {
-  "query_idx": 15,
+  "query_idx": 3,
   "last_tt_cat": "",
   "recent_names": {
-    "حامل اقلام كريستالي مارساتشي فاندار": 1795477792,
     "بودره خدود ناعمه b005 بلمسه نهائيه": 1795481084,
     "احمر شفاه كريمي غني جم لون": 1795502832,
     "جل واقي من الشمس هيدروكير spf": 1795504409,
@@ -121,7 +120,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795650728,
     1795675539,
     1795675545,
     1795675550,
@@ -165,16 +163,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795650728,
-      "link": "https://www.amazon.eg/dp/B08WJL2CJV",
-      "name_ar": "ديفا سائل لليدين 500 مل الترا جارد (",
-      "price": 39.96,
-      "list_price": 55.0,
-      "discount": 27.3,
-      "store": "Amazon",
-      "v_score": 41.7
-    },
     {
       "ts": 1795675539,
       "link": "https://www.amazon.eg/dp/B0G5PS4Y3W",
