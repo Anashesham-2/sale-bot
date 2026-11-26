@@ -1,5 +1,5 @@
 {
-  "query_idx": 3,
+  "query_idx": 8,
   "last_tt_cat": "",
   "recent_names": {
     "اسد مل برفيوم": 1795472559,
@@ -123,7 +123,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795644239,
     1795644656,
     1795645156,
     1795650728,
@@ -168,16 +167,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795644239,
-      "link": "https://www.amazon.eg/dp/B0038E15JU",
-      "name_ar": "جيل ماسكارا للرموش والحواجب من أسانس، شفاف، من ايسنس",
-      "price": 171.5,
-      "list_price": 195.62,
-      "discount": 12.3,
-      "store": "Amazon",
-      "v_score": 44.2
-    },
     {
       "ts": 1795644656,
       "link": "https://www.amazon.eg/dp/B0C94VSLJM",
