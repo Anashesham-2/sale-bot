@@ -308,11 +308,10 @@
     "Vatika",
     "MSI",
     "Naturesta",
-    "Marvelous Nutrition"
+    "Marvelous Nutrition",
+    "Trueval"
   ],
   "queries": [
-    "بروتين الجيل الثامن",
-    "مروحة ستاند صامتة فريش",
     "ميكروويف بلت بفرن هيلير",
     "انفنيكس هوت بسعة",
     "بخاخ الجسم للرجال AXE",
@@ -390,7 +389,9 @@
     "موزع HDMI USB يوجرين",
     "طقم أواني طهي تروفال",
     "طقم سمارت زينوكس Zinox",
-    "شاحن سريع C38 G-Power"
+    "شاحن سريع C38 G-Power",
+    "شاحن ويوو بمنفذ",
+    "مزيل عرق رول نيفيا"
   ],
   "channels": [
     "epichardware",
@@ -3303,6 +3304,15 @@
     "Sal7lyEgypt/41190",
     "Sal7lyEgypt/41189",
     "Yo_Ayman/17118",
-    "Yo_Ayman/17117"
-  ]
+    "Yo_Ayman/17117",
+    "epichardware/5355",
+    "epichardware/5354",
+    "epichardware/5353",
+    "Sal7lyEgypt/41199",
+    "Sal7lyEgypt/41198",
+    "Sal7lyEgypt/41197",
+    "Sal7lyEgypt/41196",
+    "Sal7lyEgypt/41195"
+  ],
+  "last_digest_date": "2026-11-26"
 }
