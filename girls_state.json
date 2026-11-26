@@ -1,5 +1,5 @@
 {
-  "query_idx": 1,
+  "query_idx": 6,
   "last_tt_cat": "",
   "recent_names": {
     "لوريال باريس الفيف شامبو بزيت المارولا": 1795432280,
@@ -139,7 +139,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795604761,
     1795605121,
     1795606352,
     1795611308,
@@ -188,16 +187,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795604761,
-      "link": "https://www.noon.com/egypt-ar/ZF35A33ACE50CFB154FE6Z/p/",
-      "name_ar": "بيردوينج سويت توك بادي سبلاش، عطر فراولة وسكر وردي طويل الثبات",
-      "price": 199.0,
-      "list_price": 350.0,
-      "discount": 43.1,
-      "store": "Noon",
-      "v_score": 40.6
-    },
     {
       "ts": 1795605121,
       "link": "https://www.amazon.eg/dp/B0CP9CGWNN",
