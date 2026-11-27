@@ -326,8 +326,6 @@
     "FAY"
   ],
   "queries": [
-    "مشروب منكه مونستر مونستر انرجي",
-    "ماوس ألعاب M815 Redragon",
     "ميدياتيك مقلاة هوائية MediaTech",
     "لاب توب ابل Apple",
     "تلفزيون كاجيتو بوصة Kajito",
@@ -405,7 +403,9 @@
     "مبرد وحدة المعالجة ASUS",
     "غلاية كهربائية سوكاني",
     "بروتين مصل الحليب RED REX",
-    "بخاخ منظف زجاج FAY -فاي"
+    "بخاخ منظف زجاج FAY -فاي",
+    "ساوند كور سماعات Soundcore",
+    "جيم سير وحدة GameSir"
   ],
   "channels": [
     "epichardware",
@@ -3815,6 +3815,9 @@
     "Sal7lyEgypt/41463",
     "Sal7lyEgypt/41462",
     "Yo_Ayman/17250",
-    "Yo_Ayman/17249"
+    "Yo_Ayman/17249",
+    "epichardware/5514",
+    "epichardware/5513",
+    "Sal7lyEgypt/41465"
   ]
 }
