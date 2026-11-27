@@ -318,10 +318,10 @@
     "Logitech",
     "LEYLAK",
     "HAIROOTS",
-    "NUVIRA"
+    "NUVIRA",
+    "Total"
   ],
   "queries": [
-    "أوكسي برايت عبوة او اكس اي",
     "كرياتين بدون نكهة ريد ريكس",
     "دبليو دبليو شاحن",
     "سانديسك محرك محمول",
@@ -400,7 +400,8 @@
     "ماكينة تحضير القهوة MediaTech",
     "مكمل غذائي سينتروم Centrum",
     "طقم اواني للطهي لازورد",
-    "هاتف HONOR Magic اونر"
+    "هاتف HONOR Magic اونر",
+    "أدوات يدوية مثقاب توتال"
   ],
   "channels": [
     "epichardware",
@@ -3630,6 +3631,11 @@
     "Sal7lyEgypt/41355",
     "Sal7lyEgypt/41354",
     "Yo_Ayman/17201",
-    "Yo_Ayman/17200"
+    "Yo_Ayman/17200",
+    "epichardware/5465",
+    "Sal7lyEgypt/41358",
+    "Sal7lyEgypt/41357",
+    "Yo_Ayman/17203",
+    "Yo_Ayman/17202"
   ]
 }
