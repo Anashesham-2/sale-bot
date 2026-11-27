@@ -322,10 +322,10 @@
     "Total",
     "Motevia",
     "El Helal and Silver star",
-    "Mercusys"
+    "Mercusys",
+    "FAY"
   ],
   "queries": [
-    "ماوس ألعاب لاسلكي ايجو",
     "مشروب منكه مونستر مونستر انرجي",
     "ماوس ألعاب M815 Redragon",
     "ميدياتيك مقلاة هوائية MediaTech",
@@ -404,7 +404,8 @@
     "مكيف هواء سبليت Tornado",
     "مبرد وحدة المعالجة ASUS",
     "غلاية كهربائية سوكاني",
-    "بروتين مصل الحليب RED REX"
+    "بروتين مصل الحليب RED REX",
+    "بخاخ منظف زجاج FAY -فاي"
   ],
   "channels": [
     "epichardware",
@@ -3802,7 +3803,13 @@
     "Sal7lyEgypt/41456",
     "epichardware/5510",
     "Sal7lyEgypt/41458",
-    "Sal7lyEgypt/41457"
-  ],
-  "last_digest_date": "2026-11-27"
+    "Sal7lyEgypt/41457",
+    "epichardware/5512",
+    "epichardware/5511",
+    "Sal7lyEgypt/41461",
+    "Sal7lyEgypt/41460",
+    "Sal7lyEgypt/41459",
+    "Yo_Ayman/17248",
+    "Yo_Ayman/17247"
+  ]
 }
