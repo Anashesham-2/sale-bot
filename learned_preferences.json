@@ -313,10 +313,10 @@
     "Hikole",
     "Juhayna",
     "Braun",
-    "NANO TREAT"
+    "NANO TREAT",
+    "ZARY"
   ],
   "queries": [
-    "مكيف هواء سبليت تورنيدو",
     "كرياتين بدون نكهة RED REX",
     "نوتري كوك حلة Nutricook",
     "ميكروفون ألعاب اكس فيفين",
@@ -395,7 +395,8 @@
     "سكوتر دفع بتعليق Hikole",
     "هارد SSD محمول SANDISK",
     "موبايل آيفون برو Apple",
-    "غلاية بلاستيكية، سعة Fresh"
+    "غلاية بلاستيكية، سعة Fresh",
+    "مزيل عرق نانو NANO TREAT"
   ],
   "channels": [
     "epichardware",
@@ -3518,6 +3519,11 @@
     "Sal7lyEgypt/41299",
     "Yo_Ayman/17174",
     "epichardware/5426",
-    "Sal7lyEgypt/41301"
+    "Sal7lyEgypt/41301",
+    "epichardware/5428",
+    "epichardware/5427",
+    "Sal7lyEgypt/41303",
+    "Sal7lyEgypt/41302",
+    "Yo_Ayman/17175"
   ]
 }
