@@ -325,7 +325,6 @@
     "Mercusys"
   ],
   "queries": [
-    "يوجرين كيبل منفذ",
     "ماوس ألعاب لاسلكي ايجو",
     "مشروب منكه مونستر مونستر انرجي",
     "ماوس ألعاب M815 Redragon",
@@ -404,7 +403,8 @@
     "مكيف هواء سبليت Sharp",
     "مكيف هواء سبليت Tornado",
     "مبرد وحدة المعالجة ASUS",
-    "غلاية كهربائية سوكاني"
+    "غلاية كهربائية سوكاني",
+    "بروتين مصل الحليب RED REX"
   ],
   "channels": [
     "epichardware",
@@ -3777,6 +3777,15 @@
     "Yo_Ayman/17240",
     "Yo_Ayman/17239",
     "Yo_Ayman/17238",
-    "Yo_Ayman/17237"
+    "Yo_Ayman/17237",
+    "epichardware/5507",
+    "epichardware/5505",
+    "Sal7lyEgypt/41447",
+    "Sal7lyEgypt/41446",
+    "Sal7lyEgypt/41445",
+    "Sal7lyEgypt/41444",
+    "Sal7lyEgypt/41443",
+    "Sal7lyEgypt/41442",
+    "Sal7lyEgypt/41441"
   ]
 }
