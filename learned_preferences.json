@@ -309,11 +309,10 @@
     "MSI",
     "Naturesta",
     "Marvelous Nutrition",
-    "Trueval"
+    "Trueval",
+    "Hikole"
   ],
   "queries": [
-    "سماعة باراكودا اكس Razer",
-    "كيبورد العاب صغيرة Razer",
     "مكيف تبريد سبليت Tornado",
     "شارب تكييف سبليت Sharp",
     "تكييف سبليت حصان هايسينس",
@@ -391,7 +390,9 @@
     "سوكاني خلاط محمول",
     "تلفزيون طراز عالي شاومي",
     "أقراص فيتامينات ومغنيسيوم سينتروم",
-    "تلفزيون ذكي بوصة هاير"
+    "تلفزيون ذكي بوصة هاير",
+    "فرن كهربائي هوم HOME",
+    "سكوتر دفع بتعليق Hikole"
   ],
   "channels": [
     "epichardware",
@@ -3474,6 +3475,12 @@
     "Sal7lyEgypt/41281",
     "Sal7lyEgypt/41280",
     "Yo_Ayman/17162",
-    "Yo_Ayman/17161"
+    "Yo_Ayman/17161",
+    "epichardware/5414",
+    "epichardware/5413",
+    "Sal7lyEgypt/41288",
+    "Sal7lyEgypt/41287",
+    "Yo_Ayman/17164",
+    "Yo_Ayman/17163"
   ]
 }
