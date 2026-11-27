@@ -1,5 +1,5 @@
 {
-  "query_idx": 15,
+  "query_idx": 3,
   "last_tt_cat": "",
   "recent_names": {
     "كريم اساس سموث سكين لتحسين مظهر": 1795554531,
@@ -113,8 +113,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795723365,
-    1795723371,
     1795724379,
     1795724385,
     1795725616,
@@ -140,26 +138,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795723365,
-      "link": "https://www.noon.com/egypt-ar/Z25781FBD4CF0E14A51EBZ/p/",
-      "name_ar": "C009 كونسيلر مونايا بتغطية كاملة للوجه وتحت العينين، بلمسة نهائية ناعمة",
-      "price": 223.3,
-      "list_price": 678.72,
-      "discount": 67.1,
-      "store": "Noon",
-      "v_score": 64.5
-    },
-    {
-      "ts": 1795723371,
-      "link": "https://www.noon.com/egypt-ar/Z3F7A0DFD560C192A67AFZ/p/",
-      "name_ar": "بايوثيرم فاونديشن بيج فاتح",
-      "price": 234.0,
-      "list_price": 585.0,
-      "discount": 60.0,
-      "store": "Noon",
-      "v_score": 53.0
-    },
     {
       "ts": 1795724379,
       "link": "https://www.noon.com/egypt-ar/ZB37DCC34537D89A05B92Z/p/",
