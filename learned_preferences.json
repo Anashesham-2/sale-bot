@@ -312,8 +312,6 @@
     "Trueval"
   ],
   "queries": [
-    "ميكروفون الألعاب USB فيفين",
-    "سماعة رأس سلكية FIFINE",
     "سماعة باراكودا اكس Razer",
     "كيبورد العاب صغيرة Razer",
     "مكيف تبريد سبليت Tornado",
@@ -391,7 +389,9 @@
     "Redragon P035 Meteor ريدراجون",
     "موبايل جالكسي A17 سامسونج",
     "سوكاني خلاط محمول",
-    "تلفزيون طراز عالي شاومي"
+    "تلفزيون طراز عالي شاومي",
+    "أقراص فيتامينات ومغنيسيوم سينتروم",
+    "تلفزيون ذكي بوصة هاير"
   ],
   "channels": [
     "epichardware",
@@ -3462,6 +3462,18 @@
     "Sal7lyEgypt/41275",
     "Yo_Ayman/17160",
     "Yo_Ayman/17159",
-    "Yo_Ayman/17158"
+    "Yo_Ayman/17158",
+    "epichardware/5411",
+    "epichardware/5410",
+    "epichardware/5409",
+    "Sal7lyEgypt/41286",
+    "Sal7lyEgypt/41285",
+    "Sal7lyEgypt/41284",
+    "Sal7lyEgypt/41283",
+    "Sal7lyEgypt/41282",
+    "Sal7lyEgypt/41281",
+    "Sal7lyEgypt/41280",
+    "Yo_Ayman/17162",
+    "Yo_Ayman/17161"
   ]
 }
