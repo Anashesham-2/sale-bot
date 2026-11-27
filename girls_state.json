@@ -1,5 +1,5 @@
 {
-  "query_idx": 7,
+  "query_idx": 12,
   "last_tt_cat": "",
   "recent_names": {
     "بطانات بانتي من كير فري": 1795513530,
@@ -121,7 +121,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795685632,
     1795686490,
     1795687190,
     1795690088,
@@ -164,16 +163,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795685632,
-      "link": "https://www.amazon.eg/dp/B0C94XJZ3P",
-      "name_ar": "أحمر الخدود المخبوز Flormar، 056 وردي خوخي، قابل للبناء والمزج",
-      "price": 660.0,
-      "list_price": 760.0,
-      "discount": 13.2,
-      "store": "Amazon",
-      "v_score": 59.6
-    },
     {
       "ts": 1795686490,
       "link": "https://www.noon.com/egypt-ar/Z6C72DDBEB55CA6D5B187Z/p/",
