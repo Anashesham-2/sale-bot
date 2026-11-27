@@ -324,7 +324,6 @@
     "El Helal and Silver star"
   ],
   "queries": [
-    "هيرو عسل زهرة Hero",
     "وسادة مسند معصم جينيريك",
     "يوجرين كيبل منفذ",
     "ماوس ألعاب لاسلكي ايجو",
@@ -403,7 +402,8 @@
     "أدوات يدوية مثقاب توتال",
     "مكيف سبليت حصان شارب",
     "مكيف هواء سبليت Sharp",
-    "مكيف هواء سبليت Tornado"
+    "مكيف هواء سبليت Tornado",
+    "مبرد وحدة المعالجة ASUS"
   ],
   "channels": [
     "epichardware",
@@ -3680,6 +3680,18 @@
     "Sal7lyEgypt/41382",
     "Sal7lyEgypt/41381",
     "Sal7lyEgypt/41380",
-    "Sal7lyEgypt/41379"
+    "Sal7lyEgypt/41379",
+    "epichardware/5481",
+    "Sal7lyEgypt/41390",
+    "Sal7lyEgypt/41389",
+    "Sal7lyEgypt/41388",
+    "Sal7lyEgypt/41386",
+    "Sal7lyEgypt/41385",
+    "Sal7lyEgypt/41384",
+    "Sal7lyEgypt/41383",
+    "Yo_Ayman/17220",
+    "Yo_Ayman/17219",
+    "Yo_Ayman/17218",
+    "Yo_Ayman/17216"
   ]
 }
