@@ -1,5 +1,5 @@
 {
-  "query_idx": 9,
+  "query_idx": 14,
   "last_tt_cat": "",
   "recent_names": {
     "l016 احمر شفاه كريمي من مونايا": 1795517381,
@@ -122,9 +122,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795690088,
-    1795690094,
-    1795690101,
     1795690933,
     1795692407,
     1795694092,
@@ -164,36 +161,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795690088,
-      "link": "https://www.noon.com/egypt-ar/ZC6AF09B71E5048219255Z/p/",
-      "name_ar": "Y001 بالتيت بورجوفا لألوان الظلال النقية، 20 لونًا، صبغة عالية — Monaya",
-      "price": 343.0,
-      "list_price": 1042.55,
-      "discount": 67.1,
-      "store": "Noon",
-      "v_score": 72.5
-    },
-    {
-      "ts": 1795690094,
-      "link": "https://www.noon.com/egypt-ar/Z96D464A2140F3766EA85Z/p/",
-      "name_ar": "Z003 برايمر مرطب، بيلمع وبيخفي العيوب، يثبت الميكب لحد 24 ساعة — Monaya",
-      "price": 146.3,
-      "list_price": 444.68,
-      "discount": 67.1,
-      "store": "Noon",
-      "v_score": 64.5
-    },
-    {
-      "ts": 1795690101,
-      "link": "https://www.noon.com/egypt-ar/Z1F3565A7EDEFE90FFEA9Z/p/",
-      "name_ar": "P006 مونايا المضغوطة للوجه، لمسة مطفية طبيعية، تأثير تنعيم وخفوت للمسام",
-      "price": 334.95,
-      "list_price": 986.17,
-      "discount": 66.0,
-      "store": "Noon",
-      "v_score": 64.0
-    },
     {
       "ts": 1795690933,
       "link": "https://www.noon.com/egypt-ar/Z3EAA3D0ABDF9110A31DBZ/p/",
