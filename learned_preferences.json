@@ -313,8 +313,6 @@
     "Hikole"
   ],
   "queries": [
-    "شارب تكييف سبليت Sharp",
-    "تكييف سبليت حصان هايسينس",
     "مكيف هواء سبليت تورنيدو",
     "كرياتين بدون نكهة RED REX",
     "نوتري كوك حلة Nutricook",
@@ -392,7 +390,9 @@
     "تلفزيون ذكي بوصة هاير",
     "فرن كهربائي هوم HOME",
     "سكوتر دفع بتعليق Hikole",
-    "هارد SSD محمول SANDISK"
+    "هارد SSD محمول SANDISK",
+    "موبايل آيفون برو Apple",
+    "غلاية بلاستيكية، سعة Fresh"
   ],
   "channels": [
     "epichardware",
@@ -3492,6 +3492,13 @@
     "epichardware/5417",
     "Sal7lyEgypt/41292",
     "Yo_Ayman/17168",
-    "Yo_Ayman/17167"
+    "Yo_Ayman/17167",
+    "epichardware/5420",
+    "epichardware/5419",
+    "epichardware/5418",
+    "Sal7lyEgypt/41295",
+    "Sal7lyEgypt/41294",
+    "Sal7lyEgypt/41293",
+    "Yo_Ayman/17169"
   ]
 }
