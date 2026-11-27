@@ -320,7 +320,6 @@
     "HAIROOTS"
   ],
   "queries": [
-    "مشترك كهرباء واقي G-Power",
     "موبايل ذكي سامسونج Samsung",
     "موبايل جالكسي A27 سامسونج",
     "موبايل سامسونج جالاكسي",
@@ -399,7 +398,8 @@
     "مروحة فريش ستاند",
     "رالي بار لوجيتيك،",
     "منظف عميق للبشرة LEYLAK",
-    "Samsung inch Mini"
+    "Samsung inch Mini",
+    "ماكينة تحضير القهوة MediaTech"
   ],
   "channels": [
     "epichardware",
@@ -3560,6 +3560,9 @@
     "Sal7lyEgypt/41316",
     "Sal7lyEgypt/41317",
     "Sal7lyEgypt/41318",
-    "epichardware/5446"
+    "epichardware/5446",
+    "epichardware/5447",
+    "Yo_Ayman/17184",
+    "Yo_Ayman/17183"
   ]
 }
