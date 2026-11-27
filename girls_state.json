@@ -1,5 +1,5 @@
 {
-  "query_idx": 5,
+  "query_idx": 10,
   "last_tt_cat": "",
   "recent_names": {
     "بيلّو ماء ميسيلار مزيل مكياج بالهيالورونيك": 1795508065,
@@ -125,7 +125,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795679820,
     1795680287,
     1795681599,
     1795682854,
@@ -170,16 +169,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795679820,
-      "link": "https://www.amazon.eg/dp/B0DXVX89K8",
-      "name_ar": "كارسيل بلسم باور ايسنس المضاد لتساقط الشعر من ماكا، 500 مل",
-      "price": 533.0,
-      "list_price": 650.0,
-      "discount": 18.0,
-      "store": "Amazon",
-      "v_score": 64.0
-    },
     {
       "ts": 1795680287,
       "link": "https://www.amazon.eg/dp/B0FG891PWD",
