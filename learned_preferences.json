@@ -320,7 +320,6 @@
     "HAIROOTS"
   ],
   "queries": [
-    "ماكينة غسيل بالضغط اي بي تي",
     "مشترك كهرباء واقي G-Power",
     "موبايل ذكي سامسونج Samsung",
     "موبايل جالكسي A27 سامسونج",
@@ -399,7 +398,8 @@
     "مزيل عرق نانو NANO TREAT",
     "مروحة فريش ستاند",
     "رالي بار لوجيتيك،",
-    "منظف عميق للبشرة LEYLAK"
+    "منظف عميق للبشرة LEYLAK",
+    "Samsung inch Mini"
   ],
   "channels": [
     "epichardware",
@@ -3552,6 +3552,7 @@
     "Sal7lyEgypt/41314",
     "epichardware/5439",
     "epichardware/5441",
-    "epichardware/5442"
+    "epichardware/5442",
+    "epichardware/5443"
   ]
 }
