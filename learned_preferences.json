@@ -326,7 +326,6 @@
     "FAY"
   ],
   "queries": [
-    "ميدياتيك مقلاة هوائية MediaTech",
     "لاب توب ابل Apple",
     "تلفزيون كاجيتو بوصة Kajito",
     "جلوريوس كيبورد العاب غلوريوس",
@@ -405,7 +404,8 @@
     "بروتين مصل الحليب RED REX",
     "بخاخ منظف زجاج FAY -فاي",
     "ساوند كور سماعات Soundcore",
-    "جيم سير وحدة GameSir"
+    "جيم سير وحدة GameSir",
+    "باور بانك أنكر انكر"
   ],
   "channels": [
     "epichardware",
@@ -3841,6 +3841,8 @@
     "Yo_Ayman/17258",
     "epichardware/5518",
     "Yo_Ayman/17260",
-    "Yo_Ayman/17259"
+    "Yo_Ayman/17259",
+    "epichardware/5520",
+    "Sal7lyEgypt/41475"
   ]
 }
