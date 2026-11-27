@@ -317,7 +317,6 @@
     "ZARY"
   ],
   "queries": [
-    "كرياتين بدون نكهة RED REX",
     "نوتري كوك حلة Nutricook",
     "ميكروفون ألعاب اكس فيفين",
     "ماكينة غسيل بالضغط اي بي تي",
@@ -396,7 +395,8 @@
     "هارد SSD محمول SANDISK",
     "موبايل آيفون برو Apple",
     "غلاية بلاستيكية، سعة Fresh",
-    "مزيل عرق نانو NANO TREAT"
+    "مزيل عرق نانو NANO TREAT",
+    "مروحة فريش ستاند"
   ],
   "channels": [
     "epichardware",
@@ -3528,6 +3528,7 @@
     "epichardware/5429",
     "Yo_Ayman/17176",
     "epichardware/5430",
-    "Yo_Ayman/17177"
+    "Yo_Ayman/17177",
+    "epichardware/5432"
   ]
 }
