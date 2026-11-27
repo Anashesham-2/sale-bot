@@ -1,5 +1,5 @@
 {
-  "query_idx": 15,
+  "query_idx": 3,
   "last_tt_cat": "",
   "recent_names": {
     "l016 احمر شفاه كريمي من مونايا": 1795517381,
@@ -120,7 +120,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795687190,
     1795690088,
     1795690094,
     1795690101,
@@ -161,16 +160,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795687190,
-      "link": "https://www.amazon.eg/dp/B0GXWPX9YF",
-      "name_ar": "سبلاش للجسم من جين زد، مسك، روزا 250 مل",
-      "price": 160.0,
-      "list_price": 225.0,
-      "discount": 28.9,
-      "store": "Amazon",
-      "v_score": 46.4
-    },
     {
       "ts": 1795690088,
       "link": "https://www.noon.com/egypt-ar/ZC6AF09B71E5048219255Z/p/",
