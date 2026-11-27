@@ -1,5 +1,5 @@
 {
-  "query_idx": 4,
+  "query_idx": 9,
   "last_tt_cat": "",
   "recent_names": {
     "جل واقي من الشمس هيدروكير spf": 1795504409,
@@ -125,8 +125,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795676951,
-    1795676957,
     1795679009,
     1795679820,
     1795680287,
@@ -172,26 +170,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795676951,
-      "link": "https://www.amazon.eg/dp/B0GXWJ6C87",
-      "name_ar": "بخاخ للجسم من جين زد سعة 250 مل",
-      "price": 160.0,
-      "list_price": 225.0,
-      "discount": 28.9,
-      "store": "Amazon",
-      "v_score": 46.4
-    },
-    {
-      "ts": 1795676957,
-      "link": "https://www.amazon.eg/dp/B0GXWST978",
-      "name_ar": "سبلاش للجسم بلس هوت ويف من جين زي، 250 مل",
-      "price": 160.0,
-      "list_price": 225.0,
-      "discount": 28.9,
-      "store": "Amazon",
-      "v_score": 46.4
-    },
     {
       "ts": 1795679009,
       "link": "https://www.amazon.eg/dp/B0BZDG7VGX",
