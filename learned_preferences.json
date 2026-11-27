@@ -322,9 +322,6 @@
     "Total"
   ],
   "queries": [
-    "كرياتين بدون نكهة ريد ريكس",
-    "دبليو دبليو شاحن",
-    "سانديسك محرك محمول",
     "هيرو عسل زهرة Hero",
     "وسادة مسند معصم جينيريك",
     "يوجرين كيبل منفذ",
@@ -401,7 +398,10 @@
     "مكمل غذائي سينتروم Centrum",
     "طقم اواني للطهي لازورد",
     "هاتف HONOR Magic اونر",
-    "أدوات يدوية مثقاب توتال"
+    "أدوات يدوية مثقاب توتال",
+    "مكيف سبليت حصان شارب",
+    "مكيف هواء سبليت Sharp",
+    "مكيف هواء سبليت Tornado"
   ],
   "channels": [
     "epichardware",
@@ -3645,6 +3645,19 @@
     "Sal7lyEgypt/41364",
     "Sal7lyEgypt/41363",
     "Sal7lyEgypt/41362",
-    "Yo_Ayman/17205"
+    "Yo_Ayman/17205",
+    "epichardware/5469",
+    "epichardware/5468",
+    "epichardware/5467",
+    "Sal7lyEgypt/41371",
+    "Sal7lyEgypt/41370",
+    "Sal7lyEgypt/41369",
+    "Sal7lyEgypt/41368",
+    "Sal7lyEgypt/41367",
+    "Sal7lyEgypt/41366",
+    "Yo_Ayman/17209",
+    "Yo_Ayman/17208",
+    "Yo_Ayman/17207",
+    "Yo_Ayman/17206"
   ]
 }
