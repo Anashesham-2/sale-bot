@@ -315,10 +315,10 @@
     "Braun",
     "NANO TREAT",
     "ZARY",
-    "Logitech"
+    "Logitech",
+    "LEYLAK"
   ],
   "queries": [
-    "ميكروفون ألعاب اكس فيفين",
     "ماكينة غسيل بالضغط اي بي تي",
     "مشترك كهرباء واقي G-Power",
     "موبايل ذكي سامسونج Samsung",
@@ -397,7 +397,8 @@
     "غلاية بلاستيكية، سعة Fresh",
     "مزيل عرق نانو NANO TREAT",
     "مروحة فريش ستاند",
-    "رالي بار لوجيتيك،"
+    "رالي بار لوجيتيك،",
+    "منظف عميق للبشرة LEYLAK"
   ],
   "channels": [
     "epichardware",
@@ -3532,6 +3533,7 @@
     "Yo_Ayman/17177",
     "epichardware/5432",
     "epichardware/5433",
-    "Sal7lyEgypt/41304"
+    "Sal7lyEgypt/41304",
+    "epichardware/5436"
   ]
 }
