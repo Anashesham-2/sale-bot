@@ -328,8 +328,6 @@
     "Infinity"
   ],
   "queries": [
-    "موبايل جالكسي A17 Samsung",
-    "غسالة هوفر H3DP485TAMBRELA Hoover",
     "اقراص ليميتليس مان Limitless",
     "موزع HDMI USB UGREEN",
     "جوال سامسونج جالكسي Samsung",
@@ -407,7 +405,9 @@
     "منظف داخلي للمحرك EZI",
     "غسالة أطباق تكفي Hoover",
     "مرطب وملطف انفينيتي",
-    "قلاية هوائية ذكية Xiaomi"
+    "قلاية هوائية ذكية Xiaomi",
+    "كيبورد العاب ميكانيكية",
+    "غسالة ملابس بسعة كاندى"
   ],
   "channels": [
     "epichardware",
@@ -3954,6 +3954,12 @@
     "Yo_Ayman/17288",
     "Yo_Ayman/17287",
     "Sal7lyEgypt/41539",
-    "Sal7lyEgypt/41538"
+    "Sal7lyEgypt/41538",
+    "epichardware/5545",
+    "epichardware/5544",
+    "epichardware/5542",
+    "Sal7lyEgypt/41540",
+    "Yo_Ayman/17291",
+    "Yo_Ayman/17290"
   ]
 }
