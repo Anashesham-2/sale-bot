@@ -328,7 +328,6 @@
     "Infinity"
   ],
   "queries": [
-    "ابل اير تاج، Apple",
     "موبايل جالكسي A17 Samsung",
     "غسالة هوفر H3DP485TAMBRELA Hoover",
     "اقراص ليميتليس مان Limitless",
@@ -407,7 +406,8 @@
     "كرياتين بدون نكهة RED REX",
     "منظف داخلي للمحرك EZI",
     "غسالة أطباق تكفي Hoover",
-    "مرطب وملطف انفينيتي"
+    "مرطب وملطف انفينيتي",
+    "قلاية هوائية ذكية Xiaomi"
   ],
   "channels": [
     "epichardware",
@@ -3900,6 +3900,7 @@
     "Sal7lyEgypt/41503",
     "epichardware/5537",
     "Sal7lyEgypt/41504",
-    "Sal7lyEgypt/41505"
+    "Sal7lyEgypt/41505",
+    "epichardware/5538"
   ]
 }
