@@ -324,10 +324,10 @@
     "El Helal and Silver star",
     "Mercusys",
     "FAY",
-    "EZI"
+    "EZI",
+    "Infinity"
   ],
   "queries": [
-    "كابل سحب خطافات جينيريك",
     "ابل اير تاج، Apple",
     "موبايل جالكسي A17 Samsung",
     "غسالة هوفر H3DP485TAMBRELA Hoover",
@@ -406,7 +406,8 @@
     "تكييف هواء بارد Beko",
     "كرياتين بدون نكهة RED REX",
     "منظف داخلي للمحرك EZI",
-    "غسالة أطباق تكفي Hoover"
+    "غسالة أطباق تكفي Hoover",
+    "مرطب وملطف انفينيتي"
   ],
   "channels": [
     "epichardware",
@@ -3880,6 +3881,7 @@
     "Sal7lyEgypt/41493",
     "epichardware/5532",
     "Sal7lyEgypt/41494",
-    "Yo_Ayman/17267"
+    "Yo_Ayman/17267",
+    "epichardware/5535"
   ]
 }
