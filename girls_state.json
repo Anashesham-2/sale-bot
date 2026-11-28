@@ -1,5 +1,5 @@
 {
-  "query_idx": 10,
+  "query_idx": 15,
   "last_tt_cat": "",
   "recent_names": {
     "شيجلام تنت شفاه وخدود هلامي لذيذ": 1795596568,
@@ -114,8 +114,6 @@
   },
   "price_history": {},
   "sent_timestamps": [
-    1795760128,
-    1795760134,
     1795764494,
     1795769109,
     1795770119,
@@ -149,26 +147,6 @@
   ],
   "tiktok_slots_sent": [],
   "sent_today_meta": [
-    {
-      "ts": 1795760128,
-      "link": "https://www.noon.com/egypt-ar/Z2C198EDACEC88EF2911AZ/p/",
-      "name_ar": "كولاجرا واقي الشمس +SPF50 جل كريم 50مل صن بلوك",
-      "price": 121.0,
-      "list_price": 199.0,
-      "discount": 39.2,
-      "store": "Noon",
-      "v_score": 64.6
-    },
-    {
-      "ts": 1795760134,
-      "link": "https://www.noon.com/egypt-ar/Z290068E6C3C196526ABEZ/p/",
-      "name_ar": "G005 جلوس مات ومرطب ثابت، 12 درجة زاهية، ثابت طويل، مرطب، لمسة مات من غير جفاف — Mona",
-      "price": 141.75,
-      "list_price": 402.13,
-      "discount": 64.8,
-      "store": "Noon",
-      "v_score": 59.4
-    },
     {
       "ts": 1795764494,
       "link": "https://www.amazon.eg/dp/B0H2W28L8B",
